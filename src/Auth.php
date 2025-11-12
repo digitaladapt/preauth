@@ -107,6 +107,8 @@ class Auth {
         if ($this->login()) {
             if (isset($this->get['rt'])) {
                 header("Location: {$this->get['rt']}");
+            } else if (getenv('PREAUTH_SEND_TO')) {
+                header("Location: " . getenv('PREAUTH_SEND_TO'));
             }
             echo "ok $this->id";
             return;
