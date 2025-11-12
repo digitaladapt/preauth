@@ -105,8 +105,8 @@ class Auth {
         }
         /* if request is valid login attempt, (set cookie and) return to where they came from */
         if ($this->login()) {
-            if (isset($this->get['rt'])) {
-                header("Location: {$this->get['rt']}");
+            if ($this->getReturnTo()) {
+                header("Location: {$this->getReturnTo()}");
             } else if (getenv('PREAUTH_SEND_TO')) {
                 header("Location: " . getenv('PREAUTH_SEND_TO'));
             }
