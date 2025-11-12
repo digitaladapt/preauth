@@ -1,0 +1,12 @@
+{
+    "autoload": {
+        "psr-4": {
+            "Preauth\\": "src/"
+        }
+    },
+    "require": {
+        "spomky-labs/otphp": "^11.3",
+        "symfony/http-foundation": "^7.3",
+        "symfony/uid": "^7.3"
+    }
+}
