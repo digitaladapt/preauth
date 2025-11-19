@@ -10,7 +10,7 @@ Maybe you need the extra protection because it's a very sensitive system, or bec
 * Docker
 * Caddy (as a reverse proxy)
 * a domain
-* a web service you want to secure 
+* a web service you want to secure
 
 It may be possible to use some other reverse proxy, but for now, I'm going to stick with just Caddy.
 
