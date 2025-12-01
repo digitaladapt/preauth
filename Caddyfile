@@ -15,6 +15,7 @@ preauth.example.com {
 # snippet to put the pre-auth system in front any service easily
 (preauth) {
 	reverse_proxy {args[0]} preauth:9000 {
+        method GET
 		header_up X-Forwarded-Uri {uri}
 		header_down -X-Powered-By
 		rewrite /preauth.php
