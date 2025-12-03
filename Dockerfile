@@ -8,8 +8,15 @@ RUN mkdir /preauth
 WORKDIR /preauth
 COPY . /preauth/
 
-# sessions are stored here
+# add php config for rate limit monitoring
+RUN mkdir -p /usr/local/etc/php/conf.d
+COPY preauth-php.ini /usr/local/etc/php/conf.d/preauth-php.ini
+
+# login sessions are stored here
 RUN mkdir -p /tmp/sessions
+
+# rate limit monitoring information is stored here
+RUN mkdir -p /tmp/monitor
 
 # fcgi command for the healthcheck
 RUN apk add fcgi
@@ -19,9 +26,9 @@ RUN composer install
 
 EXPOSE 9000
 
-HEALTHCHECK --interval=60s --retries=3 --start-interval=1s --start-period=10s --timeout=5s \
+HEALTHCHECK --interval=5m --retries=3 --start-interval=5s --start-period=50s --timeout=5s \
     CMD SCRIPT_NAME=/health.php SCRIPT_FILENAME=/preauth/health.php REQUEST_METHOD=GET \
         cgi-fcgi -bind -connect localhost:9000 | grep 'online' || exit 1
 
-ENTRYPOINT /preauth/init.sh
+ENTRYPOINT ["/preauth/init.sh"]
 

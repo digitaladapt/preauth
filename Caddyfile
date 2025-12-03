@@ -15,7 +15,7 @@ preauth.example.com {
 # snippet to put the pre-auth system in front any service easily
 (preauth) {
 	reverse_proxy {args[0]} preauth:9000 {
-        method GET
+		method GET
 		header_up X-Forwarded-Uri {uri}
 		header_down -X-Powered-By
 		rewrite /preauth.php
@@ -33,33 +33,12 @@ preauth.example.com {
 	}
 }
 
-# snippet usage: this will cause pre-auth to restrict access to https://protected.example.com/secure
+# snippet usage: this will cause preauth to restrict access to
+# https://protected.example.com/secure
 protected.example.com {
 	import preauth /secure {
 		reverse_proxy protected-service:9000
 	}
 	reverse_proxy exposed-service:9000
 }
-
-## alternatively, if using an older version of caddy,
-## you will have to have add the boilerplate in your block
-#protected.example.com {
-#	reverse_proxy /secure preauth:9000 {
-#		header_up X-Forwarded-Uri {uri}
-#		header_down -X-Powered-By
-#		rewrite /preauth.php
-#		transport fastcgi {
-#			root /preauth/
-#			split .php
-#		}
-#		@preauth_ok status 2xx
-#		handle_response @preauth_ok {
-#			copy_response_headers {
-#				include Set-Cookie Location
-#			}
-#			reverse_proxy protected-service:9000
-#		}
-#	}
-#	reverse_proxy exposed-service:9000
-#}
 

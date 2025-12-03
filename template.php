@@ -63,11 +63,11 @@ $env = new Env();
 <body>
   <h1><?php echo $env->getTitle(); ?></h1>
   <form action="/" method="get">
-    <input type="hidden" name="rt" value="<?php echo $auth->getReturnTo(); ?>">
+    <input type="hidden" name="<?php echo Preauth::RETURN_FIELD; ?>" value="<?php echo $auth->getReturnTo(); ?>">
     <div class="right"><label for="id"><?php echo $env->getIdName(); ?>:</label></div>
-    <div><input type="text" name="id" id="id" autocomplete="on" required="required" autofocus="autofocus"></div>
+    <div><input type="text" name="<?php echo Preauth::ID_FIELD; ?>" id="id" autocomplete="on" required="required" autofocus="autofocus"></div>
     <div class="right"><label for="token"><?php echo $env->getTokenName(); ?>:</label></div>
-    <div><input type="text" name="token" id="token" autocomplete="off" required="required"></div>
+    <div><input type="text" name="<?php echo Preauth::TOKEN_FIELD; ?>" id="token" autocomplete="off" required="required"></div>
     <div class="center"><button type="submit"><?php echo $env->getSubmitName(); ?></button></div>
   </form>
 </body>

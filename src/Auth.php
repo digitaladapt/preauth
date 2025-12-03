@@ -8,6 +8,12 @@ use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\Uid\Uuid;
 
 class Auth {
+    /* name of the return-to field */
+    public const RETURN_FIELD = 'preauth_rt';
+    /* name of the id field */
+    public const ID_FIELD = 'preauth_id';
+    /* name of the token field */
+    public const TOKEN_FIELD = 'preauth_token';
     /* the encryption cipher we are using */
     private const CIPHER = 'camellia-256-ctr';
     /* only allow A-z 0-9 _ - */
@@ -61,7 +67,9 @@ class Auth {
         $this->key = base64_decode(getenv('PREAUTH_KEY') ?: '');
         $this->token = getenv('PREAUTH_TOKEN') ?: '';
         $this->expire = time() + 60 * ((int)getenv('PREAUTH_TTL') ?: 43200);
-        parse_str((parse_url(($_SERVER['HTTP_X_FORWARDED_URI'] ?? ''), PHP_URL_QUERY) ?: ''), $this->get);
+        parse_str((parse_url((
+            $_SERVER['HTTP_X_FORWARDED_URI'] ?? ''
+        ), PHP_URL_QUERY) ?: ''), $this->get);
     }
 
     /**
@@ -75,7 +83,7 @@ class Auth {
      * @return string returns the return-to-url, if one was specified, empty string otherwise
      */
     public function getReturnTo(): string {
-        $rt = $this->get['rt'] ?? '';
+        $rt = $this->get[self::RETURN_FIELD] ?? '';
         if ( ! is_string($rt)) {
             $rt = '';
         }
@@ -103,6 +111,13 @@ class Auth {
             echo "ok $this->id";
             return;
         }
+
+        /* if too many requests (from the remote-ip), then trigger rate limiting */
+        if ($this->rateLimit()) {
+            include __DIR__ . '/../400.php';
+            exit(0);
+        }
+
         /* if request is valid login attempt, (set cookie and) return to where they came from */
         if ($this->login()) {
             if ($this->getReturnTo()) {
@@ -114,12 +129,14 @@ class Auth {
             return;
         }
 
-        /* not already logged in, not trying to login, but on auth page, so present login screen */
+        /* not already logged in, but on auth page, so present login screen */
+        /* either not trying to login or had a failed login attempt */
         if ($_SERVER['HTTP_HOST'] === "$this->preauth.$this->domain") {
             header('http/1.1 401 Unauthorized', true, 401);
             $this->stop = false;
         } else {
-            /* not already logged in, not trying to login, and not on auth page, so send to login screen */
+            /* not already logged in, not trying to login, and not on auth page */
+            /* so send to login screen */
             $rt = rawurlencode(
                 ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? 'https') . '://' .
                 ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? $this->domain) .
@@ -139,7 +156,9 @@ class Auth {
         $parts = array_reverse(explode('.', $host));
         $keep = min(2, count($parts));
         /* check if host should retain 3 parts, due to TLD */
-        if (count($parts) > 2 && isset(self::TLD[$parts[0]]) && in_array($parts[1], self::TLD[$parts[0]], true)) {
+        if (count($parts) > 2 && isset(self::TLD[$parts[0]]) &&
+            in_array($parts[1], self::TLD[$parts[0]], true)
+        ) {
             $keep = 3;
         }
         $parts = array_reverse(array_slice($parts, 0, $keep));
@@ -157,15 +176,18 @@ class Auth {
     }
 
     /**
-     * @return string|null returns the existing UUID if there is one and it is valid, null otherwise
+     * @return string|null returns the existing UUID if there is valid one, null otherwise
      */
     private function getExistingUUID(): ?string {
         /* filter user input */
         $encUUID = preg_replace(self::URL64, '', ($_COOKIE[self::NAME] ?? ''));
 
-        /* session exists as a file, in the format '<iv-b64>$<session-name>', where the filename is the encoded-uuid */
+        /* session exists as a file where the filename is the encoded-uuid */
+        /* in the format '<iv-b64>$<session-name>$<expiration>$<date>$<remote-host>' */
         if ($encUUID && is_file(self::BASE . $encUUID)) {
-            [$iv, $id, $expire] = explode('$', (file_get_contents(self::BASE . $encUUID) ?: '') . '$$');
+            [$iv, $id, $expire] = explode('$', (file_get_contents(
+                self::BASE . $encUUID
+            ) ?: '') . '$$');
             if ($iv) {
                 /* raw-uuid means not encoded, but still encrypted */
                 $rawUUID = base64_decode(strtr($encUUID, '+/', '-_'));
@@ -175,11 +197,49 @@ class Auth {
                     $this->id = substr(preg_replace(self::URL64, '', $id), 0, 100);
                     return $uuid;
                 }
-                /* we have something encrypted, but it is expired or not valid, so delete the session file */
+                /* we have something encrypted, but it is expired or invalid, so delete it */
                 unlink(self::BASE . $encUUID);
             }
         }
         return null;
+    }
+
+    /**
+     * Check if the remote-host has made too many login requests recently, and block if needed
+     * @return bool returns true if we should rate-limit this request, false otherwise
+     */
+    private function rateLimit(): bool {
+        /* our identifier for this remote-host, replace all special characters with dashes */
+        /* session_id() only allows ",", "-", and alphanumeric characters */
+        $limiterId = preg_replace('[^a-zA-Z0-9]', '-', $this->getRemoteHost());
+        session_id($limiterId);
+        session_start();
+
+        /* new remote-ip, start logging */
+        if ( ! isset($_SESSION['count'], $_SESSION['time'])) {
+            $this->resetRateLimit(false);
+            return false;
+        }
+
+        $sessionCount = (int)$_SESSION['count'];
+        $sessionTime  = (int)$_SESSION['time'];
+        $rateLimit    = (int)getenv('PREAUTH_RATE_LIMIT')   ?: 4;
+        $rateTimeout  = (int)getenv('PREAUTH_RATE_TIMEOUT') ?: 360;
+        $rateBlocked  = (int)getenv('PREAUTH_RATE_BLOCKED') ?: 1440;
+        $rateMaximum  = max($rateTimeout, $rateBlocked);
+
+        if ($sessionCount >= $rateLimit && time() - $rateBlocked <= $sessionTime) {
+            /* if over limit, and block current, block them */
+            return true;
+        } else if ($sessionCount < $rateLimit && time() - $rateTimeout <= $sessionTime) {
+            /* if under limit, and timeout current, allow them */
+            return false;
+        }
+
+        /* either over limit and block has expired or */
+        /* under limit and timeout has expired, so reset them */
+        $this->resetRateLimit(false);
+        return false;
     }
 
     /**
@@ -198,30 +258,26 @@ class Auth {
      */
     private function login(): bool {
         /* fields must both be filled out */
-        if (isset($this->get['token'], $this->get['id']) && $this->get['token'] && $this->get['id']) {
+        if (isset($this->get[self::TOKEN_FIELD], $this->get[self::ID_FIELD]) &&
+            $this->get[self::TOKEN_FIELD] && $this->get[self::ID_FIELD]
+        ) {
             /* filter user input */
-            $id = substr(preg_replace(self::URL64, '', $this->get['id']), 0, 100);
+            $id = substr(preg_replace(self::URL64, '', $this->get[self::ID_FIELD]), 0, 100);
             $otp = TOTP::createFromSecret($this->token);
             $date = date('Y-m-d H:i:s');
 
-            /* determine real remote-host, if local address, find next level up */
-            $remoteHost = $_SERVER['REMOTE_HOST'];
-            if (IpUtils::isPrivateIp($remoteHost)) {
-                $remoteList = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''));
-                $remoteIndex = array_search($remoteHost, $remoteList);
-                if ($remoteIndex > 0) {
-                    $remoteHost = $remoteList[$remoteIndex - 1];
-                }
-            }
-
             /* if given token is valid, login, store session file and set the cookie */
-            if ($otp->now() === $this->get['token']) {
+            if ($otp->now() === $this->get[self::TOKEN_FIELD]) {
                 $this->id = $id;
                 $uuid = $this->newUUID();
                 $rawIV = random_bytes(openssl_cipher_iv_length(self::CIPHER));
                 $rawUUID = openssl_encrypt($uuid, self::CIPHER, $this->key, 0, $rawIV);
                 $encUUID = strtr(base64_encode($rawUUID), '-_', '+/');
-                file_put_contents(self::BASE . $encUUID, base64_encode($rawIV) . "\$$id\$$this->expire\$$date\$$remoteHost\$\n");
+                file_put_contents(
+                    self::BASE . $encUUID,
+                    base64_encode($rawIV) .
+                    "\$$id\$$this->expire\$$date\${$this->getRemoteHost()}\$\n"
+                );
                 setcookie(
                     self::NAME,
                     $encUUID,
@@ -232,12 +288,52 @@ class Auth {
                     true           /* no js access   */
                 );
                 error_log("[$date] successful login by id: $id");
+                /* successful login, reset the rate-limit and close */
+                $this->resetRateLimit();
+
                 return true;
             }
-            /* log failed logins, so we can fail2ban bad actors */
-            error_log("[$date] failed login attempted by ip: $remoteHost");
+            /* login attempted and failed, update monitoring for rate limiting */
+            $this->logFailedAttempt();
         }
         return false;
+    }
+
+    /**
+     * Determine real remote-host, if local address, find next level up
+     * @return string returns the real remote host (IP address)
+     */
+    private function getRemoteHost(): string {
+        $remoteHost = $_SERVER['REMOTE_HOST'];
+        if (IpUtils::isPrivateIp($remoteHost)) {
+            $remoteList = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''));
+            $remoteIndex = array_search($remoteHost, $remoteList);
+            if ($remoteIndex > 0) {
+                $remoteHost = $remoteList[$remoteIndex - 1];
+            }
+        }
+        return $remoteHost;
+    }
+
+    /**
+     * [Re]Initialize the rate-limiting and close monitoring session (unless you pass false)
+     * @param bool $close Defaults to true, set to false to keep monitoring session open
+     */
+    private function resetRateLimit(bool $close = true): void {
+        $_SESSION['time'] = time();
+        $_SESSION['count'] = 0;
+        if ($close) {
+            session_write_close();
+        }
+    }
+
+    /**
+     * Note that login failed so we can determine if we should rate-limit future requests
+     */
+    private function logFailedAttempt(): void {
+        $_SESSION['time'] = time();
+        $_SESSION['count']++;
+        session_write_close();
     }
 }
 
