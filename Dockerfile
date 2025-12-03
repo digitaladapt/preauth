@@ -13,10 +13,10 @@ RUN mkdir -p /usr/local/etc/php/conf.d
 COPY preauth-php.ini /usr/local/etc/php/conf.d/preauth-php.ini
 
 # login sessions are stored here
-RUN mkdir -p /tmp/sessions
+RUN mkdir -p /tmp/data/sessions
 
 # rate limit monitoring information is stored here
-RUN mkdir -p /tmp/monitor
+RUN mkdir -p /tmp/data/monitor
 
 # fcgi command for the healthcheck
 RUN apk add fcgi

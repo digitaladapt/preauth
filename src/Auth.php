@@ -21,7 +21,7 @@ class Auth {
     /* cookie name */
     private const NAME = '_auth_uuid';
     /* directory to store sessions in */
-    private const BASE = '/tmp/sessions/';
+    private const BASE = '/tmp/data/sessions/';
     /* top-level-domains which are known to have multiple parts */
     private const TLD = [
         'ai'  => ['com','net','off','org'],
@@ -137,12 +137,12 @@ class Auth {
         } else {
             /* not already logged in, not trying to login, and not on auth page */
             /* so send to login screen */
-            $rt = rawurlencode(
+            $query = self::RETURN_FIELD . '=' . rawurlencode(
                 ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? 'https') . '://' .
                 ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? $this->domain) .
                 ($_SERVER['HTTP_X_FORWARDED_URI'] ?? '/')
             );
-            header("Location: https://$this->preauth.$this->domain/?rt=$rt");
+            header("Location: https://$this->preauth.$this->domain/?$query");
         }
     }
 
@@ -211,13 +211,15 @@ class Auth {
     private function rateLimit(): bool {
         /* our identifier for this remote-host, replace all special characters with dashes */
         /* session_id() only allows ",", "-", and alphanumeric characters */
-        $limiterId = preg_replace('[^a-zA-Z0-9]', '-', $this->getRemoteHost());
+        $limiterId = preg_replace('/[^a-zA-Z0-9]/', '-', $this->getRemoteHost());
+        //error_log("limiterId: {$limiterId}");
         session_id($limiterId);
         session_start();
 
         /* new remote-ip, start logging */
         if ( ! isset($_SESSION['count'], $_SESSION['time'])) {
             $this->resetRateLimit(false);
+            //error_log('limiter new, allow');
             return false;
         }
 
@@ -230,14 +232,17 @@ class Auth {
 
         if ($sessionCount >= $rateLimit && time() - $rateBlocked <= $sessionTime) {
             /* if over limit, and block current, block them */
+            //error_log("limiter over limit, block ($sessionCount)");
             return true;
         } else if ($sessionCount < $rateLimit && time() - $rateTimeout <= $sessionTime) {
             /* if under limit, and timeout current, allow them */
+            //error_log("limiter under limit, allow ($sessionCount)");
             return false;
         }
 
         /* either over limit and block has expired or */
         /* under limit and timeout has expired, so reset them */
+        //error_log("limiter expired, reset");
         $this->resetRateLimit(false);
         return false;
     }
@@ -265,6 +270,7 @@ class Auth {
             $id = substr(preg_replace(self::URL64, '', $this->get[self::ID_FIELD]), 0, 100);
             $otp = TOTP::createFromSecret($this->token);
             $date = date('Y-m-d H:i:s');
+            $remoteHost = $this->getRemoteHost();
 
             /* if given token is valid, login, store session file and set the cookie */
             if ($otp->now() === $this->get[self::TOKEN_FIELD]) {
@@ -276,7 +282,7 @@ class Auth {
                 file_put_contents(
                     self::BASE . $encUUID,
                     base64_encode($rawIV) .
-                    "\$$id\$$this->expire\$$date\${$this->getRemoteHost()}\$\n"
+                    "\$$id\$$this->expire\$$date\$$remoteHost\$\n"
                 );
                 setcookie(
                     self::NAME,
@@ -293,8 +299,19 @@ class Auth {
 
                 return true;
             }
+
             /* login attempted and failed, update monitoring for rate limiting */
+            $sessionCount = (int)$_SESSION['count'];
+            $rateLimit    = (int)getenv('PREAUTH_RATE_LIMIT')   ?: 4;
             $this->logFailedAttempt();
+
+            if (($sessionCount + 1) >= $rateLimit) {
+                /* +1 to count this failure */
+                error_log("[$date] rate-limiting trigger for: $remoteHost");
+                /* just reached the rate limit, block them */
+                include __DIR__ . '/../400.php';
+                exit(0);
+            }
         }
         return false;
     }
