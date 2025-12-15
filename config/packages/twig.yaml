@@ -1,0 +1,21 @@
+twig:
+    file_name_pattern: '*.twig'
+    strict_variables: true
+    globals:
+        env:
+            title: '%env(TITLE)%'
+            icons: '%env(ICONS)%'
+            bg_color: '%env(BG_COLOR)%'
+            fg_color: '%env(FG_COLOR)%'
+            error_color: '%env(ERROR_COLOR)%'
+            return_field: '%env(QUERY_PREFIX)%return'
+            id_field: '%env(QUERY_PREFIX)%id'
+            token_field: '%env(QUERY_PREFIX)%token'
+            id_name: '%env(ID_NAME)%'
+            token_name: '%env(TOKEN_NAME)%'
+            submit_name: '%env(SUBMIT_NAME)%'
+            error_message: '%env(ERROR_MESSAGE)%'
+            teapot_title: '%env(TEAPOT_TITLE)%'
+            teapot_message: '%env(TEAPOT_MESSAGE)%'
+            too_many_title: '%env(TOO_MANY_TITLE)%'
+            too_many_message: '%env(TOO_MANY_MESSAGE)%'

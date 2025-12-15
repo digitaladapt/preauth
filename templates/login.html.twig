@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block content %}
+<h1>{{ env.title }}</h1>
+{% if has_error|default(false) %}
+    <p>{{ env.error_message }}</p>
+{% endif %}
+<form action="/" method="get">
+    <input type="hidden" name="{{ env.return_field }}" value="{{ return_value }}">
+    <div class="right"><label for="id">{{ env.id_name }}:</label></div>
+    <div><input type="text" name="{{ env.id_field }}" id="id" autocomplete="on" required="required" autofocus="autofocus"></div>
+    <div class="right"><label for="token">{{ env.token_name }}:</label></div>
+    <div><input type="text" name="{{ env.token_field }}" id="token" autocomplete="off" required="required"></div>
+    <div class="center"><button type="submit">{{ env.submit_name }}</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block content %}
+{% if env.teapot|default(true) %}
+    <h1>{{ env.teapot_title }}</h1>
+    <p>{{ env.teapot_message }}</p>
+{% else %}
+    <h1>{{ env.too_many_title }}</h1>
+    <p>{{ env.too_many_message }}</p>
+{% endif %}
+{% endblock %}

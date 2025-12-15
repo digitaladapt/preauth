@@ -14,7 +14,7 @@ Maybe you need the extra protection because it's a very sensitive system, or bec
 
 It may be possible to use some other reverse proxy, but for now, I'm going to stick with just Caddy.
 
-There is an example Caddyfile and example .env file to get you started. Within the Caddyfile is a snippet, which makes it easy to wrap your web service with preauth.
+There is an example Caddyfile in /docs/ and example .env file to get you started. Within the Caddyfile is a snippet, which makes it easy to wrap your web service with preauth.
 
 Preauth will need a subdomain on the same domain as the service it's securing, the default is "preauth", but you can use whatever you want.
 

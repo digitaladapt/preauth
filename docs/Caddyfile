@@ -1,0 +1,42 @@
+# publically serve preauth, for login page
+# TODO replace example.com with your domain
+preauth.example.com {
+	reverse_proxy preauth {
+		header_up X-Forwarded-Uri {uri}
+	}
+}
+
+# if using caddy v2.9.x+ you can use this snippet
+# snippet to put the pre-auth system in front any service easily
+(preauth) {
+	reverse_proxy {args[0]} preauth {
+		method GET
+		header_up X-Forwarded-Uri {uri}
+		@preauth_ok status 2xx
+		handle_response @preauth_ok {
+			copy_response_headers {
+				include Set-Cookie Location
+			}
+			{block}
+		}
+	}
+}
+
+# example of securing full subdomain
+# TODO replace domain and service name
+service.example.com {
+	import preauth / {
+		reverse_proxy service
+	}
+}
+
+# you can only lock down only select paths
+# or any other match criteria, if desired
+# https://protected.example.com/secure
+protected.example.com {
+	import preauth /secure {
+		reverse_proxy protected-service:9000
+	}
+	reverse_proxy exposed-service:9000
+}
+

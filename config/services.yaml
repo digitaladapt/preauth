@@ -1,0 +1,86 @@
+# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
+
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+# See also https://symfony.com/doc/current/service_container/import.html
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html
+#   #use-parameters-for-application-configuration
+parameters:
+    # --- main variables ---
+    # URI containing secret and config for TOTP, which determines the token to login
+    # app will generate one, if not provided, but you should copy it to your .env file
+    # format: "otpauth://totp/<label>?secret=<secret-key>"
+    env(TOTP_URI): ''               # blank to have the app generate one at random
+    # how long will someone stay logged in, measured in seconds, zero for DEFAULT
+    env(COOKIE_TTL): '2592000'      # default 30 days
+    # rate limiting can *NOT* be disabled, but you could allow hundreds of logins a second
+    # number of consecutive failed login attempts before we block the ip address
+    env(LIMIT): '4'                 # default 4 failed login attempts before blocking
+    # time between failed login attempts that are consecutive, in seconds, zero for DEFAULT
+    env(LIMIT_TIMEOUT): '21600'     # default 6 hours
+    # how long a blocked ip address stay blocks, in seconds, zero for DEFAULT
+    env(LIMIT_TTL): '86400'         # default 24 hours
+
+    # --- extra variables ---
+    # query parameter prefix to prevent collisions
+    env(QUERY_PREFIX): '_preauth_'
+    # allow files in /app/public/assets directory to be served, false to disable
+    env(ASSETS): '1'                # default enabled, boolean
+    # how long do we allow all traffic from an ip address after successful login
+    # could be useful if you have a system which does not handle cookies
+    env(IP_TTL): '0'                # default disabled, time in seconds
+    # url to send people to, if they directly visit the preauth login page
+    env(SEND_TO): ''                # default disabled
+    # if desired, in addition to supporting a TOTP, you can set a static password
+    env(STATIC_SECRET): ''          # default disabled
+    # what subdomain to use for preauth login, only applies if using a domain
+    env(SUBDOMAIN): 'preauth'
+    # once blocked, do we respond with "I'm a teapot", false to use "Too many requests"
+    env(TEAPOT): '1' # boolean
+
+    # --- styling variables ---
+    env(TITLE): 'Pre-Authentication System'
+    env(ICONS): '0' # default disabled, boolean, use favicon from root domain
+    env(BG_COLOR): '#029386'
+    env(FG_COLOR): '#ffffff'
+    env(ERROR_COLOR): '#ffb16d'
+    env(ID_NAME): 'Session ID'
+    env(TOKEN_NAME): 'Authentication Token'
+    env(SUBMIT_NAME): 'Submit'
+    env(ERROR_MESSAGE): 'Unsuccessful login attempt'
+    # title and message to use on block page, if teapot is true
+    env(TEAPOT_TITLE): "I'm a teapot"
+    env(TEAPOT_MESSAGE): 'I refuse to brew coffee'
+    # title and message to use on block page, if teapot is false
+    env(TOO_MANY_TITLE): 'Too many requests'
+    env(TOO_MANY_MESSAGE): 'Try again later'
+
+    app.cookie_ttl: '%env(COOKIE_TTL)%'
+    app.limit: '%env(LIMIT)%'
+    app.limit_timeout: '%env(LIMIT_TIMEOUT)%'
+    app.limit_ttl: '%env(LIMIT_TTL)%'
+    app.query_prefix: '%env(QUERY_PREFIX)%'
+    app.totp_uri: '%env(TOTP_URI)%'
+
+    app.assets: '%env(ASSETS)%'
+    app.ip_ttl: '%env(IP_TTL)%'
+    app.send_to: '%env(SEND_TO)%'
+    app.static_secret: '%env(STATIC_SECRET)%'
+    app.subdomain: '%env(SUBDOMAIN)%'
+    app.teapot: '%env(TEAPOT)%'
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones

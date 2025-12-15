@@ -1,34 +1,45 @@
-FROM php:8.4-fpm-alpine
+# use build image, to avoid needing composer in final image
+FROM composer AS build
 
-# get compose so we can install our php dependencies
-COPY --from=composer /usr/bin/composer /usr/bin/composer
+# symfony required environment variables
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
+ENV DEFAULT_URI='http://'
 
-# app is stored here
-RUN mkdir /preauth
-WORKDIR /preauth
-COPY . /preauth/
+# load application info build image
+RUN mkdir -p /app
+WORKDIR /app
+COPY . /app/
 
-# add php config for rate limit monitoring
-RUN mkdir -p /usr/local/etc/php/conf.d
-COPY preauth-php.ini /usr/local/etc/php/conf.d/preauth-php.ini
+# install dependencies
+RUN composer install --no-dev --optimize-autoloader
+RUN composer dump-env prod --empty
+RUN php bin/console cache:clear
 
-# login sessions are stored here
-RUN mkdir -p /tmp/data/sessions
+# start creating final image
+FROM dunglas/frankenphp:php8.4-trixie
 
-# rate limit monitoring information is stored here
-RUN mkdir -p /tmp/data/monitor
+# symfony required environment variables
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
+ENV DEFAULT_URI='http://'
 
-# fcgi command for the healthcheck
-RUN apk add fcgi
+# load application into final image
+WORKDIR /app
+COPY --from=build /app /app
 
-# install our php dependencies
-RUN composer install
+# configure container
+COPY ./Caddyfile /etc/frankenphp/Caddyfile
+RUN cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini
 
-EXPOSE 9000
+# install APCu
+RUN pecl install apcu && \
+    docker-php-ext-enable apcu --ini-name 10-docker-php-ext-apcu.ini
 
-HEALTHCHECK --interval=5m --retries=3 --start-interval=5s --start-period=50s --timeout=5s \
-    CMD SCRIPT_NAME=/health.php SCRIPT_FILENAME=/preauth/health.php REQUEST_METHOD=GET \
-        cgi-fcgi -bind -connect localhost:9000 | grep 'online' || exit 1
+VOLUME ["/app/var"]
 
-ENTRYPOINT ["/preauth/init.sh"]
+EXPOSE 80
+
+HEALTHCHECK --interval=5m --retries=3 --start-interval=1s --start-period=10s --timeout=2s \
+    CMD curl http://localhost || exit 1
 

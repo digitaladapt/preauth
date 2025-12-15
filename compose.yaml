@@ -1,18 +1,22 @@
 services:
   preauth:
     env_file:
-      # TODO rename ".env.example" to just ".env"
-      # edit USER_ID and GROUP_ID if needed
-      # set PREAUTH_KEY and PREAUTH_TOKEN after initial start to persist those settings
+      # TODO rename ".env.example" to just ".env", edit as needed
+      # strongly recommend setting TOTP_URI, if not provided the app
+      # will generate one for you, please copy it into your .env file
       - .env
     expose:
-      - 9000
-    image: digitaladapt/preauth
-    init: true
+      - 80
+    image: digitaladapt/preauth:latest
     restart: unless-stopped
-    user: ${USER_ID}:${GROUP_ID}
+    # if you wish to set the user, you must make sure that the user
+    # can write to /app/var/ within the container, and that all files
+    # and folders within are writable as well
+    # IE: `$chown -R <uid>:<gid> /path/to/volume/of/app/var`
+    #
+    #user: <uid>:<gid>
     volumes:
-      - preauth:/tmp/data
+      - preauth:/app/var
 
 volumes:
   preauth:
