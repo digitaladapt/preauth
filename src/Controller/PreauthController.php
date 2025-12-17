@@ -30,6 +30,9 @@ final class PreauthController extends AbstractController {
         Request                $request,
         ?string                $path
     ): Response {
+        /* check if they sent the preauth cookie, see: AcceptListener */
+        /* check if they have made too many failed login attempts, see: RejectListener */
+
         /* if they have requested a file we have in our asset directory, then serve it,
          * but only if we are on the preauth domain, filenames are limited to safe
          * characters (we allow alphanumeric and "- _ . /" without "..") */
@@ -62,20 +65,6 @@ final class PreauthController extends AbstractController {
         // https://symfony.com/doc/7.3/event_dispatcher.html
         //    #before-filters-with-the-kernel-controller-event
 
-        /* check if they sent the preauth cookie */
-        if ($request->cookies->has($config->query('ulid'))) {
-            if ($sessionCache->hasItem(
-                'cookie_' . $request->cookies->get($config->query('ulid'))
-            )) {
-                /* cookie sent corresponds valid existing session */
-                $id = $sessionCache->getItem(
-                    'cookie_' . $request->cookies->get($config->query('ulid'))
-                )->get();
-                $logger->debug("has valid cookie-session: $id");
-                return new Response("hi $id");
-            }
-        }
-
         $ipKey = $utilities->makeCacheKey("ip_{$request->getClientIp()}");
 
         /* check if they came from allowed ip address */
@@ -86,19 +75,6 @@ final class PreauthController extends AbstractController {
             return new Response("hi $id");
         }
 
-        /* check if they have made too many failed login attempts */
-        $failuresItem = $requestCache->getItem($ipKey);
-        if ($failuresItem->isHit()) {
-            $failures = $failuresItem->get();
-            if (count($failures) >= $config->limit()) {
-                $logger->debug("already blocked: {$request->getClientIp()}");
-                return $this->render('error.html.twig', [
-                    'base_domain' => $utilities->baseDomain($request->getHost()),
-                ], new Response(status: $config->teapot()
-                    ? Response::HTTP_I_AM_A_TEAPOT : Response::HTTP_TOO_MANY_REQUESTS
-                ));
-            }
-        }
 
         // TODO move monitor cache to here... because everything above is readonly...
 
