@@ -73,8 +73,5 @@
             "allow-contrib": false,
             "require": "7.4.*"
         }
-    },
-    "require-dev": {
-        "symfony/maker-bundle": "^1.65"
     }
 }

@@ -5,13 +5,10 @@ framework:
         pools:
             sessionCache:
                 adapters:
-                    # TODO FIXME install APCu so we can use that...
-                    - cache.adapter.array
-                    #- cache.adapter.apcu
+                    - cache.adapter.apcu
             requestCache:
                 adapters:
-                    - cache.adapter.array
-                    #- cache.adapter.apcu
+                    - cache.adapter.apcu
             persistSessionCache:
                 adapters:
                     - cache.adapter.filesystem
