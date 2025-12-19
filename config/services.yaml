@@ -31,12 +31,8 @@ parameters:
     # how long do we allow all traffic from an ip address after successful login
     # could be useful if you have a system which does not handle cookies
     env(IP_TTL): '0'                # default disabled, time in seconds
-    # url to send people to, if they directly visit the preauth login page
-    env(SEND_TO): ''                # default disabled
     # if desired, in addition to supporting a TOTP, you can set a static password
     env(STATIC_SECRET): ''          # default disabled
-    # what subdomain to use for preauth login, only applies if using a domain
-    env(SUBDOMAIN): 'preauth'
     # once blocked, do we respond with "I'm a teapot", false to use "Too many requests"
     env(TEAPOT): '1' # boolean
 
@@ -66,9 +62,7 @@ parameters:
 
     app.assets: '%env(ASSETS)%'
     app.ip_ttl: '%env(IP_TTL)%'
-    app.send_to: '%env(SEND_TO)%'
     app.static_secret: '%env(STATIC_SECRET)%'
-    app.subdomain: '%env(SUBDOMAIN)%'
     app.teapot: '%env(TEAPOT)%'
 
 services:

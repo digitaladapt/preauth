@@ -16,9 +16,7 @@ class ConfigBag {
     private string $totpUri;
     private ?string $assetsDir;
     private ?int $ipTtl;
-    private ?string $sendTo;
     private ?string $staticSecret;
-    private ?string $subdomain;
     private bool $teapot;
 
     public function __construct(
@@ -33,9 +31,7 @@ class ConfigBag {
         #[Autowire('%app.assets%')] bool                          $assets,
         #[Autowire('%kernel.project_dir%/public/assets/')] string $assetsDir,
         #[Autowire('%app.ip_ttl%')] ?int                          $ipTtl,
-        #[Autowire('%app.send_to%')] ?string                      $sendTo,
         #[Autowire('%app.static_secret%')] ?string                $staticSecret,
-        #[Autowire('%app.subdomain%')] ?string                    $subdomain,
         #[Autowire('%app.teapot%')] bool                          $teapot,
     ) {
         $this->clock = $clock;
@@ -47,9 +43,7 @@ class ConfigBag {
         $this->totpUri = $totpUri ?: $utilities->loadTotp();
         $this->assetsDir = $assets ? $assetsDir : null;
         $this->ipTtl = $ipTtl ?: null;
-        $this->sendTo = $sendTo ?: null;
         $this->staticSecret = $staticSecret ?: null;
-        $this->subdomain = $subdomain ?: null;
         $this->teapot = $teapot;
     }
 
@@ -89,16 +83,8 @@ class ConfigBag {
         return $this->ipTtl;
     }
 
-    public function sendTo(): ?string {
-        return $this->sendTo ?: null;
-    }
-
     public function staticSecret(): ?string {
         return $this->staticSecret;
-    }
-
-    public function subdomain(): ?string {
-        return $this->subdomain;
     }
 
     public function teapot(): bool {

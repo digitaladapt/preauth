@@ -2,15 +2,59 @@
 
 {% block content %}
 <h1>{{ env.title }}</h1>
-{% if has_error|default(false) %}
-    <p>{{ env.error_message }}</p>
-{% endif %}
-<form action="/" method="get">
-    <input type="hidden" name="{{ env.return_field }}" value="{{ return_value }}">
-    <div class="right"><label for="id">{{ env.id_name }}:</label></div>
-    <div><input type="text" name="{{ env.id_field }}" id="id" autocomplete="on" required="required" autofocus="autofocus"></div>
-    <div class="right"><label for="token">{{ env.token_name }}:</label></div>
-    <div><input type="text" name="{{ env.token_field }}" id="token" autocomplete="off" required="required"></div>
+<p id="preauth-message">{{ error_message|default }}</p>
+<form id="preauth-form">
+    <input id="preauth-nonce" type="hidden" name="nonce" value="{{ nonce_value }}">
+    <div class="right"><label for="preauth-id">{{ env.id_name }}:</label></div>
+    <div><input type="text" name="id" id="preauth-id" autocomplete="username" required="required" autofocus="autofocus"></div>
+    <div class="right"><label for="preauth-token">{{ env.token_name }}:</label></div>
+    <div><input type="text" name="token" id="preauth-token" autocomplete="one-time-code" required="required"></div>
     <div class="center"><button type="submit">{{ env.submit_name }}</button></div>
 </form>
+<script>
+  const form    = document.getElementById('preauth-form');
+  //const id      = document.getElementById('preauth-id');
+  //const token   = document.getElementById('preauth-token');
+  //const nonce   = document.getElementById('preauth-nonce');
+  const message = document.getElementById('preauth-message');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const data = {
+      id:    form.id.value,
+      token: form.token.value,
+      nonce: form.nonce.value,
+      json:  true
+    };
+
+    const payload = btoa(JSON.stringify(data))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    const response = await fetch(window.location.href, {
+      method: 'GET',
+      headers: { 'X-Preauth': payload },
+      redirect: 'manual'
+    });
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = res.headers.get('Location');
+      if (location) {
+        window.location.href = location;
+      }
+      return;
+    } else {
+      try {
+        const content = await response.json();
+        message.innerHTML = content.message;
+        form.nonce.value  = content.nonce;
+        form.token.value  = '';
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  });
+</script>
 {% endblock %}

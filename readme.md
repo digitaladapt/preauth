@@ -16,12 +16,16 @@ It may be possible to use some other reverse proxy, but for now, I'm going to st
 
 There is an example Caddyfile in /docs/ and example .env file to get you started. Within the Caddyfile is a snippet, which makes it easy to wrap your web service with preauth.
 
-Preauth will need a subdomain on the same domain as the service it's securing, the default is "preauth", but you can use whatever you want.
+When someone tries to reach your protected web service, Caddy will check with preauth if they are allowed, if their preauth cookie is missing, invalid, or expired, we will show them to a login screen.
 
-When someone tries to reach your protected web service, Caddy will check with preauth if they are allowed, if their preauth cookie is missing, invalid, or expired, we will redirect them to a login screen.
-
-I say login, but it's really just a TOTP code (6 digit code which changes every 30 second). But once they enter the right code,they'll get their cookie and be redirected to the protected service.
+I say login, but it's really just a TOTP code (6 digit code which changes every 30 second). But once they enter the right code,they'll get their cookie and be shown the protected service.
 
 First time you spin up the docker container it will generate an encryption key for session storage, and the TOTP secret (which you'll load into your authenticator app).
 
 Be sure to save those and add them to the containers environment, or it will generate new values every time it restarts.
+
+
+
+### History
+#### v0.0.1 (June 26th, 2024)
+Started off as a single file script which was part of my caddy config. Hardcoded TOTP secret, zero flexibility, but functional. Would stay like that, quietly working in production for about a full year before any real change.

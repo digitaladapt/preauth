@@ -1,8 +1,10 @@
 framework:
     cache:
         app: cache.adapter.filesystem
-
         pools:
+            noncePool:
+                adapters:
+                    - cache.adapter.apcu
             sessionCache:
                 adapters:
                     - cache.adapter.apcu
