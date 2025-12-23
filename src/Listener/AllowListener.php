@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Listener;
 
-use App\Trait\CookieNameTrait;
+use App\ConfigBag;
 use App\Trait\StringTrait;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
@@ -12,26 +12,24 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 
-final readonly class AcceptListener {
-    use CookieNameTrait;
+final readonly class AllowListener {
     use StringTrait;
 
     public function __construct(
         private CacheItemPoolInterface $sessionPool,
+        private ConfigBag              $config,
         private LoggerInterface        $logger,
     ) {}
 
     /** @throws InvalidArgumentException */
-    #[AsEventListener(priority: 99)]
+    #[AsEventListener(priority: 88)]
     public function onKernelRequest(RequestEvent $event): void {
-        /* check if they sent the preauth cookie */
-        if ($event->getRequest()->cookies->has($this->cookieName())) {
-            $cookie = $event->getRequest()->cookies->get($this->cookieName());
-            $cookieKey = $this->makeCacheKey("cookie_$cookie");
-            if ($this->sessionPool->hasItem($cookieKey)) {
-                /* cookie sent corresponds to valid existing session */
-                $id = $this->sessionPool->getItem($cookieKey)->get();
-                $this->logger->debug("has valid cookie-session: $id");
+        if ($this->config->ipTtl() > 0) {
+            $ipKey = $this->makeCacheKey("ip_{$event->getRequest()->getClientIp()}");
+            if ($this->sessionPool->hasItem($ipKey)) {
+                /* ip address corresponds to valid existing session  */
+                $id = $this->sessionPool->getItem($ipKey)->get();
+                $this->logger->debug("has valid ip-session: $id");
                 $event->setResponse(new Response("hi $id",
                     headers: ['Content-Type' => 'text/plain']
                 ));

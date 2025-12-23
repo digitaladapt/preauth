@@ -4,9 +4,6 @@
     <meta charset="utf-8">
     <title>{{ env.title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {% if env.icons|default(false) %}
-        {{ include('_icons.html.twig') }}
-    {% endif %}
     {{ include('_style.html.twig') }}
 </head>
 <body>

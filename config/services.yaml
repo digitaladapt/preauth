@@ -38,7 +38,6 @@ parameters:
 
     # --- styling variables ---
     env(TITLE): 'Pre-Authentication System'
-    env(ICONS): '0' # default disabled, boolean, use favicon from root domain
     env(BG_COLOR): '#029386'
     env(FG_COLOR): '#ffffff'
     env(ERROR_COLOR): '#ffb16d'
@@ -64,6 +63,10 @@ parameters:
     app.ip_ttl: '%env(IP_TTL)%'
     app.static_secret: '%env(STATIC_SECRET)%'
     app.teapot: '%env(TEAPOT)%'
+
+    app.error_message: '%env(ERROR_MESSAGE)%'
+    app.teapot_title: '%env(TEAPOT_TITLE)%'
+    app.too_many_title: '%env(TOO_MANY_TITLE)%'
 
 services:
     # default configuration for services in *this* file

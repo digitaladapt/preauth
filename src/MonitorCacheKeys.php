@@ -10,13 +10,13 @@ use Psr\Cache\InvalidArgumentException;
 
 /* We must not store the key-list item or values within this object,
  * because it can change from outside this object instance. */
-class MonitorCacheKeys implements CacheItemPoolInterface {
+final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
     private const KEY_LIST = '__key_list';
     private const IS_DIRTY = '__is_dirty';
 
     private CacheItemPoolInterface $cache;
 
-    /** @throws InvalidArgumentException we sanitize cache keys, to prevent this */
+    /** @throws InvalidArgumentException */
     public function __construct(CacheItemPoolInterface $cache) {
         $this->cache = $cache;
         $items = $cache->getItems([self::KEY_LIST, self::IS_DIRTY]);
@@ -28,7 +28,7 @@ class MonitorCacheKeys implements CacheItemPoolInterface {
         }
     }
 
-    /** @throws InvalidArgumentException we sanitize cache keys, to prevent this */
+    /** @throws InvalidArgumentException */
     private function initialize(): void {
         $keyList = $this->cache->getItem(self::KEY_LIST);
         $isDirty = $this->cache->getItem(self::IS_DIRTY);
@@ -39,19 +39,19 @@ class MonitorCacheKeys implements CacheItemPoolInterface {
         $this->cache->commit();
     }
 
-    /** @throws InvalidArgumentException we sanitize cache keys, to prevent this */
+    /** @throws InvalidArgumentException */
     public function getKeys(): array {
         $keyList = $this->cache->getItem(self::KEY_LIST);
         return array_keys($keyList->get() ?? []);
     }
 
-    /** @throws InvalidArgumentException we sanitize cache keys, to prevent this */
+    /** @throws InvalidArgumentException */
     public function isDirty(): bool {
         $isDirty = $this->cache->getItem(self::IS_DIRTY);
         return $isDirty->get() ?? false;
     }
 
-    /** @throws InvalidArgumentException we sanitize cache keys, to prevent this */
+    /** @throws InvalidArgumentException */
     public function markClean(): void {
         $isDirty = $this->cache->getItem(self::IS_DIRTY);
         $isDirty->set(false);
@@ -70,7 +70,7 @@ class MonitorCacheKeys implements CacheItemPoolInterface {
         return $this->cache->hasItem($key);
     }
 
-    /** @throws InvalidArgumentException we sanitize cache keys, to prevent this */
+    /** @throws InvalidArgumentException */
     public function clear(): bool {
         /* only bother clearing the pool if it is not empty */
         if ( ! empty($this->getKeys())) {
@@ -128,19 +128,19 @@ class MonitorCacheKeys implements CacheItemPoolInterface {
         return $this->cache->deleteItems($keys);
     }
 
-    /** @throws InvalidArgumentException we sanitize cache keys, to prevent this */
+    /** @throws InvalidArgumentException */
     public function save(CacheItemInterface $item): bool {
         $this->update($item);
         return $this->cache->save($item);
     }
 
-    /** @throws InvalidArgumentException we sanitize cache keys, to prevent this */
+    /** @throws InvalidArgumentException */
     public function saveDeferred(CacheItemInterface $item): bool {
         $this->update($item);
         return $this->cache->saveDeferred($item);
     }
 
-    /** @throws InvalidArgumentException we sanitize cache keys, to prevent this */
+    /** @throws InvalidArgumentException */
     private function update(CacheItemInterface $item) {
         if ($item->getKey() === self::KEY_LIST || $item->getKey() === self::IS_DIRTY) {
             throw new OutOfBoundsException(

@@ -11,4 +11,3 @@ docker run --name preauth \
     -v ./var/share:/app/var/share \
     -p 8000:80 \
     digtialadapt/preauth:dev
-

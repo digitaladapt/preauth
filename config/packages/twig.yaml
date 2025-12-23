@@ -4,7 +4,6 @@ twig:
     globals:
         env:
             title: '%env(TITLE)%'
-            icons: '%env(ICONS)%'
             bg_color: '%env(BG_COLOR)%'
             fg_color: '%env(FG_COLOR)%'
             error_color: '%env(ERROR_COLOR)%'

@@ -3,32 +3,45 @@ declare(strict_types=1);
 
 namespace App\Trait;
 
+use Exception;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 trait MakeNonceTrait {
-    protected CacheItemPoolInterface $noncePool;
-    protected LoggerInterface        $logger;
+    /* 15 bytes neatly fits in base64 */
+    private const NONCE_LENGTH = 15;
+    private const NONCE_TTL = 60;
 
+    protected readonly CacheItemPoolInterface $noncePool;
+    protected readonly LoggerInterface        $logger;
+
+    /** @throws InvalidArgumentException|Exception */
     protected function makeNonce(int $retries = 3): string {
-        /* 15 bytes neatly fits in base64 (no trailing "=") */
-        $nonce = rtrim(strtr(base64_encode(random_bytes(15)), '+/', '-_'), '=');
+        /* convert raw binary into base64url */
+        $nonce = rtrim(strtr(base64_encode(random_bytes(
+            static::NONCE_LENGTH
+        )), '+/', '-_'), '=');
         $nonceItem = $this->noncePool->getItem($nonce);
+
         if ($nonceItem->isHit()) {
             if ($retries < 1) {
-                $this->logger->error("failed to generate unique nonce after multiple attempts, aborting");
-                // TODO maybe a pretty error page and/or json...
-                throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Internal Server Error');
+                $this->logger->error("aborting: multiple nonce collisions");
+                throw new HttpException(
+                    Response::HTTP_INTERNAL_SERVER_ERROR,
+                    'Internal Server Error'
+                );
             }
+            /* managed to have a collision, try again */
             return $this->makeNonce($retries - 1);
         }
+
         $nonceItem->set(true); /* valid */
-        $nonceItem->expiresAfter(60); /* keep for 1 minute */
-$this->logger->debug("added nonce: '$nonce'");
+        $nonceItem->expiresAfter(static::NONCE_TTL);
+        $this->logger->debug("added nonce: $nonce");
         $this->noncePool->save($nonceItem);
         return $nonce;
     }
 }
-

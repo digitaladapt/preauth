@@ -6,7 +6,7 @@ RUN pecl install apcu && \
     docker-php-ext-enable apcu
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 RUN apt-get update && \
-    apt-get install unzip
+    apt-get install -y unzip git
 
 # symfony required environment variables
 ENV APP_ENV=prod
@@ -48,6 +48,7 @@ COPY --from=build /app /app
 # configure container
 COPY ./Caddyfile /etc/frankenphp/Caddyfile
 RUN cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini
+RUN echo 'expose_php = off' > $PHP_INI_DIR/conf.d/restrict.ini
 
 # app uses var folder for cache storage
 VOLUME ["/app/var"]

@@ -24,6 +24,9 @@ First time you spin up the docker container it will generate an encryption key f
 
 Be sure to save those and add them to the containers environment, or it will generate new values every time it restarts.
 
+**TODO**
+when user gives bad cookie, remove it
+
 
 
 ### History

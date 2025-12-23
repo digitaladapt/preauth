@@ -5,16 +5,16 @@ framework:
             noncePool:
                 adapters:
                     - cache.adapter.apcu
-            sessionCache:
+            sessionPool:
                 adapters:
                     - cache.adapter.apcu
-            requestCache:
+            requestPool:
                 adapters:
                     - cache.adapter.apcu
-            persistSessionCache:
+            persistSessionPool:
                 adapters:
                     - cache.adapter.filesystem
-            persistRequestCache:
+            persistRequestPool:
                 adapters:
                     - cache.adapter.filesystem
 

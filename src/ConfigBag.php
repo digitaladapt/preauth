@@ -3,10 +3,11 @@ declare(strict_types=1);
 
 namespace App;
 
+use Psr\Cache\InvalidArgumentException;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
-class ConfigBag {
+final readonly class ConfigBag {
     private ClockInterface $clock;
     private int $cookieTtl;
     private int $limit;
@@ -18,7 +19,11 @@ class ConfigBag {
     private ?int $ipTtl;
     private ?string $staticSecret;
     private bool $teapot;
+    private string $errorMessage;
+    private string $teapotTitle;
+    private string $tooManyTitle;
 
+    /** @throws InvalidArgumentException */
     public function __construct(
         Utilities                                                 $utilities,
         ClockInterface                                            $clock,
@@ -33,6 +38,9 @@ class ConfigBag {
         #[Autowire('%app.ip_ttl%')] ?int                          $ipTtl,
         #[Autowire('%app.static_secret%')] ?string                $staticSecret,
         #[Autowire('%app.teapot%')] bool                          $teapot,
+        #[Autowire('%app.error_message%')] string                 $errorMessage,
+        #[Autowire('%app.teapot_title%')] string                  $teapotTitle,
+        #[Autowire('%app.too_many_title%')] string                $tooManyTitle,
     ) {
         $this->clock = $clock;
         $this->cookieTtl = $cookieTtl;
@@ -45,6 +53,9 @@ class ConfigBag {
         $this->ipTtl = $ipTtl ?: null;
         $this->staticSecret = $staticSecret ?: null;
         $this->teapot = $teapot;
+        $this->errorMessage = $errorMessage;
+        $this->teapotTitle = $teapotTitle;
+        $this->tooManyTitle = $tooManyTitle;
     }
 
     public function clock(): ClockInterface {
@@ -89,5 +100,17 @@ class ConfigBag {
 
     public function teapot(): bool {
         return $this->teapot;
+    }
+
+    public function errorMessage(): string {
+        return $this->errorMessage;
+    }
+
+    public function teapotTitle(): string {
+        return $this->teapotTitle;
+    }
+
+    public function tooManyTitle(): string {
+        return $this->tooManyTitle;
     }
 }

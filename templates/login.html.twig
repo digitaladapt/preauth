@@ -4,57 +4,65 @@
 <h1>{{ env.title }}</h1>
 <p id="preauth-message">{{ error_message|default }}</p>
 <form id="preauth-form">
-    <input id="preauth-nonce" type="hidden" name="nonce" value="{{ nonce_value }}">
+    <input id="preauth-nonce" type="hidden" name="preauth_nonce" value="{{ nonce_value }}">
     <div class="right"><label for="preauth-id">{{ env.id_name }}:</label></div>
-    <div><input type="text" name="id" id="preauth-id" autocomplete="username" required="required" autofocus="autofocus"></div>
+    <div><input type="text" name="preauth_id" id="preauth-id"
+            autocomplete="username" required="required" autofocus="autofocus"></div>
     <div class="right"><label for="preauth-token">{{ env.token_name }}:</label></div>
-    <div><input type="text" name="token" id="preauth-token" autocomplete="one-time-code" required="required"></div>
+    <div><input type="text" name="preauth_token" id="preauth-token"
+            autocomplete="one-time-code" required="required"></div>
     <div class="center"><button type="submit">{{ env.submit_name }}</button></div>
 </form>
 <script>
-  const form    = document.getElementById('preauth-form');
-  //const id      = document.getElementById('preauth-id');
-  //const token   = document.getElementById('preauth-token');
-  //const nonce   = document.getElementById('preauth-nonce');
-  const message = document.getElementById('preauth-message');
+const form    = document.getElementById('preauth-form');
+const message = document.getElementById('preauth-message');
 
-  form.addEventListener('submit', async (event) => {
+form.addEventListener('submit', (event) => {
     event.preventDefault();
 
-    const data = {
-      id:    form.id.value,
-      token: form.token.value,
-      nonce: form.nonce.value,
-      json:  true
-    };
+    /* make bas64url string containing our payload json object */
+    const data = btoa(JSON.stringify({
+        id:    form.preauth_id.value,
+        token: form.preauth_token.value,
+        nonce: form.preauth_nonce.value,
+        json:  true
+    })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-    const payload = btoa(JSON.stringify(data))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-
-    const response = await fetch(window.location.href, {
-      method: 'GET',
-      headers: { 'X-Preauth': payload },
-      redirect: 'manual'
+    /* send our request to the server */
+    fetch(window.location.href, {
+        method: 'GET',
+        headers: { 'X-Preauth': data },
+    }).then((response) => {
+        if (response.headers.has('Location')) {
+            /* follow redirect (not needed in most browsers) */
+            window.location.href = response.headers.get('Location');
+        } else if (response.headers.get('Content-Type') === 'application/json') {
+            /* got json, update the page */
+            response.json().then((content) => {
+                if (Object.hasOwn(content, 'message')) {
+                    message.innerText = content.message;
+                }
+                if (Object.hasOwn(content, 'nonce')) {
+                    form.preauth_nonce.value = content.nonce;
+                    form.preauth_token.value = '';
+                    form.preauth_token.focus();
+                }
+            }).catch((error) => {
+                console.log('failed to parse json from response');
+                console.log(error);
+            });
+        } else { /* non-json, non-redirect response */
+            /* overwrite the page */
+            response.text().then((text) => {
+                document.open();
+                document.write(text);
+                document.close();
+            }).catch((error) => {
+                console.log('failed to get text from response');
+                console.log(error);
+            });
+        }
     });
-
-    if (response.status >= 300 && response.status < 400) {
-      const location = res.headers.get('Location');
-      if (location) {
-        window.location.href = location;
-      }
-      return;
-    } else {
-      try {
-        const content = await response.json();
-        message.innerHTML = content.message;
-        form.nonce.value  = content.nonce;
-        form.token.value  = '';
-      } catch (error) {
-        console.log(error);
-      }
-    }
-  });
+});
 </script>
 {% endblock %}

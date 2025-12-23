@@ -8,4 +8,3 @@ enum Scope: string {
     case Ip     = 'ip';
     case None   = 'none';
 }
-
