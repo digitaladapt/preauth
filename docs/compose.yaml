@@ -1,7 +1,7 @@
 services:
   preauth:
     env_file:
-      # TODO rename ".env.example" to just ".env", edit as needed
+      # TODO rename "env.example" to ".env", edit as needed
       # strongly recommend setting TOTP_URI, if not provided the app
       # will generate one for you, please copy it into your .env file
       - .env
@@ -16,8 +16,10 @@ services:
     #
     #user: <uid>:<gid>
     volumes:
-      - preauth:/app/var
+      - preauth-config:/config
+      - preauth-data:/data
 
 volumes:
-  preauth:
+  preauth-config:
+  preauth-data:
 

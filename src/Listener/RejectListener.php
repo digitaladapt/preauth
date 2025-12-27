@@ -34,7 +34,7 @@ final readonly class RejectListener {
         /* check if they have made too many failed login attempts */
         $failuresItem = $this->requestPool->getItem($ipKey);
         if ($failuresItem->isHit()) {
-            $failures = $failuresItem->get();
+            $failures = $failuresItem->get() ?? [];
             if (count($failures) >= $this->config->limit()) {
                 $this->logger->debug("already blocked: {$event->getRequest()->getClientIp()}");
                 $html = $this->twig->render('error.html.twig');

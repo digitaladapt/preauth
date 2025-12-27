@@ -5,4 +5,3 @@ php {
 	root /app/public
 	worker index.php
 }
-

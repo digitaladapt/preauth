@@ -9,11 +9,13 @@ RUN apt-get update && \
     apt-get install -y unzip git
 
 # symfony required environment variables
-ENV APP_ENV=prod
 ENV APP_DEBUG=0
+ENV APP_ENV=prod
+ENV APP_SHARE_DIR=/data/preauth
 ENV DEFAULT_URI='http://'
 
 # load application into build image
+RUN mkdir -p /data/preauth
 RUN mkdir -p /app/bin
 WORKDIR /app
 COPY ./bin/console   /app/bin/console
@@ -37,12 +39,14 @@ RUN pecl install apcu && \
     docker-php-ext-enable apcu
 
 # symfony required environment variables
-ENV APP_ENV=prod
 ENV APP_DEBUG=0
+ENV APP_ENV=prod
+ENV APP_SHARE_DIR=/data/preauth
 ENV DEFAULT_URI='http://'
 
 # load application into final image
 WORKDIR /app
+COPY --from=build /data/preauth /data/preauth
 COPY --from=build /app /app
 
 # configure container
@@ -51,7 +55,7 @@ RUN cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini
 RUN echo 'expose_php = off' > $PHP_INI_DIR/conf.d/restrict.ini
 
 # app uses var folder for cache storage
-VOLUME ["/app/var"]
+VOLUME ["/config", "/data"]
 
 # runs http on standard port
 EXPOSE 80
