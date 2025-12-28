@@ -26,5 +26,24 @@ First time you spin up the docker container it will generate a TOTP secret (whic
 Be sure to save that TOTP secret to your docker environment, so that it persistents beyond removing the container.
 
 ### History
+#### v0.4.1 (Dec 26th, 2025)
+Fixed bug which can occur if you delete cache files.
+
+#### v0.4.0 (Dec 26th, 2025)
+Massive rewrite to switch to using listeners instead of controller, header for login payload instead of get request, removed icon system, asset system, was able to remove all the domain processing, enhanced cookie security, and more.
+
+#### v0.3.0 (Dec 15th, 2025)
+Includes significant breaking changes.
+Default port and transportation changed to http via port 80.
+Names of environment variables have changed.
+
+#### v0.2.0 (Dec 3rd, 2025)
+Now with login rate limiting.
+New page for client error (too many requests).
+Made example docker compose.
+
+#### v0.1.0 (Nov 14th, 2025)
+Now an actual project, docker image pushed to docker hub, which uses php-fpm, code into a src folder, templates into separate files.
+
 #### v0.0.1 (June 26th, 2024)
 Started off as a single file script which was part of my caddy config. Hardcoded TOTP secret, zero flexibility, but functional. Would stay like that, quietly working in production for about a full year before any real change.
