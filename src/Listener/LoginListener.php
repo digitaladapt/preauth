@@ -98,7 +98,7 @@ final readonly class LoginListener {
             if ($nonceItem->isHit() && $nonceItem->get()) {
                 /* mark nonce as spent */
                 $nonceItem->set(false); /* invalid */
-                $nonceItem->expiresAfter(60); /* keep for 1 minute */
+                $nonceItem->expiresAfter(static::NONCE_TTL); /* keep breifly */
                 $this->noncePool->save($nonceItem);
 
                 /* token authentication successful, grant access and set response */
@@ -159,7 +159,7 @@ final readonly class LoginListener {
             if (($nonceItem->isHit() && $nonceItem->get()) || ! $nonceItem->isHit()) {
                 /* mark nonce as spent */
                 $nonceItem->set(false); /* invalid */
-                $nonceItem->expiresAfter(60); /* keep for 1 minute */
+                $nonceItem->expiresAfter(static::NONCE_TTL); /* keep breifly */
                 $this->noncePool->save($nonceItem);
 
                 /* password authentication successful, grant access and set response */
@@ -239,19 +239,17 @@ final readonly class LoginListener {
             $status  = Response::HTTP_UNAUTHORIZED;
             $message = $this->config->errorMessage();
         }
+        $answer = [
+            'message' => $message,
+            'nonce'   => $this->makeNonce(),
+        ];
 
         if ($json) {
             $contentType = 'application/json';
-            $content     = json_encode([
-                'message' => $message,
-                'nonce'   => $this->makeNonce(),
-            ]);
+            $content     = json_encode($answer);
         } else {
             $contentType = 'text/html';
-            $content     = $this->twig->render('login.html.twig', [
-                'error_message' => $message,
-                'nonce_value'   => $this->makeNonce(),
-            ]);
+            $content     = $this->twig->render('login.html.twig', $answer);
         }
 
         return new Response($content, $status, ["Content-Type" => $contentType]);

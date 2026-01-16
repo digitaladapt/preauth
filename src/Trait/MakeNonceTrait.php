@@ -13,7 +13,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 trait MakeNonceTrait {
     /* 15 bytes neatly fits in base64 */
     private const NONCE_LENGTH = 15;
-    private const NONCE_TTL = 60;
+    private const NONCE_TTL = 120;
 
     protected readonly CacheItemPoolInterface $noncePool;
     protected readonly LoggerInterface        $logger;

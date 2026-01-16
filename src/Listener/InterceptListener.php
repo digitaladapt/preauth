@@ -39,7 +39,7 @@ final readonly class InterceptListener {
              * nor submitting login credentials; so present the login page now */
             $this->logger->debug("presenting login page: {$event->getRequest()->getClientIp()}");
             $content = $this->twig->render('login.html.twig', [
-                'nonce_value' => $this->makeNonce(),
+                'nonce' => $this->makeNonce(),
             ]);
             $event->setResponse(new Response($content, Response::HTTP_UNAUTHORIZED,
                 ['Content-Type' => 'text/html']

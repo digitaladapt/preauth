@@ -2,9 +2,9 @@
 
 {% block content %}
 <h1>{{ env.title }}</h1>
-<p id="preauth-message">{{ error_message|default }}</p>
+<p id="preauth-message">{{ message|default }}</p>
 <form id="preauth-form">
-    <input id="preauth-nonce" type="hidden" name="preauth_nonce" value="{{ nonce_value }}">
+    <input id="preauth-nonce" type="hidden" name="preauth_nonce" value="{{ nonce }}">
     <div class="right"><label for="preauth-id">{{ env.id_name }}:</label></div>
     <div><input type="text" name="preauth_id" id="preauth-id"
             autocomplete="username" required="required" autofocus="autofocus"></div>
