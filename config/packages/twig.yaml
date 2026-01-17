@@ -3,6 +3,7 @@ twig:
     strict_variables: true
     globals:
         env:
+            allow_password: '%env(STATIC_SECRET_ENABLED)%'
             title: '%env(TITLE)%'
             bg_color: '%env(BG_COLOR)%'
             fg_color: '%env(FG_COLOR)%'
@@ -10,8 +11,10 @@ twig:
             return_field: '%env(QUERY_PREFIX)%return'
             id_field: '%env(QUERY_PREFIX)%id'
             token_field: '%env(QUERY_PREFIX)%token'
+            password_field: '%env(QUERY_PREFIX)%password'
             id_name: '%env(ID_NAME)%'
             token_name: '%env(TOKEN_NAME)%'
+            password_name: '%env(PASSWORD_NAME)%'
             submit_name: '%env(SUBMIT_NAME)%'
             error_message: '%env(ERROR_MESSAGE)%'
             teapot_title: '%env(TEAPOT_TITLE)%'

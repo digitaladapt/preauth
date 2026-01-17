@@ -15,7 +15,6 @@ final readonly class ConfigBag {
     private int $limitTtl;
     private string $queryPrefix;
     private string $totpUri;
-    private ?string $assetsDir;
     private ?int $ipTtl;
     private ?string $staticSecret;
     private bool $teapot;
@@ -33,9 +32,8 @@ final readonly class ConfigBag {
         #[Autowire('%app.limit_ttl%')] int                        $limitTtl,
         #[Autowire('%app.query_prefix%')] string                  $queryPrefix,
         #[Autowire('%app.totp_uri%')] string                      $totpUri,
-        #[Autowire('%app.assets%')] bool                          $assets,
-        #[Autowire('%kernel.project_dir%/public/assets/')] string $assetsDir,
         #[Autowire('%app.ip_ttl%')] ?int                          $ipTtl,
+        #[Autowire('%app.static_secret_enabled%')] bool           $staticSecretEnabled,
         #[Autowire('%app.static_secret%')] ?string                $staticSecret,
         #[Autowire('%app.teapot%')] bool                          $teapot,
         #[Autowire('%app.error_message%')] string                 $errorMessage,
@@ -49,9 +47,8 @@ final readonly class ConfigBag {
         $this->limitTtl = ($limitTtl >= 1) ? $limitTtl : 86400;
         $this->queryPrefix = $queryPrefix;
         $this->totpUri = $totpUri ?: $utilities->loadTotp();
-        $this->assetsDir = $assets ? $assetsDir : null;
         $this->ipTtl = $ipTtl ?: null;
-        $this->staticSecret = $staticSecret ?: null;
+        $this->staticSecret = $staticSecretEnabled ? ($staticSecret ?: null) : null;
         $this->teapot = $teapot;
         $this->errorMessage = $errorMessage;
         $this->teapotTitle = $teapotTitle;
@@ -84,10 +81,6 @@ final readonly class ConfigBag {
 
     public function totpUri(): string {
         return $this->totpUri;
-    }
-
-    public function assetsDir(): ?string {
-        return $this->assetsDir;
     }
 
     public function ipTtl(): ?int {

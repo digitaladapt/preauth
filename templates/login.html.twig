@@ -8,25 +8,82 @@
     <div class="right"><label for="preauth-id">{{ env.id_name }}:</label></div>
     <div><input type="text" name="preauth_id" id="preauth-id"
             autocomplete="username" required="required" autofocus="autofocus"></div>
-    <div class="right"><label for="preauth-token">{{ env.token_name }}:</label></div>
-    <div><input type="text" name="preauth_token" id="preauth-token"
-            autocomplete="one-time-code" required="required"></div>
+    {% if env.allow_password %}
+        <div class="right boxTk">
+            <label for="preauth-token">{{ env.token_name }}:</label><br>
+            <span id="preauth-use-pw">🔃 {{ env.password_name }}</span></div>
+        <div class="boxTk"><input type="text" name="preauth_token" id="preauth-token"
+                autocomplete="one-time-code" required="required"></div>
+
+        <div class="right boxPw hidden">
+            <label for="preauth-password">{{ env.password_name }}:</label><br>
+            <span id="preauth-use-tk">🔃 {{ env.token_name }}</span></div>
+        <div class="boxPw hidden"><input type="password" name="preauth_password" id="preauth-password"
+                autocomplete="password" disabled="disabled" required="required"></div>
+    {% else %}
+        <div class="right"><label for="preauth-token">{{ env.token_name }}:</label></div>
+        <div><input type="text" name="preauth_token" id="preauth-token"
+                autocomplete="one-time-code" required="required"></div>
+    {% endif %}
     <div class="center"><button type="submit">{{ env.submit_name }}</button></div>
 </form>
 <script>
 const form    = document.getElementById('preauth-form');
 const message = document.getElementById('preauth-message');
 
+{% if env.allow_password %}
+    const usePw = document.getElementById('preauth-use-pw');
+    const useTk = document.getElementById('preauth-use-tk');
+    const boxPw = document.querySelectorAll('.boxPw');
+    const boxTk = document.querySelectorAll('.boxTk');
+
+    usePw.addEventListener('click', (event) => {
+        form.preauth_token.value = '';
+        form.preauth_token.disabled = true;
+        form.preauth_password.disabled = false;
+        boxTk.forEach((element) => {
+            element.classList.add('hidden');
+        });
+        boxPw.forEach((element) => {
+            element.classList.remove('hidden');
+        });
+    });
+
+    useTk.addEventListener('click', (event) => {
+        form.preauth_password.value = '';
+        form.preauth_password.disabled = true;
+        form.preauth_token.disabled = false;
+        boxPw.forEach((element) => {
+            element.classList.add('hidden');
+        });
+        boxTk.forEach((element) => {
+            element.classList.remove('hidden');
+        });
+    });
+{% endif %}
+
 form.addEventListener('submit', (event) => {
     event.preventDefault();
 
-    /* make bas64url string containing our payload json object */
-    const data = btoa(JSON.stringify({
-        id:    form.preauth_id.value,
-        token: form.preauth_token.value,
-        nonce: form.preauth_nonce.value,
-        json:  true
-    })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    {% if env.allow_password %}
+        /* make base64url string containing our payload json object */
+        /* payload will contain either token or password */
+        const data = btoa(JSON.stringify({
+            id:    form.preauth_id.value,
+            ...(    form.preauth_token.value  && { token: form.preauth_token.value }),
+            ...(( ! form.preauth_token.value) && { password: form.preauth_password.value }),
+            nonce: form.preauth_nonce.value,
+            json:  true
+        })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    {% else %}
+        /* make base64url string containing our payload json object */
+        const data = btoa(JSON.stringify({
+            id:    form.preauth_id.value,
+            token: form.preauth_token.value,
+            nonce: form.preauth_nonce.value,
+            json:  true
+        })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    {% endif %}
 
     /* send our request to the server */
     fetch(window.location.href, {

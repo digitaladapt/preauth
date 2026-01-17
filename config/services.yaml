@@ -26,12 +26,12 @@ parameters:
     # --- extra variables ---
     # query parameter prefix to prevent collisions
     env(QUERY_PREFIX): '_preauth_'
-    # allow files in /app/public/assets directory to be served, false to disable
-    env(ASSETS): '1'                # default enabled, boolean
     # how long do we allow all traffic from an ip address after successful login
     # could be useful if you have a system which does not handle cookies
     env(IP_TTL): '0'                # default disabled, time in seconds
     # if desired, in addition to supporting a TOTP, you can set a static password
+    # TODO rely on checking enabled, instead of the secret directly throughout the code
+    env(STATIC_SECRET_ENABLED): '0' # boolean
     env(STATIC_SECRET): ''          # default disabled
     # once blocked, do we respond with "I'm a teapot", false to use "Too many requests"
     env(TEAPOT): '1' # boolean
@@ -43,6 +43,7 @@ parameters:
     env(ERROR_COLOR): '#ffb16d'
     env(ID_NAME): 'Session ID'
     env(TOKEN_NAME): 'Authentication Token'
+    env(PASSWORD_NAME): 'Authentication Password'
     env(SUBMIT_NAME): 'Submit'
     env(ERROR_MESSAGE): 'Unsuccessful login attempt'
     # title and message to use on block page, if teapot is true
@@ -59,8 +60,8 @@ parameters:
     app.query_prefix: '%env(QUERY_PREFIX)%'
     app.totp_uri: '%env(TOTP_URI)%'
 
-    app.assets: '%env(ASSETS)%'
     app.ip_ttl: '%env(IP_TTL)%'
+    app.static_secret_enabled: '%env(STATIC_SECRET_ENABLED)%'
     app.static_secret: '%env(STATIC_SECRET)%'
     app.teapot: '%env(TEAPOT)%'
 
