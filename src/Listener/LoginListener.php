@@ -8,10 +8,9 @@ use App\Data\Payload;
 use App\Enum\Scope;
 use App\MonitorCacheKeys;
 use App\Trait\CookieNameTrait;
+use App\Trait\GetTotpTrait;
 use App\Trait\MakeNonceTrait;
 use App\Trait\StringTrait;
-use OTPHP\Factory;
-use OTPHP\TOTPInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
@@ -31,19 +30,21 @@ final readonly class LoginListener {
     use CookieNameTrait;
     use MakeNonceTrait;
     use StringTrait;
+    use GetTotpTrait;
 
     private CacheItemPoolInterface $requestPool;
     private CacheItemPoolInterface $sessionPool;
 
     /** @throws InvalidArgumentException */
     public function __construct(
-        private ConfigBag              $config,
+                ConfigBag              $config,
         private Environment            $twig,
                 CacheItemPoolInterface $noncePool,
                 CacheItemPoolInterface $requestPool,
                 CacheItemPoolInterface $sessionPool,
                 LoggerInterface        $logger,
     ) {
+        $this->config      = $config;
         $this->requestPool = new MonitorCacheKeys($requestPool);
         $this->sessionPool = new MonitorCacheKeys($sessionPool);
         $this->noncePool   = $noncePool;
@@ -98,7 +99,7 @@ final readonly class LoginListener {
             if ($nonceItem->isHit() && $nonceItem->get()) {
                 /* mark nonce as spent */
                 $nonceItem->set(false); /* invalid */
-                $nonceItem->expiresAfter(static::NONCE_TTL); /* keep breifly */
+                $nonceItem->expiresAfter(LoginListener::NONCE_TTL); /* keep briefly */
                 $this->noncePool->save($nonceItem);
 
                 /* token authentication successful, grant access and set response */
@@ -159,14 +160,15 @@ final readonly class LoginListener {
             if (($nonceItem->isHit() && $nonceItem->get()) || ! $nonceItem->isHit()) {
                 /* mark nonce as spent */
                 $nonceItem->set(false); /* invalid */
-                $nonceItem->expiresAfter(static::NONCE_TTL); /* keep breifly */
+                $nonceItem->expiresAfter(LoginListener::NONCE_TTL); /* keep briefly */
                 $this->noncePool->save($nonceItem);
 
                 /* password authentication successful, grant access and set response */
                 $cleanId = $this->makeCacheKey($payload->id);
                 $this->logger->debug("successful login for: $cleanId");
                 return new Response("hi $cleanId",
-                    headers: ['Content-Type' => 'text/plain']
+                    Response::HTTP_OK,
+                    ['Content-Type' => 'text/plain']
                 );
             }
         }
@@ -253,15 +255,5 @@ final readonly class LoginListener {
         }
 
         return new Response($content, $status, ["Content-Type" => $contentType]);
-    }
-
-    private function getTotp(): TOTPInterface {
-        $otp = Factory::loadFromProvisioningUri(
-            $this->config->totpUri(), $this->config->clock()
-        );
-        if ($otp instanceof TOTPInterface) {
-            return $otp;
-        }
-        throw new HttpException(500, 'Internal Server Exception');
     }
 }

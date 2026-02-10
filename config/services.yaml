@@ -30,9 +30,9 @@ parameters:
     # could be useful if you have a system which does not handle cookies
     env(IP_TTL): '0'                # default disabled, time in seconds
     # if desired, in addition to supporting a TOTP, you can set a static password
-    # TODO rely on checking enabled, instead of the secret directly throughout the code
     env(STATIC_SECRET_ENABLED): '0' # boolean
     env(STATIC_SECRET): ''          # default disabled
+    env(LOOKUP_TOTP): ''            # default disabled
     # once blocked, do we respond with "I'm a teapot", false to use "Too many requests"
     env(TEAPOT): '1' # boolean
 
@@ -63,6 +63,7 @@ parameters:
     app.ip_ttl: '%env(IP_TTL)%'
     app.static_secret_enabled: '%env(STATIC_SECRET_ENABLED)%'
     app.static_secret: '%env(STATIC_SECRET)%'
+    app.lookup_totp: '%env(LOOKUP_TOTP)%'
     app.teapot: '%env(TEAPOT)%'
 
     app.error_message: '%env(ERROR_MESSAGE)%'
