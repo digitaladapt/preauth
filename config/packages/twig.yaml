@@ -3,7 +3,6 @@ twig:
     strict_variables: true
     globals:
         env:
-            allow_password: '%env(STATIC_SECRET_ENABLED)%'
             title: '%env(TITLE)%'
             bg_color: '%env(BG_COLOR)%'
             fg_color: '%env(FG_COLOR)%'

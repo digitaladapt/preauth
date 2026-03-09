@@ -3,17 +3,16 @@ declare(strict_types=1);
 
 namespace App\Listener;
 
-use App\ConfigBag;
 use App\Data\Payload;
 use App\Enum\Scope;
 use App\MonitorCacheKeys;
 use App\Trait\CookieNameTrait;
 use App\Trait\GetTotpTrait;
+use App\Trait\HasLoggerTrait;
 use App\Trait\MakeNonceTrait;
 use App\Trait\StringTrait;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,27 +27,22 @@ use Twig\Error\SyntaxError;
 
 final readonly class LoginListener {
     use CookieNameTrait;
+    use HasLoggerTrait;
     use MakeNonceTrait;
     use StringTrait;
     use GetTotpTrait;
 
-    private CacheItemPoolInterface $requestPool;
-    private CacheItemPoolInterface $sessionPool;
+    private CacheItemPoolInterface $requestCache;
+    private CacheItemPoolInterface $sessionCache;
 
     /** @throws InvalidArgumentException */
     public function __construct(
-                ConfigBag              $config,
         private Environment            $twig,
-                CacheItemPoolInterface $noncePool,
-                CacheItemPoolInterface $requestPool,
-                CacheItemPoolInterface $sessionPool,
-                LoggerInterface        $logger,
+                CacheItemPoolInterface $requestCache,
+                CacheItemPoolInterface $sessionCache,
     ) {
-        $this->config      = $config;
-        $this->requestPool = new MonitorCacheKeys($requestPool);
-        $this->sessionPool = new MonitorCacheKeys($sessionPool);
-        $this->noncePool   = $noncePool;
-        $this->logger      = $logger;
+        $this->requestCache = new MonitorCacheKeys($requestCache);
+        $this->sessionCache = new MonitorCacheKeys($sessionCache);
     }
 
     /** @throws InvalidArgumentException|LoaderError|RuntimeError|SyntaxError */
@@ -58,13 +52,8 @@ final readonly class LoginListener {
             $data = $event->getRequest()->headers->get($this->headerName());
             $payload = Payload::decode($data);
             $response = null;
-            if ($payload) {
-                /* if using token */
-                if ($payload->token) {
-                    $response = $this->checkToken($payload, $event->getRequest());
-                } else if ($this->config->staticSecret()) {
-                    $response = $this->checkPassword($payload);
-                }
+            if ($payload && $payload->token) {
+                $response = $this->checkToken($payload, $event->getRequest());
             }
 
             /* token or password authentication was successful */
@@ -95,12 +84,12 @@ final readonly class LoginListener {
             /* token is correct */
 
             /* if server nonce is found and is valid */
-            $nonceItem = $this->noncePool->getItem($payload->nonce);
+            $nonceItem = $this->nonceCache->getItem($payload->nonce);
             if ($nonceItem->isHit() && $nonceItem->get()) {
                 /* mark nonce as spent */
                 $nonceItem->set(false); /* invalid */
                 $nonceItem->expiresAfter(LoginListener::NONCE_TTL); /* keep briefly */
-                $this->noncePool->save($nonceItem);
+                $this->nonceCache->save($nonceItem);
 
                 /* token authentication successful, grant access and set response */
                 $cleanId = $this->makeCacheKey($payload->id);
@@ -145,41 +134,10 @@ final readonly class LoginListener {
     }
 
     /** @throws InvalidArgumentException */
-    private function checkPassword(Payload $payload): ?Response {
-        /* When using password but password is disabled, request will always fail. */
-
-        /* if password is correct */
-
-        if (hash_equals($this->config->staticSecret(), $payload->password)) {
-            /* password is correct */
-
-            /* nonce *may* be client provided, but must still be unique */
-
-            /* if server/client nonce is acceptable (valid server or unused client) */
-            $nonceItem = $this->noncePool->getItem($payload->nonce);
-            if (($nonceItem->isHit() && $nonceItem->get()) || ! $nonceItem->isHit()) {
-                /* mark nonce as spent */
-                $nonceItem->set(false); /* invalid */
-                $nonceItem->expiresAfter(LoginListener::NONCE_TTL); /* keep briefly */
-                $this->noncePool->save($nonceItem);
-
-                /* password authentication successful, grant access and set response */
-                $cleanId = $this->makeCacheKey($payload->id);
-                $this->logger->debug("successful login for: $cleanId");
-                return new Response("hi $cleanId",
-                    Response::HTTP_OK,
-                    ['Content-Type' => 'text/plain']
-                );
-            }
-        }
-        return null;
-    }
-
-    /** @throws InvalidArgumentException */
     private function setCookie(string $id): Cookie {
         /* successful auth with token, store session and set the cookie */
         $ulid = new Ulid();
-        $sessionCookie = $this->sessionPool->getItem(
+        $sessionCookie = $this->sessionCache->getItem(
             $this->makeCacheKey("cookie_$ulid")
         );
         if ($sessionCookie->isHit()) {
@@ -189,7 +147,7 @@ final readonly class LoginListener {
         }
         $sessionCookie->set($id);
         $sessionCookie->expiresAfter($this->config->cookieTtl());
-        $this->sessionPool->save($sessionCookie);
+        $this->sessionCache->save($sessionCookie);
 
         return Cookie::create(
             name: $this->cookieName(),
@@ -205,10 +163,10 @@ final readonly class LoginListener {
         /* successful auth with token, requested scope of ip (and ip access enabled) */
         $ipKey = $this->makeCacheKey("ip_$ip");
 
-        $sessionIp = $this->sessionPool->getItem($ipKey);
+        $sessionIp = $this->sessionCache->getItem($ipKey);
         $sessionIp->set($id);
         $sessionIp->expiresAfter($this->config->ipTtl());
-        $this->sessionPool->save($sessionIp);
+        $this->sessionCache->save($sessionIp);
     }
 
     /** @throws InvalidArgumentException */
@@ -218,7 +176,7 @@ final readonly class LoginListener {
         /* hash the data and timeframe, so we do not count duplicates in the same timeframe
          * hitting refresh a few times should not lock you out */
         $ipKey = $this->makeCacheKey("ip_{$request->getClientIp()}");
-        $failuresItem = $this->requestPool->getItem($ipKey);
+        $failuresItem = $this->requestCache->getItem($ipKey);
         $failures = $failuresItem->get() ?? [];
         $failures[hash('xxh3', "$timeframe-$data")] = true;
         $limitReached = count($failures) >= $this->config->limit();
@@ -226,7 +184,7 @@ final readonly class LoginListener {
         $failuresItem->expiresAfter($limitReached
             ? $this->config->limitTtl() : $this->config->limitTimeout()
         );
-        $this->requestPool->save($failuresItem);
+        $this->requestCache->save($failuresItem);
         return $limitReached;
     }
 

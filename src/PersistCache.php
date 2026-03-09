@@ -9,67 +9,67 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
 final readonly class PersistCache {
-    private MonitorCacheKeys $requestPool;
-    private MonitorCacheKeys $persistRequestPool;
-    private MonitorCacheKeys $sessionPool;
-    private MonitorCacheKeys $persistSessionPool;
+    private MonitorCacheKeys $requestCache;
+    private MonitorCacheKeys $requestStorage;
+    private MonitorCacheKeys $sessionCache;
+    private MonitorCacheKeys $sessionStorage;
 
     /** @throws InvalidArgumentException */
     public function __construct(
-        CacheItemPoolInterface $requestPool,
-        CacheItemPoolInterface $persistRequestPool,
-        CacheItemPoolInterface $sessionPool,
-        CacheItemPoolInterface $persistSessionPool
+        CacheItemPoolInterface $requestCache,
+        CacheItemPoolInterface $requestStorage,
+        CacheItemPoolInterface $sessionCache,
+        CacheItemPoolInterface $sessionStorage,
     ) {
-        $this->requestPool        = new MonitorCacheKeys($requestPool);
-        $this->persistRequestPool = new MonitorCacheKeys($persistRequestPool);
-        $this->sessionPool        = new MonitorCacheKeys($sessionPool);
-        $this->persistSessionPool = new MonitorCacheKeys($persistSessionPool);
+        $this->requestCache        = new MonitorCacheKeys($requestCache);
+        $this->requestStorage = new MonitorCacheKeys($requestStorage);
+        $this->sessionCache        = new MonitorCacheKeys($sessionCache);
+        $this->sessionStorage = new MonitorCacheKeys($sessionStorage);
     }
 
     /** @throws InvalidArgumentException */
     public function boot(): void {
         /* the caches are considered warm as soon as they are not empty */
-        if (empty($this->requestPool->getKeys())) {
-            $items = $this->persistRequestPool->getItems($this->persistRequestPool->getKeys());
+        if (empty($this->requestCache->getKeys())) {
+            $items = $this->requestStorage->getItems($this->requestStorage->getKeys());
             foreach ($items as $item) {
-                $this->requestPool->saveDeferred($item);
+                $this->requestCache->saveDeferred($item);
             }
-            $this->requestPool->markClean();
-            $this->requestPool->commit();
+            $this->requestCache->markClean();
+            $this->requestCache->commit();
         }
 
-        if (empty($this->sessionPool->getKeys())) {
-            $items = $this->persistSessionPool->getItems($this->persistSessionPool->getKeys());
+        if (empty($this->sessionCache->getKeys())) {
+            $items = $this->sessionStorage->getItems($this->sessionStorage->getKeys());
             foreach ($items as $item) {
-                $this->sessionPool->saveDeferred($item);
+                $this->sessionCache->saveDeferred($item);
             }
-            $this->sessionPool->markClean();
-            $this->sessionPool->commit();
+            $this->sessionCache->markClean();
+            $this->sessionCache->commit();
         }
     }
 
     /** @throws InvalidArgumentException */
     public function persist(): void {
         /* we only need to persist the caches if they contain changes */
-        if ($this->requestPool->isDirty()) {
-            $this->requestPool->markClean();
-            $items = $this->requestPool->getItems($this->requestPool->getKeys());
-            $this->persistRequestPool->clear();
+        if ($this->requestCache->isDirty()) {
+            $this->requestCache->markClean();
+            $items = $this->requestCache->getItems($this->requestCache->getKeys());
+            $this->requestStorage->clear();
             foreach ($items as $item) {
-                $this->persistRequestPool->saveDeferred($item);
+                $this->requestStorage->saveDeferred($item);
             }
-            $this->persistRequestPool->commit();
+            $this->requestStorage->commit();
         }
 
-        if ($this->sessionPool->isDirty()) {
-            $this->sessionPool->markClean();
-            $items = $this->sessionPool->getItems($this->sessionPool->getKeys());
-            $this->persistSessionPool->clear();
+        if ($this->sessionCache->isDirty()) {
+            $this->sessionCache->markClean();
+            $items = $this->sessionCache->getItems($this->sessionCache->getKeys());
+            $this->sessionStorage->clear();
             foreach ($items as $item) {
-                $this->persistSessionPool->saveDeferred($item);
+                $this->sessionStorage->saveDeferred($item);
             }
-            $this->persistSessionPool->commit();
+            $this->sessionStorage->commit();
         }
     }
 }

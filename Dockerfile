@@ -12,7 +12,6 @@ RUN apt-get update && \
 ENV APP_DEBUG=0
 ENV APP_ENV=prod
 ENV APP_SHARE_DIR=/data/preauth
-ENV DEFAULT_URI='http://'
 
 # load application into build image
 RUN mkdir -p /data/preauth
@@ -42,7 +41,6 @@ RUN pecl install apcu && \
 ENV APP_DEBUG=0
 ENV APP_ENV=prod
 ENV APP_SHARE_DIR=/data/preauth
-ENV DEFAULT_URI='http://'
 
 # load application into final image
 WORKDIR /app

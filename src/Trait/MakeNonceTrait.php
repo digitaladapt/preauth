@@ -6,17 +6,23 @@ namespace App\Trait;
 use Exception;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Contracts\Service\Attribute\Required;
 
 trait MakeNonceTrait {
+    use HasLoggerTrait;
+
     /* 15 bytes neatly fits in base64 */
     private const NONCE_LENGTH = 15;
     private const NONCE_TTL = 120;
 
-    protected readonly CacheItemPoolInterface $noncePool;
-    protected readonly LoggerInterface        $logger;
+    protected readonly CacheItemPoolInterface $nonceCache;
+
+    #[Required]
+    public function setNonceCache(CacheItemPoolInterface $nonceCache): void {
+        $this->nonceCache = $nonceCache;
+    }
 
     /** @throws InvalidArgumentException|Exception */
     protected function makeNonce(int $retries = 3): string {
@@ -24,7 +30,7 @@ trait MakeNonceTrait {
         $nonce = rtrim(strtr(base64_encode(random_bytes(
             static::NONCE_LENGTH
         )), '+/', '-_'), '=');
-        $nonceItem = $this->noncePool->getItem($nonce);
+        $nonceItem = $this->nonceCache->getItem($nonce);
 
         if ($nonceItem->isHit()) {
             if ($retries < 1) {
@@ -41,7 +47,7 @@ trait MakeNonceTrait {
         $nonceItem->set(true); /* valid */
         $nonceItem->expiresAfter(static::NONCE_TTL);
         $this->logger->debug("added nonce: $nonce");
-        $this->noncePool->save($nonceItem);
+        $this->nonceCache->save($nonceItem);
         return $nonce;
     }
 }

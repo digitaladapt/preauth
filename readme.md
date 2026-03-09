@@ -19,11 +19,11 @@ There is an example Caddyfile in /docs/ and env.example file to get you started.
 
 When someone tries to reach your protected web service, Caddy will check with preauth if they are allowed, if their preauth cookie is missing, invalid, or expired, we will show them to a login screen.
 
-I say login, but it's really just a TOTP code (6 digit code which changes every 30 second). But once they enter the right code,they'll get their cookie and be shown the protected service. It is also possible to allow all requests from an approved IP address, but that is disabled by default.
+I say login, but it's really just a TOTP code (6-digit code which changes every 30 second). But once they enter the right code,they'll get their cookie and be shown the protected service. It is also possible to allow all requests from an approved IP address, but that is disabled by default.
 
 First time you spin up the docker container it will generate a TOTP secret (which you'll load into your authenticator app); or generate you own.
 
-Be sure to save that TOTP secret to your docker environment, so that it persistents beyond removing the container.
+Be sure to save that TOTP secret to your docker environment, so that it persists beyond removing the container.
 
 ### History
 #### v0.4.1 (Dec 26th, 2025)

@@ -20,7 +20,7 @@ final readonly class RejectListener {
     use StringTrait;
 
     public function __construct(
-        private CacheItemPoolInterface $requestPool,
+        private CacheItemPoolInterface $requestCache,
         private ConfigBag              $config,
         private Environment            $twig,
         private LoggerInterface        $logger,
@@ -32,7 +32,7 @@ final readonly class RejectListener {
         $ipKey = $this->makeCacheKey("ip_{$event->getRequest()->getClientIp()}");
 
         /* check if they have made too many failed login attempts */
-        $failuresItem = $this->requestPool->getItem($ipKey);
+        $failuresItem = $this->requestCache->getItem($ipKey);
         if ($failuresItem->isHit()) {
             $failures = $failuresItem->get() ?? [];
             if (count($failures) >= $this->config->limit()) {

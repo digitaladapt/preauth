@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace App\Listener;
 
 use App\ConfigBag;
+use App\Trait\HasLoggerTrait;
 use App\Trait\MakeNonceTrait;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -17,18 +17,14 @@ use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
 final readonly class InterceptListener {
+    use HasLoggerTrait;
     use MakeNonceTrait;
 
     public function __construct(
-        private CacheItemPoolInterface $requestPool,
+        private CacheItemPoolInterface $requestCache,
         private ConfigBag              $config,
         private Environment            $twig,
-                CacheItemPoolInterface $noncePool,
-                LoggerInterface        $logger,
-    ) {
-        $this->logger = $logger;
-        $this->noncePool = $noncePool;
-    }
+    ) {}
 
     /** @throws InvalidArgumentException|RuntimeError|SyntaxError|LoaderError */
     #[AsEventListener(priority: 55)]

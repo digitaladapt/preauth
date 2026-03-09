@@ -16,8 +16,6 @@ final readonly class ConfigBag {
     private string $queryPrefix;
     private string $totpUri;
     private ?int $ipTtl;
-    private ?string $lookupTotp;
-    private ?string $staticSecret;
     private bool $teapot;
     private string $errorMessage;
     private string $teapotTitle;
@@ -34,9 +32,6 @@ final readonly class ConfigBag {
         #[Autowire('%app.query_prefix%')] string                  $queryPrefix,
         #[Autowire('%app.totp_uri%')] string                      $totpUri,
         #[Autowire('%app.ip_ttl%')] ?int                          $ipTtl,
-        #[Autowire('%app.lookup_totp%')] ?string                  $lookupTotp,
-        #[Autowire('%app.static_secret_enabled%')] bool           $staticSecretEnabled,
-        #[Autowire('%app.static_secret%')] ?string                $staticSecret,
         #[Autowire('%app.teapot%')] bool                          $teapot,
         #[Autowire('%app.error_message%')] string                 $errorMessage,
         #[Autowire('%app.teapot_title%')] string                  $teapotTitle,
@@ -50,8 +45,6 @@ final readonly class ConfigBag {
         $this->queryPrefix = $queryPrefix;
         $this->totpUri = $totpUri ?: $utilities->loadTotp();
         $this->ipTtl = $ipTtl ?: null;
-        $this->staticSecret = $staticSecretEnabled ? ($staticSecret ?: null) : null;
-        $this->lookupTotp = $this->staticSecret ? ($lookupTotp ?: null) : null;
         $this->teapot = $teapot;
         $this->errorMessage = $errorMessage;
         $this->teapotTitle = $teapotTitle;
@@ -88,14 +81,6 @@ final readonly class ConfigBag {
 
     public function ipTtl(): ?int {
         return $this->ipTtl;
-    }
-
-    public function lookupTotp(): ?string {
-        return $this->lookupTotp;
-    }
-
-    public function staticSecret(): ?string {
-        return $this->staticSecret;
     }
 
     public function teapot(): bool {

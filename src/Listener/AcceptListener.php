@@ -17,7 +17,7 @@ final readonly class AcceptListener {
     use StringTrait;
 
     public function __construct(
-        private CacheItemPoolInterface $sessionPool,
+        private CacheItemPoolInterface $sessionCache,
         private LoggerInterface        $logger,
     ) {}
 
@@ -28,9 +28,9 @@ final readonly class AcceptListener {
         if ($event->getRequest()->cookies->has($this->cookieName())) {
             $cookie = $event->getRequest()->cookies->get($this->cookieName());
             $cookieKey = $this->makeCacheKey("cookie_$cookie");
-            if ($this->sessionPool->hasItem($cookieKey)) {
+            if ($this->sessionCache->hasItem($cookieKey)) {
                 /* cookie sent corresponds to valid existing session */
-                $id = $this->sessionPool->getItem($cookieKey)->get();
+                $id = $this->sessionCache->getItem($cookieKey)->get();
                 $this->logger->debug("has valid cookie-session: $id");
                 $event->setResponse(new Response("hi $id",
                     headers: ['Content-Type' => 'text/plain']

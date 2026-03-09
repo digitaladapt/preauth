@@ -6,9 +6,15 @@ use App\ConfigBag;
 use OTPHP\Factory;
 use OTPHP\TOTPInterface;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Contracts\Service\Attribute\Required;
 
 trait GetTotpTrait {
     protected readonly ConfigBag $config;
+
+    #[Required]
+    public function setConfig(ConfigBag $config): void {
+        $this->config = $config;
+    }
 
     protected function getTotp(): TOTPInterface {
         $otp = Factory::loadFromProvisioningUri(

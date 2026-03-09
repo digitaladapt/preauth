@@ -11,6 +11,9 @@ use Psr\Cache\InvalidArgumentException;
 /* We must not store the key-list item or values within this object,
  * because it can change from outside this object instance. */
 final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
+    /* TODO store clean/dirty status in the key-list, so that in PersistCache,
+     * we can only need to update/remove specific items that changed,
+     * instead of the full list */
     private const KEY_LIST = '__key_list';
     private const IS_DIRTY = '__is_dirty';
 

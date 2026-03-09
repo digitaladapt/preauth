@@ -16,7 +16,7 @@ final readonly class AllowListener {
     use StringTrait;
 
     public function __construct(
-        private CacheItemPoolInterface $sessionPool,
+        private CacheItemPoolInterface $sessionCache,
         private ConfigBag              $config,
         private LoggerInterface        $logger,
     ) {}
@@ -26,9 +26,9 @@ final readonly class AllowListener {
     public function onKernelRequest(RequestEvent $event): void {
         if ($this->config->ipTtl() > 0) {
             $ipKey = $this->makeCacheKey("ip_{$event->getRequest()->getClientIp()}");
-            if ($this->sessionPool->hasItem($ipKey)) {
+            if ($this->sessionCache->hasItem($ipKey)) {
                 /* ip address corresponds to valid existing session  */
-                $id = $this->sessionPool->getItem($ipKey)->get();
+                $id = $this->sessionCache->getItem($ipKey)->get();
                 $this->logger->debug("has valid ip-session: $id");
                 $event->setResponse(new Response("hi $id",
                     headers: ['Content-Type' => 'text/plain']

@@ -7,12 +7,12 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "bacon/bacon-qr-code": "^3.0",
+        "bacon/bacon-qr-code": "^3.0.3",
         "runtime/frankenphp-symfony": "^0.2.0",
-        "spomky-labs/otphp": "^11.3",
+        "spomky-labs/otphp": "^11.4.2",
         "symfony/cache": "7.4.*",
         "symfony/console": "7.4.*",
-        "symfony/flex": "^2",
+        "symfony/flex": "^2.10",
         "symfony/framework-bundle": "7.4.*",
         "symfony/mime": "7.4.*",
         "symfony/runtime": "7.4.*",
@@ -32,11 +32,6 @@
     "autoload": {
         "psr-4": {
             "App\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "App\\Tests\\": "tests/"
         }
     },
     "replace": {
