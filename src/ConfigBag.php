@@ -10,9 +10,6 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class ConfigBag {
     private ClockInterface $clock;
     private int $cookieTtl;
-    private int $limit;
-    private int $limitTimeout;
-    private int $limitTtl;
     private string $queryPrefix;
     private string $totpUri;
     private ?int $ipTtl;
@@ -26,9 +23,6 @@ final readonly class ConfigBag {
         Utilities                                                 $utilities,
         ClockInterface                                            $clock,
         #[Autowire('%app.cookie_ttl%')] int                       $cookieTtl,
-        #[Autowire('%app.limit%')] int                            $limit,
-        #[Autowire('%app.limit_timeout%')] int                    $limitTimeout,
-        #[Autowire('%app.limit_ttl%')] int                        $limitTtl,
         #[Autowire('%app.query_prefix%')] string                  $queryPrefix,
         #[Autowire('%app.totp_uri%')] string                      $totpUri,
         #[Autowire('%app.ip_ttl%')] ?int                          $ipTtl,
@@ -39,9 +33,6 @@ final readonly class ConfigBag {
     ) {
         $this->clock = $clock;
         $this->cookieTtl = $cookieTtl;
-        $this->limit = ($limit >= 1) ? $limit : 4;
-        $this->limitTimeout = ($limitTimeout >= 1) ? $limitTimeout : 21600;
-        $this->limitTtl = ($limitTtl >= 1) ? $limitTtl : 86400;
         $this->queryPrefix = $queryPrefix;
         $this->totpUri = $totpUri ?: $utilities->loadTotp();
         $this->ipTtl = $ipTtl ?: null;
@@ -57,18 +48,6 @@ final readonly class ConfigBag {
 
     public function cookieTtl(): int {
         return $this->cookieTtl;
-    }
-
-    public function limit(): int {
-        return $this->limit;
-    }
-
-    public function limitTimeout(): int {
-        return $this->limitTimeout;
-    }
-
-    public function limitTtl(): int {
-        return $this->limitTtl;
     }
 
     public function query(string $field): string {

@@ -1,0 +1,15 @@
+framework:
+    rate_limiter:
+        burst:
+            policy: 'sliding_window'
+            limit: '%env(int:BURST_COUNT)%'
+            interval: '%env(int:BURST_TIME)% seconds'
+            cache_pool: 'rateLimitCache'
+        upper:
+            policy: 'sliding_window'
+            limit: '%env(int:UPPER_COUNT)%'
+            interval: '%env(int:UPPER_TIME)% seconds'
+            cache_pool: 'rateLimitCache'
+        login_limiter:
+            policy: compound
+            limiters: [burst, upper]

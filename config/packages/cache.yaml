@@ -4,13 +4,11 @@ framework:
         pools:
             nonceCache:
                 adapters: cache.adapter.apcu
+            rateLimitCache:
+                adapters: cache.adapter.apcu
             sessionCache:
                 adapters: cache.adapter.apcu
-            requestCache:
-                adapters: cache.adapter.apcu
             sessionStorage:
-                adapters: cache.adapter.filesystem
-            requestStorage:
                 adapters: cache.adapter.filesystem
 
         # Unique name of your app: used to compute stable namespaces for cache keys.

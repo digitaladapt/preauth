@@ -13,12 +13,14 @@ use App\Trait\MakeNonceTrait;
 use App\Trait\StringTrait;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Uid\Ulid;
 use Twig\Environment;
 use Twig\Error\LoaderError;
@@ -32,17 +34,17 @@ final readonly class LoginListener {
     use StringTrait;
     use GetTotpTrait;
 
-    private CacheItemPoolInterface $requestCache;
     private CacheItemPoolInterface $sessionCache;
+    private RateLimiterFactoryInterface $rateLimiter;
 
     /** @throws InvalidArgumentException */
     public function __construct(
-        private Environment            $twig,
-                CacheItemPoolInterface $requestCache,
-                CacheItemPoolInterface $sessionCache,
+        private                    Environment                 $twig,
+                                   CacheItemPoolInterface      $sessionCache,
+        #[Target('login_limiter')] RateLimiterFactoryInterface $rateLimiter,
     ) {
-        $this->requestCache = new MonitorCacheKeys($requestCache);
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
+        $this->rateLimiter  = $rateLimiter;
     }
 
     /** @throws InvalidArgumentException|LoaderError|RuntimeError|SyntaxError */
@@ -62,10 +64,7 @@ final readonly class LoginListener {
                 return;
             }
 
-            $limitReached = $this->logFailure(
-                $payload ? $payload->toString() : $data,
-                $event->getRequest()
-            );
+            $limitReached = $this->logFailure($event->getRequest());
 
             $this->logger->debug("logging failure for: {$event->getRequest()->getClientIp()}");
             $event->setResponse($this->makeFailedResponse($limitReached, $payload->json ?? true));
@@ -169,23 +168,9 @@ final readonly class LoginListener {
         $this->sessionCache->save($sessionIp);
     }
 
-    /** @throws InvalidArgumentException */
-    private function logFailure(string $data, Request $request): bool {
-        // TODO use rate-limiting symfony system (also update RejectListener)
-        $timeframe = (int)floor(time() / $this->getTotp()->getPeriod());
-        /* hash the data and timeframe, so we do not count duplicates in the same timeframe
-         * hitting refresh a few times should not lock you out */
-        $ipKey = $this->makeCacheKey("ip_{$request->getClientIp()}");
-        $failuresItem = $this->requestCache->getItem($ipKey);
-        $failures = $failuresItem->get() ?? [];
-        $failures[hash('xxh3', "$timeframe-$data")] = true;
-        $limitReached = count($failures) >= $this->config->limit();
-        $failuresItem->set($failures);
-        $failuresItem->expiresAfter($limitReached
-            ? $this->config->limitTtl() : $this->config->limitTimeout()
-        );
-        $this->requestCache->save($failuresItem);
-        return $limitReached;
+    private function logFailure(Request $request): bool {
+        $limiter = $this->rateLimiter->create($request->getClientIp());
+        return ($limiter->consume(1)->getRemainingTokens() < 1);
     }
 
     /** @throws InvalidArgumentException|RuntimeError|SyntaxError|LoaderError */

@@ -6,7 +6,6 @@ namespace App\Listener;
 use App\ConfigBag;
 use App\Trait\HasLoggerTrait;
 use App\Trait\MakeNonceTrait;
-use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,9 +20,8 @@ final readonly class InterceptListener {
     use MakeNonceTrait;
 
     public function __construct(
-        private CacheItemPoolInterface $requestCache,
-        private ConfigBag              $config,
-        private Environment            $twig,
+        private ConfigBag   $config,
+        private Environment $twig,
     ) {}
 
     /** @throws InvalidArgumentException|RuntimeError|SyntaxError|LoaderError */

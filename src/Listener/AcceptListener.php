@@ -4,21 +4,21 @@ declare(strict_types=1);
 namespace App\Listener;
 
 use App\Trait\CookieNameTrait;
+use App\Trait\HasLoggerTrait;
 use App\Trait\StringTrait;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 
 final readonly class AcceptListener {
     use CookieNameTrait;
+    use HasLoggerTrait;
     use StringTrait;
 
     public function __construct(
         private CacheItemPoolInterface $sessionCache,
-        private LoggerInterface        $logger,
     ) {}
 
     /** @throws InvalidArgumentException */
