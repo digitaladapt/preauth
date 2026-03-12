@@ -36,13 +36,17 @@ final readonly class PersistCache {
 
     /** @throws InvalidArgumentException */
     public function persist(): void {
-        /* we only need to persist the caches if they contain changes */
-        if ($this->sessionCache->isDirty()) {
+        /* we only need to persist the changes made to the cache (if any) */
+        $changes = $this->sessionCache->getChanges();
+        if ($changes) {
             $this->sessionCache->markClean();
-            $items = $this->sessionCache->getItems($this->sessionCache->getKeys());
-            $this->sessionStorage->clear();
+            $items = $this->sessionCache->getItems(array_keys($changes));
             foreach ($items as $item) {
-                $this->sessionStorage->saveDeferred($item);
+                if (($changes[$item->getKey()] ?? null) === MonitorCacheKeys::REMOVED) {
+                    $this->sessionStorage->deleteItem($item->getKey());
+                } else {
+                    $this->sessionStorage->saveDeferred($item);
+                }
             }
             $this->sessionStorage->commit();
         }
