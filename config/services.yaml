@@ -15,6 +15,10 @@ parameters:
     env(TOTP_URI): ''               # blank to have the app generate one at random
     # how long will someone stay logged in, measured in seconds, zero for DEFAULT
     env(COOKIE_TTL): '2592000'      # default 30 days
+    # Enable optional redirection to a dedicated authentication subdomain
+    env(SUBDOMAIN_REDIRECT): '0' # boolean, 1 to enable
+    # The subdomain (e.g., auth.example.com) to which unauthenticated users are redirected
+    env(AUTH_SUBDOMAIN): ''
     # rate limiting can *NOT* be disabled, but you could allow hundreds of logins a second
     # default is the lower of 2 per half-minute or 10 per hour
     env(BURST_COUNT): 2   # 2 per 30 seconds
@@ -51,6 +55,8 @@ parameters:
     app.cookie_ttl: '%env(COOKIE_TTL)%'
     app.query_prefix: '%env(QUERY_PREFIX)%'
     app.totp_uri: '%env(TOTP_URI)%'
+    app.subdomain_redirect: '%env(SUBDOMAIN_REDIRECT)%'
+    app.auth_subdomain: '%env(AUTH_SUBDOMAIN)%'
 
     app.ip_ttl: '%env(IP_TTL)%'
     app.teapot: '%env(TEAPOT)%'

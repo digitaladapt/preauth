@@ -8,6 +8,6 @@ trait StringTrait {
     private const KEY_REGEX = '/[^A-Za-z0-9_.]+/';
 
     public function makeCacheKey(string $name): string {
-        return preg_replace(static::KEY_REGEX, '_', $name);
+        return mb_substr(preg_replace(static::KEY_REGEX, '_', $name), 0, 128);
     }
 }

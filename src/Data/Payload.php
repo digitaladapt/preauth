@@ -39,12 +39,13 @@ final class Payload {
             return null;
         }
 
+        /* all input is limited */
         $payload = new Payload();
-        $payload->id    = $data->id;
-        $payload->nonce = $data->nonce;
+        $payload->id    = mb_substr($data->id, 0, 128);
+        $payload->nonce = mb_substr($data->nonce, 0, 128);
         $payload->json  = ($data->json ?? true);
         $payload->scope = Scope::tryFrom($data->scope ?? '') ?? Scope::Cookie;
-        $payload->token = $data->token;
+        $payload->token = mb_substr($data->token, 0, 128);
 
         return Payload::constrict($payload);
     }

@@ -30,7 +30,7 @@ trait MakeNonceTrait {
         $nonce = rtrim(strtr(base64_encode(random_bytes(
             static::NONCE_LENGTH
         )), '+/', '-_'), '=');
-        $nonceItem = $this->nonceCache->getItem($nonce);
+        $nonceItem = $this->nonceCache->getItem($this->makeCacheKey($nonce));
 
         if ($nonceItem->isHit()) {
             if ($retries < 1) {

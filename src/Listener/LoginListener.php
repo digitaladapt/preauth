@@ -6,6 +6,7 @@ namespace App\Listener;
 use App\Data\Payload;
 use App\Enum\Scope;
 use App\MonitorCacheKeys;
+use App\Service\BackupCodeManager;
 use App\Trait\CookieNameTrait;
 use App\Trait\GetTotpTrait;
 use App\Trait\HasLoggerTrait;
@@ -36,15 +37,18 @@ final readonly class LoginListener {
 
     private CacheItemPoolInterface $sessionCache;
     private RateLimiterFactoryInterface $rateLimiter;
+    private BackupCodeManager $backupCodeManager;
 
     /** @throws InvalidArgumentException */
     public function __construct(
         private                    Environment                 $twig,
                                    CacheItemPoolInterface      $sessionCache,
         #[Target('login_limiter')] RateLimiterFactoryInterface $rateLimiter,
+                                   BackupCodeManager           $backupCodeManager,
     ) {
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
         $this->rateLimiter  = $rateLimiter;
+        $this->backupCodeManager = $backupCodeManager;
     }
 
     /** @throws InvalidArgumentException|LoaderError|RuntimeError|SyntaxError */
@@ -79,11 +83,13 @@ final readonly class LoginListener {
             $payload->scope = Scope::Cookie;
         }
 
-        if ($this->getTotp()->verify($payload->token, null, 10)) {
-            /* token is correct */
+        if ($this->getTotp()->verify($payload->token, null, 10) ||
+            $this->backupCodeManager->verifyAndConsume($payload->token)
+        ) {
+            /* token is correct (TOTP or Backup) */
 
             /* if server nonce is found and is valid */
-            $nonceItem = $this->nonceCache->getItem($payload->nonce);
+            $nonceItem = $this->nonceCache->getItem($this->makeCacheKey($payload->nonce));
             if ($nonceItem->isHit() && $nonceItem->get()) {
                 /* mark nonce as spent */
                 $nonceItem->set(false); /* invalid */
@@ -117,11 +123,13 @@ final readonly class LoginListener {
                         $content     = "hi $cleanId, please reload";
                     }
 
+                    $location = $request->query->has('return') && $this->validateUrl($request->query->get('return')) ?
+                        "{$request->query->get('return')}" :
+                        "{$request->getPathInfo()}{$request->getQueryString()}";
+
                     $response->setContent($content)
                         ->setStatusCode(Response::HTTP_TEMPORARY_REDIRECT)
-                        ->headers->set('Location',
-                            "{$request->getPathInfo()}{$request->getQueryString()}"
-                        );
+                        ->headers->set('Location', $location);
                     $response->headers->set('Content-Type', $contentType);
                 }
 
@@ -130,6 +138,11 @@ final readonly class LoginListener {
             }
         }
         return null;
+    }
+
+    private function validateUrl(string $url): bool {
+        // TODO verify host has the same base of the authSubdomain
+        return filter_var($url, FILTER_VALIDATE_URL);
     }
 
     /** @throws InvalidArgumentException */
@@ -148,6 +161,7 @@ final readonly class LoginListener {
         $sessionCookie->expiresAfter($this->config->cookieTtl());
         $this->sessionCache->save($sessionCookie);
 
+        // TODO if using authSubdomain, the cookie we issue will need to be different.. different prefix, domain being specified, etc.
         return Cookie::create(
             name: $this->cookieName(),
             value: $ulid->toString(),
