@@ -7,6 +7,7 @@ use App\Data\Payload;
 use App\Enum\Scope;
 use App\MonitorCacheKeys;
 use App\Service\BackupCodeManager;
+use App\Service\DomainManager;
 use App\Trait\CookieNameTrait;
 use App\Trait\GetTotpTrait;
 use App\Trait\HasLoggerTrait;
@@ -45,6 +46,7 @@ final readonly class LoginListener {
                                    CacheItemPoolInterface      $sessionCache,
         #[Target('login_limiter')] RateLimiterFactoryInterface $rateLimiter,
                                    BackupCodeManager           $backupCodeManager,
+        private                    DomainManager               $domainManager,
     ) {
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
         $this->rateLimiter  = $rateLimiter;
@@ -58,7 +60,7 @@ final readonly class LoginListener {
             $data = $event->getRequest()->headers->get($this->headerName());
             $payload = Payload::decode($data);
             $response = null;
-            if ($payload && $payload->token) {
+            if ($payload) {
                 $response = $this->checkToken($payload, $event->getRequest());
             }
 
@@ -123,8 +125,10 @@ final readonly class LoginListener {
                         $content     = "hi $cleanId, please reload";
                     }
 
-                    $location = $request->query->has('return') && $this->validateUrl($request->query->get('return')) ?
-                        "{$request->query->get('return')}" :
+                    $returnKey = $this->config->query('return');
+                    $location = $request->query->has($returnKey) &&
+                        $this->domainManager->validReturn($request->query->get($returnKey)) ?
+                        "{$request->query->get($returnKey)}" :
                         "{$request->getPathInfo()}{$request->getQueryString()}";
 
                     $response->setContent($content)
@@ -138,11 +142,6 @@ final readonly class LoginListener {
             }
         }
         return null;
-    }
-
-    private function validateUrl(string $url): bool {
-        // TODO verify host has the same base of the authSubdomain
-        return filter_var($url, FILTER_VALIDATE_URL);
     }
 
     /** @throws InvalidArgumentException */
@@ -161,14 +160,30 @@ final readonly class LoginListener {
         $sessionCookie->expiresAfter($this->config->cookieTtl());
         $this->sessionCache->save($sessionCookie);
 
-        // TODO if using authSubdomain, the cookie we issue will need to be different.. different prefix, domain being specified, etc.
-        return Cookie::create(
-            name: $this->cookieName(),
-            value: $ulid->toString(),
-            expire: time() + $this->config->cookieTtl(),
-            secure: true,
-            sameSite: Cookie::SAMESITE_STRICT
-        );
+        if ($this->domainManager->authBase()) {
+            /* when using subdomain-auth we have to use a different cookie name, as the
+             * "__Host-Http-" prefix we normally use does not allow domain to be set */
+            return Cookie::create(
+                name: $this->authCookieName(),
+                value: $ulid->toString(),
+                expire: time() + $this->config->cookieTtl(),
+                path: '/',
+                domain: $this->domainManager->authBase(),
+                secure: true,
+                httpOnly: true,
+                sameSite: Cookie::SAMESITE_STRICT,
+            );
+        } else {
+            return Cookie::create(
+                name: $this->cookieName(),
+                value: $ulid->toString(),
+                expire: time() + $this->config->cookieTtl(),
+                path: '/',
+                secure: true,
+                httpOnly: true,
+                sameSite: Cookie::SAMESITE_STRICT,
+            );
+        }
     }
 
     /** @throws InvalidArgumentException */

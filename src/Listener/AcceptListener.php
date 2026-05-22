@@ -24,11 +24,17 @@ final readonly class AcceptListener {
     /** @throws InvalidArgumentException */
     #[AsEventListener(priority: 99)]
     public function onKernelRequest(RequestEvent $event): void {
-        /* check if they sent the preauth cookie */
-        if ($event->getRequest()->cookies->has($this->cookieName())) {
+        /* check if they sent either preauth cookie */
+        if ($event->getRequest()->cookies->has($this->cookieName()) ||
+            $event->getRequest()->cookies->has($this->authCookieName())
+        ) {
             $cookie = $event->getRequest()->cookies->get($this->cookieName());
+            if ( ! $cookie) {
+                /* fallback to the auth‑subdomain cookie if the host cookie is not present */
+                $cookie = $event->getRequest()->cookies->get($this->authCookieName());
+            }
             $cookieKey = $this->makeCacheKey("cookie_$cookie");
-            if ($this->sessionCache->hasItem($cookieKey)) {
+            if ($cookie && $this->sessionCache->hasItem($cookieKey)) {
                 /* cookie sent corresponds to valid existing session */
                 $id = $this->sessionCache->getItem($cookieKey)->get();
                 $this->logger->debug("has valid cookie-session: $id");

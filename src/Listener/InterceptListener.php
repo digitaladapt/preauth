@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Listener;
 
 use App\ConfigBag;
+use App\Service\DomainManager;
 use App\Trait\HasLoggerTrait;
 use App\Trait\MakeNonceTrait;
 use Psr\Cache\InvalidArgumentException;
@@ -21,6 +22,7 @@ final readonly class InterceptListener {
 
     public function __construct(
         private ConfigBag   $config,
+        private DomainManager $domainManager,
         private Environment $twig,
     ) {}
 
@@ -31,16 +33,15 @@ final readonly class InterceptListener {
             /* by this point, we know that the request we have is:
              * not already authorized, nor already rate-limited,
              * nor submitting login credentials; so redirect or present the login page now */
-            if ($this->config->subdomainRedirect() && $this->config->authSubdomain() &&
-                $this->config->authSubdomain() !== $event->getRequest()->getHost()
+            if ($this->domainManager->getAuthSubdomain() !== $event->getRequest()->getHost() &&
+                $this->domainManager->matchesAuth($event->getRequest()->getHost())
             ) {
-                // TODO verify host has the same base of the authSubdomain
-                /* redirect to auth */
+                /* host matches base-domain of auth, but not on auth subdomain, redirect */
                 $query = http_build_query([
                     $this->config->query('return') => $event->getRequest()->getUri(),
                 ]);
                 $event->setResponse(new Response('', Response::HTTP_TEMPORARY_REDIRECT,
-                    ['Location' => "https://{$this->config->authSubdomain()}/?$query"]
+                    ['Location' => "https://{$this->domainManager->getAuthSubdomain()}/?$query"]
                 ));
             } else {
                 $this->logger->debug("presenting login page: {$event->getRequest()->getClientIp()}");
