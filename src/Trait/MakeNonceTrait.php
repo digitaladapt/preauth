@@ -12,10 +12,11 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 trait MakeNonceTrait {
     use HasLoggerTrait;
+    use StringTrait;
 
     /* 15 bytes neatly fits in base64 */
-    private const NONCE_LENGTH = 15;
-    private const NONCE_TTL = 120;
+    private const int NONCE_LENGTH = 15;
+    private const int NONCE_TTL = 120;
 
     protected readonly CacheItemPoolInterface $nonceCache;
 

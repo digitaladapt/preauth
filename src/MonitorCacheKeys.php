@@ -8,13 +8,13 @@ use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 
-/* We must not store the key-list item or values within this object,
- * because it can change from outside this object instance. */
+/* we must *NOT* store the key-list item or values within this object
+ * because it can change from outside this object instance */
 final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
-    private const KEY_LIST = '__key_list';
-    private const CHANGE_LIST = '__chg_list';
-    public  const UPDATED = 1;
-    public  const REMOVED = 2;
+    private const string KEY_LIST = '__key_list';
+    private const string CHANGE_LIST = '__chg_list';
+    public const int UPDATED = 1;
+    public const int REMOVED = 2;
 
     private CacheItemPoolInterface $cache;
 
@@ -135,7 +135,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
     }
 
     /** @throws InvalidArgumentException|OutOfBoundsException */
-    private function update(CacheItemInterface $item) {
+    private function update(CacheItemInterface $item): void {
         $this->isValid($item->getKey());
         $keyList = $this->cache->getItem(self::KEY_LIST);
         $keyValues = $keyList->get();

@@ -1,7 +1,7 @@
 services:
   preauth:
     env_file:
-      # TODO rename "env.example" to ".env", edit as needed
+      # TODO rename "example.env" to ".env", edit as needed
       # strongly recommend setting TOTP_URI, if not provided the app
       # will generate one for you, please copy it into your .env file
       - .env
@@ -10,10 +10,7 @@ services:
     image: digitaladapt/preauth:latest
     restart: unless-stopped
     # if you wish to set the user, you must make sure that the user
-    # can write to /app/var/ within the container, and that all files
-    # and folders within are writable as well
-    # IE: `$chown -R <uid>:<gid> /path/to/volume/of/app/var`
-    #
+    # can write to /config and /data within the container
     #user: <uid>:<gid>
     volumes:
       - preauth-config:/config

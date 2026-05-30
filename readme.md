@@ -25,7 +25,26 @@ First time you spin up the docker container it will generate a TOTP secret (whic
 
 Be sure to save that TOTP secret to your docker environment, so that it persists beyond removing the container.
 
+## Backup Codes
+
+It is possible to generate single-use backup codes via a console command within the docker container.
+
+```shell
+docker exec -t preauth bin/console app:generate-backup-codes [count=10]
+```
+
 ### History
+#### v0.7.0 (May 29th, 2026)
+Added ability to generate single-use backup codes.
+Removed static password and lookup token, as they were security risks.
+Updated to PHP 8.5, updated dependencies.
+
+#### v0.6.0 (Feb 10th, 2026)
+Added optional (disabled by default) ability to lookup token by static password.
+
+#### v0.5.0 (Jan 17th, 2026)
+Nonce related cleanup; added optional (disabled by default) ability to use a static password as a backup means of authentication.
+
 #### v0.4.1 (Dec 26th, 2025)
 Fixed bug which can occur if you delete cache files.
 

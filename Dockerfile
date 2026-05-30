@@ -1,5 +1,5 @@
 # use build image, to simplify final image
-FROM php:8.4-trixie AS build
+FROM php:8.5-trixie AS build
 
 # install APCu and composer
 RUN pecl install apcu && \
@@ -31,7 +31,7 @@ RUN composer install --no-dev --optimize-autoloader
 RUN composer dump-env prod --empty
 
 # start creating final image
-FROM dunglas/frankenphp:php8.4-trixie
+FROM dunglas/frankenphp:php8.5-trixie
 
 # install APCu
 RUN pecl install apcu && \
@@ -51,6 +51,8 @@ COPY --from=build /app /app
 COPY ./Caddyfile /etc/frankenphp/Caddyfile
 RUN cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini
 RUN echo 'expose_php = off' > $PHP_INI_DIR/conf.d/restrict.ini
+# console needs apc to manage cache
+RUN echo 'apc.enable_cli = on' > $PHP_INI_DIR/conf.d/console.ini
 
 # app uses var folder for cache storage
 VOLUME ["/config", "/data"]

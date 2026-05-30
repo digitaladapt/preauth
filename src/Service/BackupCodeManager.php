@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\MonitorCacheKeys;
+use App\Trait\HasLoggerTrait;
 use App\Trait\StringTrait;
 use DateTimeImmutable;
 use Exception;
@@ -11,20 +12,17 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use App\Trait\GetTotpTrait;
 
-/**
- * Manages generation and validation of single‑use backup codes.
- *
- * Backup codes are case‑insensitive alphanumeric strings whose length is
- * the length of the TOTP code plus two characters. They are stored in the
- * cache. Each code is marked as used after a successful authentication.
+/** backup-codes are case‑insensitive alphanumeric strings
+ * they are single-use and marked as used after successful authentication
  */
-final class BackupCodeManager {
+final readonly class BackupCodeManager {
     use GetTotpTrait;
+    use HasLoggerTrait;
     use StringTrait;
 
-    private const DEFAULT_COUNT = 10;
+    private const int DEFAULT_COUNT = 10;
     /* php base_convert() will break if given too long of an input */
-    const MAX_LENGTH = 64;
+    const int MAX_LENGTH = 64;
 
     private CacheItemPoolInterface $sessionCache;
 
@@ -33,13 +31,10 @@ final class BackupCodeManager {
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
     }
 
-    /**
-     * Generate a set of backup codes for a given user identifier.
-     *
+    /** generate a set of backup-codes and return them
      * @param int $count Number of codes to generate
-     * @return list<string> Generated backup codes
-     * @throws InvalidArgumentException|Exception
-     */
+     * @return string[] Generated backup codes
+     * @throws InvalidArgumentException|Exception */
     public function generate(int $count = self::DEFAULT_COUNT): array {
         $length = min($this->getTotp()->getDigits() + 2, self::MAX_LENGTH);
         $codes = [];
@@ -50,6 +45,7 @@ final class BackupCodeManager {
                 $length, '0', STR_PAD_LEFT);
         }
         $this->saveCodes($codes);
+        $this->logger->info("generated {$count} backup codes}");
         return $codes;
     }
 
@@ -66,16 +62,14 @@ final class BackupCodeManager {
         }
     }
 
-    /**
-     * Verify a backup code and, if valid, mark it as used.
-     *
+    /** check if backup-code is valid and mark it as used
      * @param string $code Code supplied by the client
      * @return bool true if the code is valid and unused
-     * @throws InvalidArgumentException
-     */
+     * @throws InvalidArgumentException */
     public function verifyAndConsume(string $code): bool {
         $backupItem = $this->sessionCache->getItem($this->makeCacheKey(strtolower("backup_$code")));
         if ($backupItem->isHit() && $backupItem->get()) {
+            $this->logger->debug("valid backup code");
             /* mark backup code as spent */
             $backupItem->set(false); /* used */
             /* per PSR6, if no expiration is set, implementation may set a default,

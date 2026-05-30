@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace App\Trait;
 
 trait CookieNameTrait {
-    private const COOKIE_NAME = '__Host-Http-Preauth';
-    private const AUTH_COOKIE_NAME = '__Http-Domain-Preauth';
-    private const HEADER_NAME = 'X-Preauth';
+    private const string COOKIE_NAME = '__Host-Http-Preauth';
+    private const string AUTH_COOKIE_NAME = '__Http-Domain-Preauth';
+    private const string HEADER_NAME = 'X-Preauth';
 
     final protected function cookieName(): string {
         return static::COOKIE_NAME;

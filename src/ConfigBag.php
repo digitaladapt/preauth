@@ -10,7 +10,6 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class ConfigBag {
     private ClockInterface $clock;
     private int $cookieTtl;
-    private string $queryPrefix;
     private string $totpUri;
     private ?int $ipTtl;
     private bool $teapot;
@@ -23,7 +22,6 @@ final readonly class ConfigBag {
         Utilities                                  $utilities,
         ClockInterface                             $clock,
         #[Autowire('%app.cookie_ttl%')] int        $cookieTtl,
-        #[Autowire('%app.query_prefix%')] string   $queryPrefix,
         #[Autowire('%app.totp_uri%')] string       $totpUri,
         #[Autowire('%app.ip_ttl%')] ?int           $ipTtl,
         #[Autowire('%app.teapot%')] bool           $teapot,
@@ -31,14 +29,13 @@ final readonly class ConfigBag {
         #[Autowire('%app.teapot_title%')] string   $teapotTitle,
         #[Autowire('%app.too_many_title%')] string $tooManyTitle,
     ) {
-        $this->clock = $clock;
-        $this->cookieTtl = $cookieTtl;
-        $this->queryPrefix = $queryPrefix;
-        $this->totpUri = $totpUri ?: $utilities->loadTotp();
-        $this->ipTtl = $ipTtl ?: null;
-        $this->teapot = $teapot;
+        $this->clock        = $clock;
+        $this->cookieTtl    = $cookieTtl;
+        $this->totpUri      = $totpUri ?: $utilities->loadTotp();
+        $this->ipTtl        = $ipTtl ?: null;
+        $this->teapot       = $teapot;
         $this->errorMessage = $errorMessage;
-        $this->teapotTitle = $teapotTitle;
+        $this->teapotTitle  = $teapotTitle;
         $this->tooManyTitle = $tooManyTitle;
     }
 
@@ -48,10 +45,6 @@ final readonly class ConfigBag {
 
     public function cookieTtl(): int {
         return $this->cookieTtl;
-    }
-
-    public function query(string $field): string {
-        return "$this->queryPrefix$field";
     }
 
     public function totpUri(): string {

@@ -4,12 +4,12 @@ declare(strict_types=1);
 namespace App\Data;
 
 use App\Enum\Scope;
+use Symfony\Component\HttpFoundation\InputBag;
 
-/* When scope is Ip but ip-access is disabled, scope is to be considered Cookie. */
-/* When using password but password is disabled, request will always fail. */
+/** when scope is IP but ip-access is disabled, scope is to be considered cookie */
 final class Payload {
     public string $id;    /* session name, identifying who is logging in */
-    public string $token; /* totp, typically six digits */
+    public string $token; /* TOTP, typically six digits */
     public string $nonce; /* random unique string, to block duplicate submissions */
     public bool   $json;  /* should we return json (for the login page) */
     public Scope  $scope; /* type of access being requested */
@@ -29,9 +29,22 @@ final class Payload {
         return null;
     }
 
+    public static function load(InputBag $input): ?Payload {
+        /* convert form data into real data */
+        if ($input->has('preauth_nonce') && $input->has('preauth_id') && $input->has('preauth_token')) {
+            return Payload::create((object)[
+                'id'    => $input->get('preauth_id'),
+                'nonce' => $input->get('preauth_nonce'),
+                'token' => $input->get('preauth_token'),
+                'json'  => false,
+            ]);
+        }
+        return null;
+    }
+
     public static function create(object $data): ?Payload {
         /* if missing required fields id, nonce, or token */
-        if (strlen($data->id ?? '') < 1 ||
+        if (strlen($data->id    ?? '') < 1 ||
             strlen($data->nonce ?? '') < 1 ||
             strlen($data->token ?? '') < 1
         ) {
@@ -50,16 +63,16 @@ final class Payload {
         return Payload::constrict($payload);
     }
 
-    public static function constrict(Payload $payload): Payload {
+    public function toString(): string {
+        return json_encode($this);
+    }
+
+    private static function constrict(Payload $payload): Payload {
         /* When scope is None, json will be considered false. */
         if ($payload->scope === Scope::None) {
             $payload->json = false;
         }
 
         return $payload;
-    }
-
-    public function toString(): string {
-        return json_encode($this);
     }
 }

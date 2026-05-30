@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Listener;
 
+use App\Service\DomainManager;
 use App\Trait\CookieNameTrait;
 use App\Trait\HasLoggerTrait;
 use App\Trait\StringTrait;
@@ -19,28 +20,25 @@ final readonly class AcceptListener {
 
     public function __construct(
         private CacheItemPoolInterface $sessionCache,
+        private DomainManager          $domainManager,
     ) {}
 
     /** @throws InvalidArgumentException */
     #[AsEventListener(priority: 99)]
     public function onKernelRequest(RequestEvent $event): void {
-        /* check if they sent either preauth cookie */
-        if ($event->getRequest()->cookies->has($this->cookieName()) ||
-            $event->getRequest()->cookies->has($this->authCookieName())
-        ) {
-            $cookie = $event->getRequest()->cookies->get($this->cookieName());
-            if ( ! $cookie) {
-                /* fallback to the auth‑subdomain cookie if the host cookie is not present */
-                $cookie = $event->getRequest()->cookies->get($this->authCookieName());
-            }
+        /* check if they sent the correct preauth cookie */
+        $cookieName = $this->domainManager->authBase() ?$this->authCookieName() : $this->cookieName();
+        if ($event->getRequest()->cookies->has($cookieName)) {
+            $cookie = $event->getRequest()->cookies->get($cookieName);
             $cookieKey = $this->makeCacheKey("cookie_$cookie");
             if ($cookie && $this->sessionCache->hasItem($cookieKey)) {
                 /* cookie sent corresponds to valid existing session */
                 $id = $this->sessionCache->getItem($cookieKey)->get();
                 $this->logger->debug("has valid cookie-session: $id");
-                $event->setResponse(new Response("hi $id",
-                    headers: ['Content-Type' => 'text/plain']
-                ));
+                $event->setResponse(new Response("hi $id", headers: [
+                    'Content-Type' => 'text/plain',
+                    'Remote-User'  => $id,
+                ]));
             }
         }
     }

@@ -30,9 +30,10 @@ final readonly class AllowListener {
                 /* ip address corresponds to valid existing session  */
                 $id = $this->sessionCache->getItem($ipKey)->get();
                 $this->logger->debug("has valid ip-session: $id");
-                $event->setResponse(new Response("hi $id",
-                    headers: ['Content-Type' => 'text/plain']
-                ));
+                $event->setResponse(new Response("hi $id", headers: [
+                    'Content-Type' => 'text/plain',
+                    'Remote-User'  => $id,
+                ]));
             }
         }
     }

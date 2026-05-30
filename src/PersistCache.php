@@ -7,6 +7,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
+/* need autoconfigure so we get it from the service container in Kernel->boot() */
 #[Autoconfigure(public: true)]
 final readonly class PersistCache {
     private MonitorCacheKeys $sessionCache;

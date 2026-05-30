@@ -1,33 +1,28 @@
-# if using caddy v2.9.x+ you can use this snippet
-# snippet to put the preauth system in front any service easily
-(preauth) {
-	# make sure caddy and preauth are on the same network
-	reverse_proxy {args[0]} preauth {
-		# leave body content for protected service
-		method GET
-		# if auth is successful, send request to protected service
-		@preauth_ok status 2xx
-		handle_response @preauth_ok {
-			{block}
-		}
-	}
-}
-
-# example of securing full subdomain
-# TODO replace domain and service name
+# example of securing full service
+# TODO replace domain and service name and port
 service.example.com {
-	import preauth * {
-		reverse_proxy service_container
+	forward_auth preauth {
+		uri {uri}
+		copy_headers Remote-User
 	}
+	reverse_proxy service-container:80
 }
 
-# you can only lock down only select paths
-# or any other match criteria, if desired
-# https://protected.example.com/secure/
+# you can choose to only restrict select paths
+# or any other Caddy match criteria, if desired
+# IE: https://protected.example.com/secure/
 protected.example.com {
-	import preauth /secure/* {
-		reverse_proxy protected-service:9000
+	# note any request that does not start with "/secure/" is NOT protected
+	forward_auth /secure/* preauth {
+		uri {uri}
+		copy_headers Remote-User
 	}
-	reverse_proxy exposed-service:9000
+	reverse_proxy protected-service:9000
 }
 
+# optionally, if you want to use a subdomain for centeral preauth
+# set SUBDOMAIN_REDIRECT to true
+# and AUTH_SUBDOMAIN to match the subdomain you use here
+auth.example.com {
+	reverse_proxy preauth
+}

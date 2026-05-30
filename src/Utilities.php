@@ -48,20 +48,14 @@ final readonly class Utilities {
     }
 
     private function showTotp(string $totp): void {
-//        /* only show this at most, every 5 minutes */
-//        $suppress = $this->appPool->getItem('suppress');
-//        if ( ! $suppress->isHit()) {
         $writer = new Writer(new PlainTextRenderer());
         file_put_contents(
             'php://stderr', <<<RAW
             {$writer->writeString($totp)}
             $totp
-            loading totp, because the env is not set, please copy above into TOTP_URI
+            loading TOTP, because the env is not set, please copy above into TOTP_URI
 
             RAW, FILE_APPEND
         );
-//            $suppress->expiresAfter(300);
-//            $this->appPool->save($suppress);
-//        }
     }
 }

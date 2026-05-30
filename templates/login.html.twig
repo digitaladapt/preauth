@@ -3,7 +3,7 @@
 {% block content %}
 <h1>{{ env.title }}</h1>
 <p id="preauth-message">{{ message|default }}</p>
-<form id="preauth-form">
+<form id="preauth-form" {% if post ?? false %} method="post" {% endif %}>
     <input id="preauth-nonce" type="hidden" name="preauth_nonce" value="{{ nonce }}">
     <div class="right"><label for="preauth-id">{{ env.id_name }}:</label></div>
     <div><input type="text" name="preauth_id" id="preauth-id"
@@ -13,4 +13,5 @@
                 autocomplete="one-time-code" required="required"></div>
     <div class="center"><button type="submit">{{ env.submit_name }}</button></div>
 </form>
+{% if not post ?? false %}{{ include('_script.html.twig') }}{% endif %}
 {% endblock %}
