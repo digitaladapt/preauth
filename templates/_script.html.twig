@@ -1,68 +1,84 @@
 <script>
-    const form    = document.getElementById('preauth-form');
-    const message = document.getElementById('preauth-message');
-    const body    = document.getElementById('preauth-body');
-    const style   = document.getElementById('preauth-style');
+const form    = document.getElementById('preauth-form');
+const message = document.getElementById('preauth-message');
+const body    = document.getElementById('preauth-body');
+const style   = document.getElementById('preauth-style');
 
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
+form.addEventListener('submit', (event) => {
+    event.preventDefault();
 
-        /* make base64url string containing our payload json object */
-        const data = btoa(JSON.stringify({
-            id:    form.preauth_id.value,
-            token: form.preauth_token.value,
-            nonce: form.preauth_nonce.value,
-            json:  true
-        })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    {# make base64url string containing our payload json object #}
+    const data = btoa(JSON.stringify({
+        id:    form.username.value?.trim() ?? '',
+        token: form.totp.value?.trim() ?? '',
+        nonce: form.nonce.value?.trim() ?? '',
+        json:  true
+    })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-        /* send our request to the server */
-        fetch(window.location.href, {
-            method: 'GET',
-            headers: { 'X-Preauth': data },
-        }).then((response) => {
-            if (response.headers.has('Location')) {
-                /* follow redirect (not needed in most browsers) */
-                window.location.href = response.headers.get('Location');
-            } else if (response.headers.get('Content-Type') === 'application/json') {
-                /* got json, update the page */
-                response.json().then((content) => {
-                    if (Object.hasOwn(content, 'message')) {
-                        message.innerText = content.message;
-                    }
-                    if (Object.hasOwn(content, 'nonce')) {
-                        form.preauth_nonce.value = content.nonce;
-                        form.preauth_token.value = '';
-                        form.preauth_token.focus();
-                    }
-                }).catch((error) => {
-                    console.log('failed to parse json from response');
-                    console.log(error);
-                });
-            } else if (response.headers.get('Content-Type') === 'text/html') {
-                /* got HTML, replace the page */
-                response.text().then((html) => {
-                    document.open();
-                    document.write(html);
-                    document.close();
-                }).catch((error) => {
-                    console.log('failed to get html from response');
-                    console.log(error);
-                });
-            } else { /* non-json, non-html, non-redirect response */
-                /* update the page, change style to plain text */
-                response.text().then((text) => {
-                    body.innerText = text;
-                    style.disabled = true;
-                    body.style.whiteSpace = 'pre-wrap';
-                    body.style.wordWrap = 'break-word';
-                }).catch((error) => {
-                    console.log('failed to get text from response');
-                    console.log(error);
-                });
-            }
-        }).catch((error) => {
-            console.log('failed to get response');
-            console.log(error);
-        });
+    {# send our request to the server #}
+    fetch(window.location.href, {
+        method: 'GET',
+        headers: { 'X-Preauth': data },
+    }).then((response) => {
+        {% if env.debug > 2 -%}
+            console.log(response);
+        {% endif -%}
+        if (response.headers.has('Location')) {
+            {# follow redirect (probably not needed) #}
+            {% if env.debug > 2 -%}
+                console.log('got redirect response');
+            {% endif -%}
+            window.location.href = response.headers.get('Location');
+        } else if (response.headers.get('Content-Type')?.toLowerCase().includes('application/json') ?? false) {
+            {# got json, update the page #}
+            {% if env.debug > 2 -%}
+                console.log('got json response');
+            {% endif -%}
+            response.json().then((content) => {
+                if (Object.hasOwn(content, 'message')) {
+                    message.innerText = content.message;
+                }
+                if (Object.hasOwn(content, 'nonce')) {
+                    form.nonce.value = content.nonce;
+                    form.totp.value = '';
+                    form.totp.focus();
+                }
+            }).catch((error) => {
+                console.log('failed to parse json from response');
+                console.log(error);
+            });
+        } else if (response.headers.get('Content-Type')?.toLowerCase().includes('text/html') ?? false) {
+            {# got html, replace the page #}
+            {% if env.debug > 2 -%}
+                console.log('got html response');
+            {% endif -%}
+            response.text().then((html) => {
+                document.open();
+                document.write(html);
+                document.close();
+            }).catch((error) => {
+                console.log('failed to get html from response');
+                console.log(error);
+            });
+        } else {
+            {# non-json, non-html, non-redirect response #}
+            {# update the page, change style to plain text #}
+            {% if env.debug > 2 -%}
+                console.log('got misc response');
+            {% endif -%}
+            response.text().then((text) => {
+                body.innerText = text;
+                style.disabled = true;
+                body.style.whiteSpace = 'pre-wrap';
+                body.style.wordWrap = 'break-word';
+            }).catch((error) => {
+                console.log('failed to get text from response');
+                console.log(error);
+            });
+        }
+    }).catch((error) => {
+        console.log('failed to get response');
+        console.log(error);
     });
+});
 </script>

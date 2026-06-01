@@ -31,11 +31,11 @@ final class Payload {
 
     public static function load(InputBag $input): ?Payload {
         /* convert form data into real data */
-        if ($input->has('preauth_nonce') && $input->has('preauth_id') && $input->has('preauth_token')) {
+        if ($input->has('username') && $input->has('nonce') && $input->has('totp')) {
             return Payload::create((object)[
-                'id'    => $input->get('preauth_id'),
-                'nonce' => $input->get('preauth_nonce'),
-                'token' => $input->get('preauth_token'),
+                'id'    => $input->get('username'),
+                'nonce' => $input->get('nonce'),
+                'token' => $input->get('totp'),
                 'json'  => false,
             ]);
         }
@@ -44,9 +44,9 @@ final class Payload {
 
     public static function create(object $data): ?Payload {
         /* if missing required fields id, nonce, or token */
-        if (strlen($data->id    ?? '') < 1 ||
-            strlen($data->nonce ?? '') < 1 ||
-            strlen($data->token ?? '') < 1
+        if (strlen(trim($data->id    ?? '')) < 1 ||
+            strlen(trim($data->nonce ?? '')) < 1 ||
+            strlen(trim($data->token ?? '')) < 1
         ) {
             /* returns null as the input is invalid */
             return null;
@@ -54,11 +54,11 @@ final class Payload {
 
         /* all input is limited */
         $payload = new Payload();
-        $payload->id    = mb_substr($data->id, 0, 128);
-        $payload->nonce = mb_substr($data->nonce, 0, 128);
+        $payload->id    = mb_substr(trim($data->id), 0, 128);
+        $payload->nonce = mb_substr(trim($data->nonce), 0, 128);
         $payload->json  = ($data->json ?? true);
         $payload->scope = Scope::tryFrom($data->scope ?? '') ?? Scope::Cookie;
-        $payload->token = mb_substr($data->token, 0, 128);
+        $payload->token = mb_substr(trim($data->token), 0, 128);
 
         return Payload::constrict($payload);
     }

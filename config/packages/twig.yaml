@@ -15,3 +15,4 @@ twig:
             teapot_message: '%env(TEAPOT_MESSAGE)%'
             too_many_title: '%env(TOO_MANY_TITLE)%'
             too_many_message: '%env(TOO_MANY_MESSAGE)%'
+            debug: '%env(SHELL_VERBOSITY)%'

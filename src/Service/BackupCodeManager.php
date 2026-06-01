@@ -40,12 +40,12 @@ final readonly class BackupCodeManager {
         $codes = [];
         for ($i = 0; $i < $count; $i++) {
             /* output is alphanumeric string of given length */
-            $codes[] = str_pad(substr(base_convert(bin2hex(random_bytes($length)),
-                    16, 36), 0, $length),
-                $length, '0', STR_PAD_LEFT);
+            $codes[] = strtolower(str_pad(substr(base_convert(bin2hex(
+                random_bytes($length)
+            ), 16, 36), 0, $length), $length, '0', STR_PAD_LEFT));
         }
         $this->saveCodes($codes);
-        $this->logger->info("generated {$count} backup codes}");
+        $this->logger->info("generated {$count} backup codes");
         return $codes;
     }
 
@@ -67,7 +67,10 @@ final readonly class BackupCodeManager {
      * @return bool true if the code is valid and unused
      * @throws InvalidArgumentException */
     public function verifyAndConsume(string $code): bool {
-        $backupItem = $this->sessionCache->getItem($this->makeCacheKey(strtolower("backup_$code")));
+        /* remove unallowed characters, since backup codes are case-insensitive alphanumeric */
+        $backupKey = 'backup_' . preg_replace('/[^a-z0-9]+/', '', strtolower($code));
+        $backupItem = $this->sessionCache->getItem($this->makeCacheKey($backupKey));
+        $this->logger->debug("checking backup code '{$backupKey}': " . ($backupItem->isHit() ? 'HIT & ' : 'miss & ') . ($backupItem->get() ? 'VALID' : 'invalid'));
         if ($backupItem->isHit() && $backupItem->get()) {
             $this->logger->debug("valid backup code");
             /* mark backup code as spent */

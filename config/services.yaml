@@ -51,6 +51,9 @@ parameters:
     env(TOO_MANY_TITLE): 'Too many requests'
     env(TOO_MANY_MESSAGE): 'Try again later'
 
+    # --- debug options ---
+    env(SHELL_VERBOSITY): '0'       # set to 3 to log debug
+
     # --- application variables ---
     app.totp_uri: '%env(TOTP_URI)%'
     app.cookie_ttl: '%env(COOKIE_TTL)%'

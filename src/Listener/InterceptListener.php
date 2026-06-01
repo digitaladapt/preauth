@@ -40,7 +40,7 @@ final readonly class InterceptListener {
         ) {
             /* host matches base-domain of auth, but not on auth subdomain, redirect */
             $query = http_build_query(['return' => $event->getRequest()->getUri()]);
-            $event->setResponse(new Response('', Response::HTTP_TEMPORARY_REDIRECT,
+            $event->setResponse(new Response('', Response::HTTP_SEE_OTHER,
                 ['Location' => "https://{$this->domainManager->getAuthSubdomain()}/?$query"]
             ));
         } else {

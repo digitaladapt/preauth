@@ -89,10 +89,9 @@ final readonly class LoginManager {
                         "{$request->query->get('return')}" :
                         "{$request->getPathInfo()}{$request->getQueryString()}";
 
-                    /* when using central auth, force redirect to use GET method */
+                    /* force redirect to use GET method (important when using central auth) */
                     $response->setContent($content)
-                        ->setStatusCode($this->domainManager->getAuthSubdomain() === $request->getHost() ?
-                            Response::HTTP_SEE_OTHER : Response::HTTP_TEMPORARY_REDIRECT)
+                        ->setStatusCode(Response::HTTP_SEE_OTHER)
                         ->headers->set('Location', $location);
                     $response->headers->set('Content-Type', $contentType);
                 }
