@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Listener;
 
 use App\ConfigBag;
-use App\Service\DomainManager;
+use App\Service\DomainInterface;
 use App\Trait\CookieNameTrait;
 use App\Trait\HasLoggerTrait;
 use App\Trait\MakeNonceTrait;
@@ -24,9 +24,9 @@ final readonly class InterceptListener {
     use MakeNonceTrait;
 
     public function __construct(
-        private ConfigBag     $config,
-        private DomainManager $domainManager,
-        private Environment   $twig,
+        private ConfigBag       $config,
+        private DomainInterface $domainManager,
+        private Environment     $twig,
     ) {}
 
     /** @throws InvalidArgumentException|RuntimeError|SyntaxError|LoaderError */

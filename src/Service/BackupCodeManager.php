@@ -13,9 +13,8 @@ use Psr\Cache\InvalidArgumentException;
 use App\Trait\GetTotpTrait;
 
 /** backup-codes are case‑insensitive alphanumeric strings
- * they are single-use and marked as used after successful authentication
- */
-final readonly class BackupCodeManager {
+ * they are single-use and marked as used after successful authentication */
+final readonly class BackupCodeManager implements BackupCodeInterface {
     use GetTotpTrait;
     use HasLoggerTrait;
     use StringTrait;

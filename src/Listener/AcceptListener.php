@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Listener;
 
-use App\Service\DomainManager;
+use App\Service\DomainInterface;
 use App\Trait\CookieNameTrait;
 use App\Trait\HasLoggerTrait;
 use App\Trait\StringTrait;
@@ -20,7 +20,7 @@ final readonly class AcceptListener {
 
     public function __construct(
         private CacheItemPoolInterface $sessionCache,
-        private DomainManager          $domainManager,
+        private DomainInterface        $domainManager,
     ) {}
 
     /** @throws InvalidArgumentException */
