@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Uid\Ulid;
 
-final readonly class LoginManager {
+final readonly class LoginManager implements LoginInterface {
     use CookieNameTrait;
     use GetTotpTrait;
     use MakeNonceTrait;
@@ -29,8 +29,8 @@ final readonly class LoginManager {
     /** @throws InvalidArgumentException */
     public function __construct(
                 CacheItemPoolInterface $sessionCache,
-        private BackupCodeManager      $backupCodeManager,
-        private DomainManager          $domainManager,
+        private BackupCodeInterface    $backupCodeManager,
+        private DomainInterface        $domainManager,
     ) {
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
     }

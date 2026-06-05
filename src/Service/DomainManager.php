@@ -5,7 +5,7 @@ namespace App\Service;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
-final readonly class DomainManager {
+final readonly class DomainManager implements DomainInterface {
     /* top-level-domains which are known to have multiple parts */
     private const array TLD = [
         'ai'  => ['com','net','off','org'],

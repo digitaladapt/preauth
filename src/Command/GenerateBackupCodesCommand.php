@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\PersistCache;
-use App\Service\BackupCodeManager;
+use App\Service\BackupCodeInterface;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -15,8 +15,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  * usage: php bin/console app:generate-backup-codes [count] */
 final class GenerateBackupCodesCommand extends Command {
     public function __construct(
-        private readonly BackupCodeManager $manager,
-        private readonly PersistCache      $persistCache,
+        private readonly BackupCodeInterface $manager,
+        private readonly PersistCache        $persistCache,
     ) {
         parent::__construct();
     }

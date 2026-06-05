@@ -5,8 +5,8 @@ namespace App\Listener;
 
 use App\ConfigBag;
 use App\Data\Payload;
-use App\Service\DomainManager;
-use App\Service\LoginManager;
+use App\Service\DomainInterface;
+use App\Service\LoginInterface;
 use App\Trait\CookieNameTrait;
 use App\Trait\HasLoggerTrait;
 use App\Trait\MakeNonceTrait;
@@ -34,8 +34,8 @@ final readonly class LoginListener {
     public function __construct(
         private                    Environment                 $twig,
         #[Target('login_limiter')] RateLimiterFactoryInterface $rateLimiter,
-        private                    DomainManager               $domainManager,
-        private                    LoginManager                $loginManager,
+        private                    DomainInterface             $domainManager,
+        private                    LoginInterface              $loginManager,
         private                    ConfigBag                   $config,
     ) {
         $this->rateLimiter  = $rateLimiter;
