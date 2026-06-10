@@ -5,8 +5,10 @@ namespace App\Tests\Unit\Listener;
 
 use App\ConfigBag;
 use App\Listener\RejectListener;
+use App\Utilities;
 use OTPHP\TOTP;
 use PHPUnit\Framework\TestCase;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,13 +21,14 @@ use Twig\Environment;
 
 final class RejectListenerTest extends TestCase {
     private function createEvent(Request $request): RequestEvent {
-        $kernel = $this->createMock(HttpKernelInterface::class);
+        $kernel = $this->createStub(HttpKernelInterface::class);
         return new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
     }
 
     private function createConfigBag(bool $teapot = false): ConfigBag {
-        $clock = $this->createMock(ClockInterface::class);
-        $utilities = $this->createMock(\App\Utilities::class);
+        $clock = $this->createStub(ClockInterface::class);
+        $cache = $this->createStub(CacheItemPoolInterface::class);
+        $utilities = new Utilities($clock, $cache);
         $totp = TOTP::generate($clock);
         $totp->setLabel('Test');
 
@@ -44,21 +47,26 @@ final class RejectListenerTest extends TestCase {
 
     private function createLimiter(int $remainingTokens): LimiterInterface {
         $limit = $this->createMock(RateLimit::class);
-        $limit->method('getRemainingTokens')->willReturn($remainingTokens);
+        $limit->expects($this->once())->method('getRemainingTokens')
+            ->willReturn($remainingTokens);
 
         $limiter = $this->createMock(LimiterInterface::class);
-        $limiter->method('consume')->with(0)->willReturn($limit);
+        $limiter->expects($this->once())->method('consume')->with(0)
+            ->willReturn($limit);
         return $limiter;
     }
 
+    /** when not blocked, expect no response */
     public function testOnKernelRequestWhenNotBlocked(): void {
         $twig = $this->createMock(Environment::class);
+        $twig->expects($this->never())->method('render');
         $config = $this->createConfigBag();
         $rateLimiter = $this->createMock(RateLimiterFactoryInterface::class);
-        $rateLimiter->method('create')->willReturn($this->createLimiter(5));
+        $rateLimiter->expects($this->once())->method('create')
+            ->willReturn($this->createLimiter(5));
 
         $listener = new RejectListener($config, $twig, $rateLimiter);
-        $listener->setLogger($this->createMock(LoggerInterface::class));
+        $listener->setLogger($this->createStub(LoggerInterface::class));
 
         $request = Request::create('https://example.com/');
         $event = $this->createEvent($request);
@@ -67,16 +75,19 @@ final class RejectListenerTest extends TestCase {
         self::assertNull($event->getResponse());
     }
 
+    /** when blocked, expect too-many response */
     public function testOnKernelRequestWhenBlocked(): void {
         $twig = $this->createMock(Environment::class);
-        $twig->method('render')->with('error.html.twig')->willReturn('<html>blocked</html>');
+        $twig->expects($this->once())->method('render')
+            ->with('error.html.twig')->willReturn('<html>blocked</html>');
 
         $config = $this->createConfigBag();
         $rateLimiter = $this->createMock(RateLimiterFactoryInterface::class);
-        $rateLimiter->method('create')->willReturn($this->createLimiter(0));
+        $rateLimiter->expects($this->once())->method('create')
+            ->willReturn($this->createLimiter(0));
 
         $listener = new RejectListener($config, $twig, $rateLimiter);
-        $listener->setLogger($this->createMock(LoggerInterface::class));
+        $listener->setLogger($this->createStub(LoggerInterface::class));
 
         $request = Request::create('https://example.com/');
         $event = $this->createEvent($request);
@@ -88,16 +99,19 @@ final class RejectListenerTest extends TestCase {
         self::assertSame('<html>blocked</html>', $response->getContent());
     }
 
+    /** when blocked with teapot expect teapot response */
     public function testOnKernelRequestWhenBlockedWithTeapot(): void {
         $twig = $this->createMock(Environment::class);
-        $twig->method('render')->with('error.html.twig')->willReturn('<html>teapot</html>');
+        $twig->expects($this->once())->method('render')
+            ->with('error.html.twig')->willReturn('<html>teapot</html>');
 
         $config = $this->createConfigBag(true);
         $rateLimiter = $this->createMock(RateLimiterFactoryInterface::class);
-        $rateLimiter->method('create')->willReturn($this->createLimiter(0));
+        $rateLimiter->expects($this->once())->method('create')
+            ->willReturn($this->createLimiter(0));
 
         $listener = new RejectListener($config, $twig, $rateLimiter);
-        $listener->setLogger($this->createMock(LoggerInterface::class));
+        $listener->setLogger($this->createStub(LoggerInterface::class));
 
         $request = Request::create('https://example.com/');
         $event = $this->createEvent($request);
