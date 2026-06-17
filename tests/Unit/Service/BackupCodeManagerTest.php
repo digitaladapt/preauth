@@ -5,31 +5,19 @@ namespace App\Tests\Unit\Service;
 
 use App\ConfigBag;
 use App\Service\BackupCodeManager;
+use App\Utilities;
 use OTPHP\TOTP;
 use PHPUnit\Framework\TestCase;
-use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 final class BackupCodeManagerTest extends TestCase {
-    private function createMockPool(): CacheItemPoolInterface {
-        return $this->createMock(CacheItemPoolInterface::class);
-    }
-
-    private function createMockItem(string $key, mixed $value = null, bool $isHit = true): CacheItemInterface {
-        $item = $this->createMock(CacheItemInterface::class);
-        $item->method('getKey')->willReturn($key);
-        $item->method('get')->willReturn($value);
-        $item->method('isHit')->willReturn($isHit);
-        $item->method('set')->willReturnSelf();
-        $item->method('expiresAt')->willReturnSelf();
-        return $item;
-    }
-
     private function createConfigBag(): ConfigBag {
         $clock = $this->createMock(ClockInterface::class);
-        $utilities = $this->createMock(\App\Utilities::class);
+        $cache = $this->createMock(CacheItemPoolInterface::class);
+        $utilities = new Utilities($clock, $cache);
         $totp = TOTP::generate($clock);
         $totp->setLabel('Test');
 
@@ -46,7 +34,7 @@ final class BackupCodeManagerTest extends TestCase {
         );
     }
 
-    private function createManager(CacheItemPoolInterface $pool): BackupCodeManager {
+    private function createManager(ArrayAdapter $pool): BackupCodeManager {
         $manager = new BackupCodeManager($pool);
         $manager->setConfig($this->createConfigBag());
         $manager->setLogger($this->createMock(LoggerInterface::class));
@@ -54,20 +42,7 @@ final class BackupCodeManagerTest extends TestCase {
     }
 
     public function testGenerateCreatesCodes(): void {
-        $pool = $this->createMockPool();
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-
-        $pool->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $pool->method('getItem')
-            ->willReturnCallback(function ($key) {
-                return $this->createMockItem($key, null, false);
-            });
-        $pool->expects(self::atLeastOnce())->method('saveDeferred')->willReturn(true);
-        $pool->expects(self::atLeastOnce())->method('commit')->willReturn(true);
-
+        $pool = new ArrayAdapter();
         $manager = $this->createManager($pool);
         $codes = $manager->generate(5);
 
@@ -79,20 +54,7 @@ final class BackupCodeManagerTest extends TestCase {
     }
 
     public function testGenerateCodesAreUnique(): void {
-        $pool = $this->createMockPool();
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-
-        $pool->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $pool->method('getItem')
-            ->willReturnCallback(function ($key) {
-                return $this->createMockItem($key, null, false);
-            });
-        $pool->method('saveDeferred')->willReturn(true);
-        $pool->method('commit')->willReturn(true);
-
+        $pool = new ArrayAdapter();
         $manager = $this->createManager($pool);
         $codes = $manager->generate(10);
 
@@ -100,154 +62,104 @@ final class BackupCodeManagerTest extends TestCase {
     }
 
     public function testVerifyAndConsumeWithValidCode(): void {
-        $pool = $this->createMockPool();
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-        $backupItem = $this->createMockItem('backup_abc123', true, true);
-
-        $pool->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $pool->method('getItem')
-            ->willReturnCallback(function ($key) use ($backupItem) {
-                if (str_contains($key, 'backup_')) {
-                    return $backupItem;
-                }
-                return $this->createMockItem($key, null, false);
-            });
-        $pool->expects(self::atLeastOnce())->method('save')->willReturn(true);
-
+        $pool = new ArrayAdapter();
         $manager = $this->createManager($pool);
-        self::assertTrue($manager->verifyAndConsume('abc123'));
+
+        // Generate a code first
+        $codes = $manager->generate(1);
+        $code = $codes[0];
+
+        self::assertTrue($manager->verifyAndConsume($code));
     }
 
     public function testVerifyAndConsumeWithInvalidCode(): void {
-        $pool = $this->createMockPool();
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-        $backupItem = $this->createMockItem('backup_invalid', false, true);
-
-        $pool->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $pool->method('getItem')
-            ->willReturnCallback(function ($key) use ($backupItem) {
-                if (str_contains($key, 'backup_')) {
-                    return $backupItem;
-                }
-                return $this->createMockItem($key, null, false);
-            });
-
+        $pool = new ArrayAdapter();
         $manager = $this->createManager($pool);
-        self::assertFalse($manager->verifyAndConsume('invalid'));
+
+        // Generate a code and consume it first
+        $codes = $manager->generate(1);
+        $code = $codes[0];
+        $manager->verifyAndConsume($code);
+
+        // Now the code is used, so it should be invalid
+        self::assertFalse($manager->verifyAndConsume($code));
     }
 
     public function testVerifyAndConsumeWithMissingCode(): void {
-        $pool = $this->createMockPool();
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-        $backupItem = $this->createMockItem('backup_missing', null, false);
-
-        $pool->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $pool->method('getItem')
-            ->willReturnCallback(function ($key) use ($backupItem) {
-                if (str_contains($key, 'backup_')) {
-                    return $backupItem;
-                }
-                return $this->createMockItem($key, null, false);
-            });
-
+        $pool = new ArrayAdapter();
         $manager = $this->createManager($pool);
-        self::assertFalse($manager->verifyAndConsume('missing'));
+
+        self::assertFalse($manager->verifyAndConsume('nonexistent'));
     }
 
     public function testVerifyAndConsumeIsCaseInsensitive(): void {
-        $pool = $this->createMockPool();
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-        $backupItem = $this->createMockItem('backup_abc123', true, true);
-
-        $pool->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $pool->method('getItem')
-            ->willReturnCallback(function ($key) use ($backupItem) {
-                if (str_contains($key, 'backup_')) {
-                    return $backupItem;
-                }
-                return $this->createMockItem($key, null, false);
-            });
-        $pool->expects(self::atLeastOnce())->method('save')->willReturn(true);
-
+        $pool = new ArrayAdapter();
         $manager = $this->createManager($pool);
-        self::assertTrue($manager->verifyAndConsume('ABC123'));
-        self::assertTrue($manager->verifyAndConsume('AbC123'));
+
+        // Generate a code first
+        $codes = $manager->generate(1);
+        $code = $codes[0];
+
+        self::assertTrue($manager->verifyAndConsume(strtoupper($code)));
     }
 
     public function testVerifyAndConsumeStripsInvalidChars(): void {
-        $pool = $this->createMockPool();
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-        $backupItem = $this->createMockItem('backup_abc123', true, true);
-
-        $pool->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $pool->method('getItem')
-            ->willReturnCallback(function ($key) use ($backupItem) {
-                if (str_contains($key, 'backup_')) {
-                    return $backupItem;
-                }
-                return $this->createMockItem($key, null, false);
-            });
-        $pool->expects(self::atLeastOnce())->method('save')->willReturn(true);
-
+        $pool = new ArrayAdapter();
         $manager = $this->createManager($pool);
-        self::assertTrue($manager->verifyAndConsume('abc-123'));
-        self::assertTrue($manager->verifyAndConsume('abc 123'));
-        self::assertTrue($manager->verifyAndConsume('abc!@#123'));
+
+        // Generate a code first
+        $codes = $manager->generate(1);
+        $code = $codes[0];
+
+        // Insert invalid characters
+        $modifiedCode = substr($code, 0, 2) . '-' . substr($code, 2, 2) . ' ' . substr($code, 4);
+        self::assertTrue($manager->verifyAndConsume($modifiedCode));
     }
 
     public function testExpireRemovesBackupCodes(): void {
-        $pool = $this->createMockPool();
-        $keyListItem = $this->createMockItem('__key_list', ['backup_a' => true, 'backup_b' => true, 'other' => true], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-
-        $pool->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $pool->method('getItem')
-            ->with('__key_list')
-            ->willReturn($keyListItem);
-        $pool->expects(self::once())
-            ->method('deleteItems')
-            ->with(self::callback(function ($keys) {
-                return count($keys) === 2 && in_array('backup_a', $keys) && in_array('backup_b', $keys);
-            }))
-            ->willReturn(true);
-        $pool->expects(self::once())->method('saveDeferred')->willReturn(true);
-        $pool->expects(self::once())->method('commit')->willReturn(true);
-
+        $pool = new ArrayAdapter();
         $manager = $this->createManager($pool);
+
+        // Generate some backup codes
+        $manager->generate(3);
+
+        // Verify they exist
+        $keys = [];
+        foreach ($pool->getItems(['__key_list', '__chg_list']) as $item) {
+            if ($item->getKey() === '__key_list') {
+                $keys = array_keys($item->get() ?? []);
+            }
+        }
+        $backupKeys = array_filter($keys, fn($k) => str_starts_with($k, 'backup_'));
+        self::assertNotEmpty($backupKeys);
+
+        // Expire them
         $manager->expire();
+
+        // Verify they are gone
+        $keysAfter = [];
+        foreach ($pool->getItems(['__key_list', '__chg_list']) as $item) {
+            if ($item->getKey() === '__key_list') {
+                $keysAfter = array_keys($item->get() ?? []);
+            }
+        }
+        $backupKeysAfter = array_filter($keysAfter, fn($k) => str_starts_with($k, 'backup_'));
+        self::assertEmpty($backupKeysAfter);
     }
 
     public function testExpireDoesNothingWhenNoBackupCodes(): void {
-        $pool = $this->createMockPool();
-        $keyListItem = $this->createMockItem('__key_list', ['other' => true], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-
-        $pool->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $pool->method('getItem')
-            ->with('__key_list')
-            ->willReturn($keyListItem);
-        $pool->expects(self::never())->method('deleteItems');
-
+        $pool = new ArrayAdapter();
         $manager = $this->createManager($pool);
+
+        // Add a non-backup item
+        $item = $pool->getItem('other_key');
+        $item->set('value');
+        $pool->save($item);
+
+        // Expire should not throw
         $manager->expire();
+
+        // Non-backup item should still exist
+        self::assertTrue($pool->hasItem('other_key'));
     }
 }
