@@ -1,0 +1,3 @@
+tests/Unit/Core/UtilitiesTest.php
+tests/Unit/Trait/HasLoggerTraitTest.php
+tests/Unit/Trait/MakeNonceTraitTest.php

@@ -6,40 +6,49 @@ namespace App\Tests\Unit\Service;
 use App\ConfigBag;
 use App\Data\Payload;
 use App\Enum\Scope;
-use App\Service\BackupCodeManager;
+use App\Service\BackupCodeInterface;
 use App\Service\DomainManager;
 use App\Service\LoginManager;
 use OTPHP\TOTP;
 use PHPUnit\Framework\TestCase;
-use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 final class LoginManagerTest extends TestCase {
-    private function createMockItem(string $key, mixed $value = null, bool $isHit = true): CacheItemInterface {
-        $item = $this->createMock(CacheItemInterface::class);
-        $item->method('getKey')->willReturn($key);
-        $item->method('get')->willReturn($value);
-        $item->method('isHit')->willReturn($isHit);
-        $item->method('set')->willReturnSelf();
-        $item->method('expiresAfter')->willReturnSelf();
-        return $item;
+    private ?TOTP $totp = null;
+    private ?ClockInterface $clock = null;
+
+    private function getClock(): ClockInterface {
+        if ($this->clock === null) {
+            $now = time();
+            $this->clock = $this->createMock(ClockInterface::class);
+            $this->clock->method('now')->willReturn(new \DateTimeImmutable('@' . $now));
+        }
+        return $this->clock;
+    }
+
+    private function getTotp(): TOTP {
+        if ($this->totp === null) {
+            $this->totp = TOTP::generate($this->getClock());
+            $this->totp->setLabel('Test');
+        }
+        return $this->totp;
     }
 
     private function createConfigBag(int $ipTtl = 1800): ConfigBag {
-        $clock = $this->createMock(ClockInterface::class);
-        $utilities = $this->createMock(\App\Utilities::class);
-        $totp = TOTP::generate($clock);
-        $totp->setLabel('Test');
+        $clock = $this->getClock();
+        $cache = $this->createMock(CacheItemPoolInterface::class);
+        $utilities = new \App\Utilities($clock, $cache);
 
         return new ConfigBag(
             $utilities,
             $clock,
             3600,
-            $totp->getProvisioningUri(),
+            $this->getTotp()->getProvisioningUri(),
             $ipTtl,
             false,
             'Error',
@@ -48,54 +57,40 @@ final class LoginManagerTest extends TestCase {
         );
     }
 
+    private function getCurrentTotpToken(): string {
+        return $this->getTotp()->now();
+    }
+
     private function createManager(
-        CacheItemPoolInterface $cache,
-        ?BackupCodeManager $backupCodeManager = null,
-        ?DomainManager $domainManager = null
+        ArrayAdapter $cache,
+        ?BackupCodeInterface $backupCodeManager = null,
+        ?DomainManager $domainManager = null,
+        ?ArrayAdapter $nonceCache = null
     ): LoginManager {
-        $bcm = $backupCodeManager ?? $this->createMock(BackupCodeManager::class);
+        $bcm = $backupCodeManager ?? $this->createMock(BackupCodeInterface::class);
         $dm = $domainManager ?? new DomainManager(false, '');
         $manager = new LoginManager($cache, $bcm, $dm);
         $manager->setConfig($this->createConfigBag());
         $manager->setLogger($this->createMock(LoggerInterface::class));
 
-        $nonceCache = $this->createMock(CacheItemPoolInterface::class);
-        $nonceItem = $this->createMockItem('nonce_abc', true, true);
-        $nonceCache->method('getItem')->willReturn($nonceItem);
-        $nonceCache->method('save')->willReturn(true);
-        $manager->setNonceCache($nonceCache);
+        $nc = $nonceCache ?? new ArrayAdapter();
+        if (!$nonceCache) {
+            $nonceItem = $nc->getItem('nonce_abc');
+            $nonceItem->set(true);
+            $nc->save($nonceItem);
+        }
+        $manager->setNonceCache($nc);
 
         return $manager;
     }
 
     public function testCheckTokenWithValidTotpAndCookieScope(): void {
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-
-        $cache->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $cache->method('getItem')
-            ->willReturnCallback(function ($key) {
-                if (str_starts_with($key, 'cookie_')) {
-                    return $this->createMockItem($key, null, false);
-                }
-                return $this->createMockItem($key, null, false);
-            });
-        $cache->method('saveDeferred')->willReturn(true);
-        $cache->method('commit')->willReturn(true);
-        $cache->method('save')->willReturn(true);
-
+        $cache = new ArrayAdapter();
         $manager = $this->createManager($cache);
-
-        $clock = $this->createMock(ClockInterface::class);
-        $totp = TOTP::generate($clock);
-        $totp->setLabel('Test');
 
         $payload = new Payload();
         $payload->id = 'user1';
-        $payload->token = $totp->now();
+        $payload->token = $this->getCurrentTotpToken();
         $payload->nonce = 'abc';
         $payload->json = true;
         $payload->scope = Scope::Cookie;
@@ -110,23 +105,12 @@ final class LoginManagerTest extends TestCase {
     }
 
     public function testCheckTokenWithValidTotpAndNoneScope(): void {
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-
-        $cache->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-
+        $cache = new ArrayAdapter();
         $manager = $this->createManager($cache);
-
-        $clock = $this->createMock(ClockInterface::class);
-        $totp = TOTP::generate($clock);
-        $totp->setLabel('Test');
 
         $payload = new Payload();
         $payload->id = 'user1';
-        $payload->token = $totp->now();
+        $payload->token = $this->getCurrentTotpToken();
         $payload->nonce = 'abc';
         $payload->json = false;
         $payload->scope = Scope::None;
@@ -141,14 +125,7 @@ final class LoginManagerTest extends TestCase {
     }
 
     public function testCheckTokenWithInvalidToken(): void {
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-
-        $cache->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-
+        $cache = new ArrayAdapter();
         $manager = $this->createManager($cache);
 
         $payload = new Payload();
@@ -165,25 +142,9 @@ final class LoginManagerTest extends TestCase {
     }
 
     public function testCheckTokenWithValidBackupCode(): void {
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
+        $cache = new ArrayAdapter();
 
-        $cache->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $cache->method('getItem')
-            ->willReturnCallback(function ($key) {
-                if (str_starts_with($key, 'cookie_')) {
-                    return $this->createMockItem($key, null, false);
-                }
-                return $this->createMockItem($key, null, false);
-            });
-        $cache->method('saveDeferred')->willReturn(true);
-        $cache->method('commit')->willReturn(true);
-        $cache->method('save')->willReturn(true);
-
-        $backupManager = $this->createMock(BackupCodeManager::class);
+        $backupManager = $this->createMock(BackupCodeInterface::class);
         $backupManager->method('verifyAndConsume')->willReturn(true);
 
         $manager = $this->createManager($cache, $backupManager);
@@ -202,33 +163,12 @@ final class LoginManagerTest extends TestCase {
     }
 
     public function testCheckTokenWithIpScopeWhenDisabled(): void {
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-
-        $cache->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $cache->method('getItem')
-            ->willReturnCallback(function ($key) {
-                if (str_starts_with($key, 'cookie_')) {
-                    return $this->createMockItem($key, null, false);
-                }
-                return $this->createMockItem($key, null, false);
-            });
-        $cache->method('saveDeferred')->willReturn(true);
-        $cache->method('commit')->willReturn(true);
-        $cache->method('save')->willReturn(true);
-
+        $cache = new ArrayAdapter();
         $manager = $this->createManager($cache);
-
-        $clock = $this->createMock(ClockInterface::class);
-        $totp = TOTP::generate($clock);
-        $totp->setLabel('Test');
 
         $payload = new Payload();
         $payload->id = 'user1';
-        $payload->token = $totp->now();
+        $payload->token = $this->getCurrentTotpToken();
         $payload->nonce = 'abc';
         $payload->json = true;
         $payload->scope = Scope::Ip;
@@ -242,28 +182,19 @@ final class LoginManagerTest extends TestCase {
     }
 
     public function testCheckTokenWithInvalidNonce(): void {
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
+        $cache = new ArrayAdapter();
 
-        $cache->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
+        // Create nonce cache with invalid nonce
+        $nonceCache = new ArrayAdapter();
+        $nonceItem = $nonceCache->getItem('nonce_bad');
+        $nonceItem->set(false);
+        $nonceCache->save($nonceItem);
 
-        $manager = $this->createManager($cache);
-
-        $nonceCache = $this->createMock(CacheItemPoolInterface::class);
-        $nonceItem = $this->createMockItem('nonce_bad', false, true);
-        $nonceCache->method('getItem')->willReturn($nonceItem);
-        $manager->setNonceCache($nonceCache);
-
-        $clock = $this->createMock(ClockInterface::class);
-        $totp = TOTP::generate($clock);
-        $totp->setLabel('Test');
+        $manager = $this->createManager($cache, nonceCache: $nonceCache);
 
         $payload = new Payload();
         $payload->id = 'user1';
-        $payload->token = $totp->now();
+        $payload->token = $this->getCurrentTotpToken();
         $payload->nonce = 'bad';
         $payload->json = true;
         $payload->scope = Scope::None;
@@ -275,28 +206,16 @@ final class LoginManagerTest extends TestCase {
     }
 
     public function testCheckTokenWithMissingNonce(): void {
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
+        $cache = new ArrayAdapter();
 
-        $cache->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
+        // Create empty nonce cache (missing nonce)
+        $nonceCache = new ArrayAdapter();
 
-        $manager = $this->createManager($cache);
-
-        $nonceCache = $this->createMock(CacheItemPoolInterface::class);
-        $nonceItem = $this->createMockItem('nonce_missing', null, false);
-        $nonceCache->method('getItem')->willReturn($nonceItem);
-        $manager->setNonceCache($nonceCache);
-
-        $clock = $this->createMock(ClockInterface::class);
-        $totp = TOTP::generate($clock);
-        $totp->setLabel('Test');
+        $manager = $this->createManager($cache, nonceCache: $nonceCache);
 
         $payload = new Payload();
         $payload->id = 'user1';
-        $payload->token = $totp->now();
+        $payload->token = $this->getCurrentTotpToken();
         $payload->nonce = 'missing';
         $payload->json = true;
         $payload->scope = Scope::None;
@@ -308,31 +227,17 @@ final class LoginManagerTest extends TestCase {
     }
 
     public function testCheckTokenWithUlidCollisionThrows(): void {
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $keyListItem = $this->createMockItem('__key_list', [], true);
-        $changeListItem = $this->createMockItem('__chg_list', [], true);
-
-        $cache->method('getItems')
-            ->with(['__key_list', '__chg_list'])
-            ->willReturn([$keyListItem, $changeListItem]);
-        $cache->method('getItem')
-            ->willReturnCallback(function ($key) {
-                if (str_starts_with($key, 'cookie_')) {
-                    // Simulate collision
-                    return $this->createMockItem($key, 'existing', true);
-                }
-                return $this->createMockItem($key, null, false);
-            });
-
+        $cache = new ArrayAdapter();
         $manager = $this->createManager($cache);
 
-        $clock = $this->createMock(ClockInterface::class);
-        $totp = TOTP::generate($clock);
-        $totp->setLabel('Test');
+        // Pre-populate cache with a cookie to simulate collision
+        $cookieItem = $cache->getItem('cookie_test');
+        $cookieItem->set('existing');
+        $cache->save($cookieItem);
 
         $payload = new Payload();
         $payload->id = 'user1';
-        $payload->token = $totp->now();
+        $payload->token = $this->getCurrentTotpToken();
         $payload->nonce = 'abc';
         $payload->json = true;
         $payload->scope = Scope::Cookie;
