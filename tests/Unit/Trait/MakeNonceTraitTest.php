@@ -23,6 +23,10 @@ final class MakeNonceTraitTest extends TestCase {
             public function publicMakeNonce(int $retries = 3): string {
                 return $this->makeNonce($retries);
             }
+
+            public function publicMakeCacheKey(string $name): string {
+                return $this->makeCacheKey($name);
+            }
         };
     }
 
@@ -48,8 +52,10 @@ final class MakeNonceTraitTest extends TestCase {
 
         $nonce = $obj->publicMakeNonce();
 
-        self::assertTrue($pool->hasItem($nonce));
-        $item = $pool->getItem($nonce);
+        // makeNonce stores via makeCacheKey() which rewrites '-' to '_'
+        $key = $obj->publicMakeCacheKey($nonce);
+        self::assertTrue($pool->hasItem($key));
+        $item = $pool->getItem($key);
         self::assertTrue($item->get());
     }
 
@@ -61,7 +67,7 @@ final class MakeNonceTraitTest extends TestCase {
 
         $nonce = $obj->publicMakeNonce();
 
-        $item = $pool->getItem($nonce);
+        $item = $pool->getItem($obj->publicMakeCacheKey($nonce));
         $expiry = $item->getMetadata()['expiry'];
         // NONCE_TTL is 120 seconds
         self::assertLessThanOrEqual(120, (int) $expiry - time());
