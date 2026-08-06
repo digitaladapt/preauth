@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 
-final class Kernel extends BaseKernel {
+class Kernel extends BaseKernel {
     use MicroKernelTrait;
 
     private PersistCache $persistCache;

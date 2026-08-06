@@ -15,6 +15,13 @@
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
+        <server name="KERNEL_CLASS" value="App\Tests\TestKernel" />
+        <!-- fixed TOTP secret so functional tests can compute valid codes -->
+        <server name="TOTP_URI" value="otpauth://totp/Test-TOTP?secret=JBSWY3DPEHPK3PXP" />
+        <server name="APP_SECRET" value="test_secret_key_change_me" />
+        <!-- high rate limits so functional tests don't get blocked -->
+        <server name="BURST_COUNT" value="10000" />
+        <server name="UPPER_COUNT" value="10000" />
     </php>
 
     <testsuites>
