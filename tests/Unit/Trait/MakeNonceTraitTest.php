@@ -104,4 +104,73 @@ final class MakeNonceTraitTest extends TestCase {
 
         $obj->publicMakeNonce();
     }
+
+    public function testMakeNonceRetriesAndSucceedsAfterCollision(): void {
+        // Use a spy pool that returns isHit=true on the first getItem call
+        // (simulating a collision), then delegates to a real ArrayAdapter for
+        // subsequent calls so the retry succeeds.
+        $realPool = new ArrayAdapter();
+        $collisionCount = 0;
+
+        $spyPool = new class($realPool, $collisionCount) implements CacheItemPoolInterface {
+            private int $hits = 0;
+            public function __construct(
+                private CacheItemPoolInterface $inner,
+                private int &$hitCounter,
+            ) {}
+
+            public function getItem(string $key): CacheItemInterface {
+                $item = $this->inner->getItem($key);
+                // pretend the first requested key is already a hit (collision)
+                if ($this->hits === 0) {
+                    $this->hits++;
+                    $this->hitCounter++;
+                    return new class($key) implements CacheItemInterface {
+                        public function __construct(private string $key) {}
+                        public function getKey(): string { return $this->key; }
+                        public function get(): mixed { return true; }
+                        public function isHit(): bool { return true; }
+                        public function set(mixed $value): static { return $this; }
+                        public function expiresAt(?\DateTimeInterface $expiration): static { return $this; }
+                        public function expiresAfter(int|\DateInterval|null $time): static { return $this; }
+                    };
+                }
+                return $item;
+            }
+            public function getItems(array $keys = []): iterable { return $this->inner->getItems($keys); }
+            public function hasItem(string $key): bool { return $this->inner->hasItem($key); }
+            public function clear(): bool { return $this->inner->clear(); }
+            public function deleteItem(string $key): bool { return $this->inner->deleteItem($key); }
+            public function deleteItems(array $keys): bool { return $this->inner->deleteItems($keys); }
+            public function save(CacheItemInterface $item): bool { return $this->inner->save($item); }
+            public function saveDeferred(CacheItemInterface $item): bool { return $this->inner->saveDeferred($item); }
+            public function commit(): bool { return $this->inner->commit(); }
+        };
+
+        $obj = $this->makeObject();
+        $obj->setLogger(new NullLogger());
+        $obj->setNonceCache($spyPool);
+
+        // should retry and succeed on the second attempt
+        $nonce = $obj->publicMakeNonce();
+        self::assertIsString($nonce);
+        self::assertSame(20, strlen($nonce));
+        self::assertSame(1, $collisionCount, 'Expected exactly one collision before success');
+    }
+
+    public function testMakeNonceThrowsImmediatelyWithZeroRetries(): void {
+        $pool = $this->createStub(CacheItemPoolInterface::class);
+        $item = $this->createStub(CacheItemInterface::class);
+        $item->method('isHit')->willReturn(true);
+        $item->method('get')->willReturn(true);
+        $pool->method('getItem')->willReturn($item);
+        $pool->method('save')->willReturn(true);
+
+        $obj = $this->makeObject();
+        $obj->setLogger(new NullLogger());
+        $obj->setNonceCache($pool);
+
+        $this->expectException(HttpException::class);
+        $obj->publicMakeNonce(0);
+    }
 }

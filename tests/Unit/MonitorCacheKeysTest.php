@@ -209,4 +209,65 @@ final class MonitorCacheKeysTest extends TestCase {
         $this->expectException(OutOfBoundsException::class);
         $monitor->deleteItems(['__chg_list']);
     }
+
+    public function testSaveDeferredOnKeyListThrowsOutOfBoundsException(): void {
+        $monitor = $this->wrap();
+        $item = $monitor->getItem('safe');
+        $item->set('value');
+
+        // getItem returns the real item, but saveDeferred calls update() which
+        // validates the key — so we need to get the __key_list item and try to save it
+        $keyListItem = $monitor->getItem('__key_list');
+
+        $this->expectException(OutOfBoundsException::class);
+        $monitor->saveDeferred($keyListItem);
+    }
+
+    public function testSaveDeferredOnChangeListThrowsOutOfBoundsException(): void {
+        $monitor = $this->wrap();
+        $changeListItem = $monitor->getItem('__chg_list');
+
+        $this->expectException(OutOfBoundsException::class);
+        $monitor->saveDeferred($changeListItem);
+    }
+
+    public function testGetKeysReturnsEmptyArrayWhenKeyListMissing(): void {
+        // If the underlying pool loses its key list, getKeys should return []
+        $pool = new ArrayAdapter();
+        $monitor = new MonitorCacheKeys($pool);
+
+        $item = $monitor->getItem('alpha');
+        $item->set('value');
+        $monitor->save($item);
+
+        // delete the key list directly from the underlying pool
+        $pool->deleteItem('__key_list');
+
+        $monitor2 = new MonitorCacheKeys($pool);
+        // the constructor will re-initialize since __key_list is missing
+        // but getKeys on the new monitor should be empty
+        self::assertSame([], $monitor2->getKeys());
+    }
+
+    public function testDeleteItemReturnsTrueForExistingKey(): void {
+        $monitor = $this->wrap();
+        $item = $monitor->getItem('to-delete');
+        $item->set('value');
+        $monitor->save($item);
+
+        self::assertTrue($monitor->deleteItem('to-delete'));
+        self::assertNotContains('to-delete', $monitor->getKeys());
+    }
+
+    public function testDeleteItemsReturnsTrue(): void {
+        $monitor = $this->wrap();
+        foreach (['a', 'b', 'c'] as $key) {
+            $item = $monitor->getItem($key);
+            $item->set('value');
+            $monitor->save($item);
+        }
+
+        self::assertTrue($monitor->deleteItems(['a', 'b', 'c']));
+        self::assertSame([], $monitor->getKeys());
+    }
 }

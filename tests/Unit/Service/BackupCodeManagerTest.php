@@ -168,4 +168,48 @@ final class BackupCodeManagerTest extends TestCase {
             self::assertFalse($pool->hasItem('backup_' . strtolower($code)));
         }
     }
+
+    public function testVerifyAndConsumeEmptyStringReturnsFalse(): void {
+        $manager = $this->makeManager();
+
+        // empty string after preg_replace becomes 'backup_' with nothing after it
+        self::assertFalse($manager->verifyAndConsume(''));
+    }
+
+    public function testVerifyAndConsumeCodeWithValueFalseReturnsFalse(): void {
+        $pool = new ArrayAdapter();
+        $manager = $this->makeManager($pool);
+        $codes = $manager->generate(1);
+        $code = $codes[0];
+
+        // first use succeeds
+        self::assertTrue($manager->verifyAndConsume($code));
+
+        // the code is now marked as false (used); isHit is true but get() is false
+        $key = 'backup_' . strtolower($code);
+        $item = $pool->getItem($key);
+        self::assertTrue($item->isHit());
+        self::assertFalse($item->get());
+
+        // second use should fail because get() returns false
+        self::assertFalse($manager->verifyAndConsume($code));
+    }
+
+    public function testGenerateProducesUniqueCodes(): void {
+        $manager = $this->makeManager();
+
+        $codes = $manager->generate(50);
+
+        self::assertCount(50, $codes);
+        self::assertCount(50, array_unique($codes), 'All generated codes should be unique');
+    }
+
+    public function testGenerateCodeLengthIsDigitsPlusTwo(): void {
+        $manager = $this->makeManager();
+
+        $codes = $manager->generate(1);
+
+        // default TOTP digits is 6, so code length should be 6 + 2 = 8
+        self::assertSame(8, strlen($codes[0]));
+    }
 }

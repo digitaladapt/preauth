@@ -69,4 +69,22 @@ final class GetTotpTraitTest extends TestCase {
         $this->expectException(\Throwable::class);
         $obj->publicGetTotp();
     }
+
+    public function testGetTotpThrowsHttpExceptionWhenNotTotpType(): void {
+        // A HOTP URI loads successfully as an OTPInterface but is NOT a TOTPInterface,
+        // so the instanceof check in getTotp() should throw an HttpException(500)
+        $obj = $this->makeObject();
+        $clock = $this->frozenClock();
+        $utilities = $this->createUtilities($clock);
+        $config = new ConfigBag(
+            $utilities, $clock,
+            3600, 'otpauth://hotp/Test-HOTP?secret=JBSWY3DPEHPK3PXP&counter=0', 0, false,
+            'Error', 'Teapot', 'Too Many'
+        );
+        $obj->setConfig($config);
+
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('Internal Server Exception');
+        $obj->publicGetTotp();
+    }
 }

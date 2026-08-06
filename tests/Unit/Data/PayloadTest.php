@@ -36,6 +36,28 @@ final class PayloadTest extends TestCase {
         self::assertNull(Payload::decode(self::b64u('"just a string"')));
     }
 
+    public function testDecodeInvalidJsonReturnsNull(): void {
+        // valid base64url but invalid JSON
+        self::assertNull(Payload::decode(self::b64u('{invalid json')));
+    }
+
+    public function testDecodeJsonArrayReturnsNull(): void {
+        self::assertNull(Payload::decode(self::b64u('[1,2,3]')));
+    }
+
+    public function testDecodeJsonNullReturnsNull(): void {
+        self::assertNull(Payload::decode(self::b64u('null')));
+    }
+
+    public function testDecodeJsonBooleanReturnsNull(): void {
+        self::assertNull(Payload::decode(self::b64u('true')));
+        self::assertNull(Payload::decode(self::b64u('false')));
+    }
+
+    public function testDecodeJsonNumberReturnsNull(): void {
+        self::assertNull(Payload::decode(self::b64u('42')));
+    }
+
     public function testDecodeEmptyStringReturnsNull(): void {
         self::assertNull(Payload::decode(''));
     }
@@ -69,6 +91,12 @@ final class PayloadTest extends TestCase {
         self::assertNull(Payload::load($input));
     }
 
+    public function testLoadWithAllFieldsPresentButEmptyReturnsNull(): void {
+        // has() returns true for all, but create() rejects empty values
+        $input = new InputBag(['username' => '', 'nonce' => '', 'totp' => '']);
+        self::assertNull(Payload::load($input));
+    }
+
     public function testCreateWithValidData(): void {
         $data = (object)[
             'id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1',
@@ -88,6 +116,21 @@ final class PayloadTest extends TestCase {
         $data = (object)['id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1'];
         $payload = Payload::create($data);
         self::assertSame(Scope::Cookie, $payload->scope);
+    }
+
+    public function testCreateWithInvalidScopeFallsBackToCookie(): void {
+        $data = (object)[
+            'id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1',
+            'scope' => 'admin',
+        ];
+        $payload = Payload::create($data);
+        self::assertSame(Scope::Cookie, $payload->scope);
+    }
+
+    public function testCreateWithMissingJsonDefaultsToTrue(): void {
+        $data = (object)['id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1'];
+        $payload = Payload::create($data);
+        self::assertTrue($payload->json);
     }
 
     public function testCreateWithNoneScopeSetsJsonFalse(): void {
