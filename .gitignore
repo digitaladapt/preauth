@@ -6,3 +6,9 @@
 /vendor/
 ###< symfony/framework-bundle ###
 
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+/bin/.phpunit.result.cache
+###< phpunit/phpunit ###

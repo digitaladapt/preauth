@@ -1,0 +1,12 @@
+framework:
+    cache:
+        app: cache.adapter.array
+        pools:
+            nonceCache:
+                adapters: cache.adapter.array
+            rateLimitCache:
+                adapters: cache.adapter.array
+            sessionCache:
+                adapters: cache.adapter.array
+            sessionStorage:
+                adapters: cache.adapter.array
