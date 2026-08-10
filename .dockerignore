@@ -1,0 +1,12 @@
+.git/
+.gitignore
+var/
+vendor/
+tests/
+.phpunit.cache/
+docs/
+*.md
+.env
+.env.test
+.env.local
+composer.phar

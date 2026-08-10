@@ -16,9 +16,9 @@ final class Payload {
 
     public static function decode(string $base64url): ?Payload {
         /* convert the base64url into json string */
-        $json = base64_decode(str_pad(strtr($base64url, '-_', '+/'),
-            strlen($base64url) % 4, '='
-        ), true);
+        $base64 = strtr($base64url, '-_', '+/');
+        $base64 .= str_repeat('=', (4 - strlen($base64) % 4) % 4);
+        $json = base64_decode($base64, true);
         if ($json) {
             /* convert the json string into real data */
             $data = json_decode($json);

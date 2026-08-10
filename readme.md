@@ -15,7 +15,7 @@ It sits between your reverse proxy and web service to add extra protection, whil
 
 It may be possible to use some other reverse proxy, but for now, I'm going to stick with just Caddy.
 
-There is an example Caddyfile in /docs/ and env.example file to get you started. Within the Caddyfile is a snippet, which makes it easy to wrap your web service with preauth.
+There is an example Caddyfile in /docs/ and an example.env file to get you started. Within the Caddyfile is a snippet, which makes it easy to wrap your web service with preauth.
 
 When someone tries to reach your protected web service, Caddy will check with preauth if they are allowed, if their preauth cookie is missing, invalid, or expired, we will show them to a login screen.
 

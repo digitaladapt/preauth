@@ -12,3 +12,7 @@
 /.phpunit.cache/
 /bin/.phpunit.result.cache
 ###< phpunit/phpunit ###
+
+###> project-specific ###
+/config/reference.php
+###< project-specific ###
