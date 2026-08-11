@@ -123,16 +123,12 @@ final readonly class LoginManager implements LoginInterface
         $sessionCookie->expiresAfter($this->config->cookieTtl());
         $this->sessionCache->save($sessionCookie);
 
-        /* when using subdomain-auth we have to use a different cookie name, as the
-         * "__Host-Http-" prefix we normally use does not allow domain to be set */
-        /* changes here must be reflected in InterceptListener::pruneInvalidCookie() */
         return Cookie::create(
-            name: $this->domainManager->authBase() ? $this->authCookieName() : $this->cookieName(),
+            name: $this->sessionCookieName($this->domainManager),
             value: $ulid->toString(),
             expire: time() + $this->config->cookieTtl(),
             path: '/',
-            /* if using central auth, only set the domain if the host matches */
-            domain: $this->domainManager->matchesAuth($host) ? $this->domainManager->authBase() : null,
+            domain: $this->sessionCookieDomain($this->domainManager, $host),
             secure: true,
             httpOnly: true,
             sameSite: Cookie::SAMESITE_STRICT,

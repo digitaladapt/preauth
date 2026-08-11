@@ -1,7 +1,7 @@
 services:
   preauth:
     env_file:
-      # TODO rename "example.env" to ".env", edit as needed
+      # rename "example.env" to ".env", edit as needed
       # strongly recommend setting TOTP_URI, if not provided the app
       # will generate one for you, please copy it into your .env file
       - .env

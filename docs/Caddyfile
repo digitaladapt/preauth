@@ -20,7 +20,7 @@ protected.example.com {
 	reverse_proxy protected-service:9000
 }
 
-# optionally, if you want to use a subdomain for centeral preauth
+# optionally, if you want to use a subdomain for central preauth
 # set SUBDOMAIN_REDIRECT to true
 # and AUTH_SUBDOMAIN to match the subdomain you use here
 auth.example.com {

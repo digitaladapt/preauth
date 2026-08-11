@@ -60,7 +60,7 @@ Client → Caddy → forward_auth → Preauth listeners (priority order) → 200
   cookie name (domain-scoped, no `__Host-` prefix).
 - **Nonce system** — 15-byte random nonces, single-use, 120s TTL, with
   retry-on-collision (up to 3 attempts).
-- **TOTP with 10-second leeway** — Accommodates clock drift.
+- **TOTP with ±1 period leeway (±30 seconds)** — Accommodates clock drift.
 - **Backup codes** — Case-insensitive alphanumeric, single-use, stored
   in cache with year-2999 expiry. Generated via console command.
 - **Domain awareness** — `DomainManager` handles multi-part TLDs
@@ -380,15 +380,14 @@ approach proves insufficient for the use case.*
   - Smaller image size (alpine-based if feasible)
   - Better health check (actual endpoint, not just `curl localhost`)
 - [ ] **GitHub/Gitea repository polish:**
-  - Comprehensive README with setup guide, architecture overview, and
+  - ✅ Comprehensive README with setup guide, architecture overview, and
     configuration reference
   - Contributing guidelines
-  - Changelog (currently inline in README — formalise it)
-  - GitHub Actions CI (run tests on push/PR, build Docker image on tag)
+  - ✅ Changelog formalised (CHANGELOG.md)
+  - ✅ CI workflows (tests + php-cs-fixer on push/PR, Docker image on tag)
 - [ ] **Security review:**
-  - Consider CSRF protection on the POST form login (auth subdomain)
-  - Consider adding `X-Content-Type-Options: nosniff` and other security
-    headers to responses
+  - ✅ CSRF protection on the POST form login — nonce system documented
+  - ✅ Security headers added (X-Content-Type-Options, X-Frame-Options, CSP, etc.)
   - Review nonce entropy and cache key collision space
   - Consider session fixation protections
 - [ ] **Frontend improvements:**
@@ -476,13 +475,9 @@ identity provider:
 
 | Branch | Status | Notes |
 |--------|--------|-------|
-| `main` (0.8.1) | Production | Current stable release |
-| `kat-tests` | ✅ Ready to merge | 222 tests, 100% coverage, all passing |
-| `origin/improved-rate-limiting` | Stale | Compound sliding-window rate limiting. Already merged into main via develop. |
-| `origin/cache-persistence-improvement` | Merged (0.7.0) | Only persist changed keys. In main. |
-| `origin/remove-static-secret` | Merged | Removed static password, replaced with backup codes. In main. |
-| `origin/cleanup-cline*`, `cline-wip` | Experimental | Code cleanup attempts, not merged. |
-| `origin/add-notes` | Minor | Documentation additions. |
+| `main` (0.10.0) | Production | Current stable release |
+
+All feature branches have been pruned. Development uses a feature-branch + PR workflow into `main`.
 
 ---
 
