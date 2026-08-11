@@ -11,7 +11,6 @@ use App\Trait\StringTrait;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 
 final readonly class AcceptListener
@@ -52,10 +51,7 @@ final readonly class AcceptListener
 
             $id = $item->get();
             $this->logger->debug("has valid cookie-session: $id");
-            $event->setResponse(new Response("hi $id", headers: [
-                'Content-Type' => 'text/plain',
-                'Remote-User'  => $id,
-            ]));
+            $event->setResponse($this->authSuccessResponse($id));
         } catch (InvalidArgumentException $e) {
             /* cache failure — fail closed (don't authenticate) */
             $this->logger->error("cache error in AcceptListener: {$e->getMessage()}");

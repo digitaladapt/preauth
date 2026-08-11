@@ -56,12 +56,12 @@ parameters:
 
     # --- application variables ---
     app.totp_uri: '%env(TOTP_URI)%'
-    app.cookie_ttl: '%env(COOKIE_TTL)%'
-    app.subdomain_redirect: '%env(SUBDOMAIN_REDIRECT)%'
+    app.cookie_ttl: '%env(int:COOKIE_TTL)%'
+    app.subdomain_redirect: '%env(bool:SUBDOMAIN_REDIRECT)%'
     app.auth_subdomain: '%env(AUTH_SUBDOMAIN)%'
 
-    app.ip_ttl: '%env(IP_TTL)%'
-    app.teapot: '%env(TEAPOT)%'
+    app.ip_ttl: '%env(int:IP_TTL)%'
+    app.teapot: '%env(bool:TEAPOT)%'
 
     app.error_message: '%env(ERROR_MESSAGE)%'
     app.teapot_title: '%env(TEAPOT_TITLE)%'

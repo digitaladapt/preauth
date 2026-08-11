@@ -47,7 +47,7 @@ final readonly class Utilities
          * we want this to keep forever, so a few hundred years should do it */
         $totpItem->expiresAt(DateTimeImmutable::createFromFormat(
             'Y-m-d',
-            '2999-12-31'
+            AppConstants::FAR_FUTURE_DATE
         ));
         $this->appPool->save($totpItem);
         return $totp;

@@ -63,10 +63,7 @@ final readonly class LoginManager implements LoginInterface
                 $cleanId = $this->makeCacheKey($payload->id);
 
                 /* if they just want this one page, return ok, to grant them access */
-                $response = new Response("hi $cleanId", headers: [
-                    'Content-Type' => 'text/plain',
-                    'Remote-User'  => $cleanId,
-                ]);
+                $response = $this->authSuccessResponse($cleanId);
 
                 if ($payload->scope !== Scope::None) {
                     /* grant access based on the requested scope */
