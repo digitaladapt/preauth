@@ -1,11 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
-final readonly class DomainManager implements DomainInterface {
+final readonly class DomainManager implements DomainInterface
+{
     /* top-level-domains which are known to have multiple parts */
     private const array TLD = [
         'ai'  => ['com','net','off','org'],
@@ -38,7 +40,8 @@ final readonly class DomainManager implements DomainInterface {
 
     /** IE: "auth.example.com" or null if not using a separate subdomain
      * @return ?string Returns auth subdomain if configured, otherwise null */
-    public function getAuthSubdomain(): ?string {
+    public function getAuthSubdomain(): ?string
+    {
         if ($this->authBase()) {
             return $this->authSubdomain;
         }
@@ -48,7 +51,8 @@ final readonly class DomainManager implements DomainInterface {
     /** check if given url is an acceptable url for redirection
      * @param string $url Where we are thinking of sending the user
      * @return bool Returns true if it is acceptable to send the user there */
-    public function validReturn(string $url): bool {
+    public function validReturn(string $url): bool
+    {
         /* ensure url is valid and, when using an auth subdomain,
          * that the url host matches the base domain */
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
@@ -70,7 +74,8 @@ final readonly class DomainManager implements DomainInterface {
     /** check if host-base matches auth-base
      * @param string $host
      * @return bool returns true if and only if host matches base domain of auth */
-    public function matchesAuth(string $host): bool {
+    public function matchesAuth(string $host): bool
+    {
         $hostBase = $this->baseDomain($host);
         $authBase = $this->baseDomain($this->authSubdomain);
         return $this->subdomainRedirect && $this->authSubdomain &&
@@ -79,7 +84,8 @@ final readonly class DomainManager implements DomainInterface {
 
     /** IE: "example.com" if central auth is something like "auth.example.com"
      * @return string|null returns base domain if we are doing central auth */
-    public function authBase(): ?string {
+    public function authBase(): ?string
+    {
         if ($this->subdomainRedirect && $this->authSubdomain && $this->baseDomain($this->authSubdomain)) {
             return $this->baseDomain($this->authSubdomain);
         }
@@ -91,7 +97,8 @@ final readonly class DomainManager implements DomainInterface {
      * things like "localhost" and "8.8.8.8" will return null
      * @param string $host ip, localhost, or domain with zero or more subdomains
      * @return ?string returns null if host is ip or localhost otherwise domain with all subdomains removed */
-    private function baseDomain(string $host): ?string {
+    private function baseDomain(string $host): ?string
+    {
         /* if host is an ip address (or localhost), leave it as is */
         if (filter_var($host, FILTER_VALIDATE_IP) || $host === 'localhost') {
             return null;
@@ -106,12 +113,13 @@ final readonly class DomainManager implements DomainInterface {
     /** IE: ["www", "example", "com"] or ["www", "example", "co", "uk"]
      * @param string[] $parts pieces of a domain split by "." dot
      * @return int typically 2 but sometimes 3 */
-    private function baseLength(array $parts): int {
+    private function baseLength(array $parts): int
+    {
         $length = count($parts);
         $baseLength = min(2, $length);
         /* check if host should retain 3 parts, due to TLD */
-        if (count($parts) > 2 && isset(self::TLD[$parts[$length-1]]) &&
-            in_array($parts[$length-2], self::TLD[$parts[$length-1]], true)
+        if (count($parts) > 2 && isset(self::TLD[$parts[$length - 1]]) &&
+            in_array($parts[$length - 2], self::TLD[$parts[$length - 1]], true)
         ) {
             $baseLength = min(3, $length);
         }

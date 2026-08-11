@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit\Data;
@@ -8,12 +9,15 @@ use App\Enum\Scope;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\InputBag;
 
-final class PayloadTest extends TestCase {
-    private static function b64u(string $data): string {
+final class PayloadTest extends TestCase
+{
+    private static function b64u(string $data): string
+    {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 
-    public function testDecodeValidBase64Url(): void {
+    public function testDecodeValidBase64Url(): void
+    {
         $data = json_encode([
             'id' => 'testuser', 'token' => '123456', 'nonce' => 'abc123',
             'json' => true, 'scope' => 'cookie',
@@ -28,41 +32,50 @@ final class PayloadTest extends TestCase {
         self::assertSame(Scope::Cookie, $payload->scope);
     }
 
-    public function testDecodeInvalidBase64UrlReturnsNull(): void {
+    public function testDecodeInvalidBase64UrlReturnsNull(): void
+    {
         self::assertNull(Payload::decode('!!!not-valid-base64!!!'));
     }
 
-    public function testDecodeNonObjectJsonReturnsNull(): void {
+    public function testDecodeNonObjectJsonReturnsNull(): void
+    {
         self::assertNull(Payload::decode(self::b64u('"just a string"')));
     }
 
-    public function testDecodeInvalidJsonReturnsNull(): void {
+    public function testDecodeInvalidJsonReturnsNull(): void
+    {
         // valid base64url but invalid JSON
         self::assertNull(Payload::decode(self::b64u('{invalid json')));
     }
 
-    public function testDecodeJsonArrayReturnsNull(): void {
+    public function testDecodeJsonArrayReturnsNull(): void
+    {
         self::assertNull(Payload::decode(self::b64u('[1,2,3]')));
     }
 
-    public function testDecodeJsonNullReturnsNull(): void {
+    public function testDecodeJsonNullReturnsNull(): void
+    {
         self::assertNull(Payload::decode(self::b64u('null')));
     }
 
-    public function testDecodeJsonBooleanReturnsNull(): void {
+    public function testDecodeJsonBooleanReturnsNull(): void
+    {
         self::assertNull(Payload::decode(self::b64u('true')));
         self::assertNull(Payload::decode(self::b64u('false')));
     }
 
-    public function testDecodeJsonNumberReturnsNull(): void {
+    public function testDecodeJsonNumberReturnsNull(): void
+    {
         self::assertNull(Payload::decode(self::b64u('42')));
     }
 
-    public function testDecodeEmptyStringReturnsNull(): void {
+    public function testDecodeEmptyStringReturnsNull(): void
+    {
         self::assertNull(Payload::decode(''));
     }
 
-    public function testLoadWithValidInputBag(): void {
+    public function testLoadWithValidInputBag(): void
+    {
         $input = new InputBag([
             'username' => 'alice', 'nonce' => 'nonce123', 'totp' => '654321',
         ]);
@@ -76,28 +89,33 @@ final class PayloadTest extends TestCase {
         self::assertSame(Scope::Cookie, $payload->scope);
     }
 
-    public function testLoadMissingUsernameReturnsNull(): void {
+    public function testLoadMissingUsernameReturnsNull(): void
+    {
         $input = new InputBag(['nonce' => 'n', 'totp' => 't']);
         self::assertNull(Payload::load($input));
     }
 
-    public function testLoadMissingNonceReturnsNull(): void {
+    public function testLoadMissingNonceReturnsNull(): void
+    {
         $input = new InputBag(['username' => 'u', 'totp' => 't']);
         self::assertNull(Payload::load($input));
     }
 
-    public function testLoadMissingTotpReturnsNull(): void {
+    public function testLoadMissingTotpReturnsNull(): void
+    {
         $input = new InputBag(['username' => 'u', 'nonce' => 'n']);
         self::assertNull(Payload::load($input));
     }
 
-    public function testLoadWithAllFieldsPresentButEmptyReturnsNull(): void {
+    public function testLoadWithAllFieldsPresentButEmptyReturnsNull(): void
+    {
         // has() returns true for all, but create() rejects empty values
         $input = new InputBag(['username' => '', 'nonce' => '', 'totp' => '']);
         self::assertNull(Payload::load($input));
     }
 
-    public function testCreateWithValidData(): void {
+    public function testCreateWithValidData(): void
+    {
         $data = (object)[
             'id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1',
             'json' => false, 'scope' => 'ip',
@@ -112,13 +130,15 @@ final class PayloadTest extends TestCase {
         self::assertSame(Scope::Ip, $payload->scope);
     }
 
-    public function testCreateWithDefaultScope(): void {
+    public function testCreateWithDefaultScope(): void
+    {
         $data = (object)['id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1'];
         $payload = Payload::create($data);
         self::assertSame(Scope::Cookie, $payload->scope);
     }
 
-    public function testCreateWithInvalidScopeFallsBackToCookie(): void {
+    public function testCreateWithInvalidScopeFallsBackToCookie(): void
+    {
         $data = (object)[
             'id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1',
             'scope' => 'admin',
@@ -127,13 +147,15 @@ final class PayloadTest extends TestCase {
         self::assertSame(Scope::Cookie, $payload->scope);
     }
 
-    public function testCreateWithMissingJsonDefaultsToTrue(): void {
+    public function testCreateWithMissingJsonDefaultsToTrue(): void
+    {
         $data = (object)['id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1'];
         $payload = Payload::create($data);
         self::assertTrue($payload->json);
     }
 
-    public function testCreateWithNoneScopeSetsJsonFalse(): void {
+    public function testCreateWithNoneScopeSetsJsonFalse(): void
+    {
         $data = (object)[
             'id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1',
             'json' => true, 'scope' => 'none',
@@ -143,27 +165,32 @@ final class PayloadTest extends TestCase {
         self::assertFalse($payload->json);
     }
 
-    public function testCreateWithEmptyIdReturnsNull(): void {
+    public function testCreateWithEmptyIdReturnsNull(): void
+    {
         $data = (object)['id' => '', 'token' => 't', 'nonce' => 'n'];
         self::assertNull(Payload::create($data));
     }
 
-    public function testCreateWithWhitespaceIdReturnsNull(): void {
+    public function testCreateWithWhitespaceIdReturnsNull(): void
+    {
         $data = (object)['id' => '   ', 'token' => 't', 'nonce' => 'n'];
         self::assertNull(Payload::create($data));
     }
 
-    public function testCreateWithEmptyTokenReturnsNull(): void {
+    public function testCreateWithEmptyTokenReturnsNull(): void
+    {
         $data = (object)['id' => 'u', 'token' => '', 'nonce' => 'n'];
         self::assertNull(Payload::create($data));
     }
 
-    public function testCreateWithEmptyNonceReturnsNull(): void {
+    public function testCreateWithEmptyNonceReturnsNull(): void
+    {
         $data = (object)['id' => 'u', 'token' => 't', 'nonce' => ''];
         self::assertNull(Payload::create($data));
     }
 
-    public function testCreateTrimsAndTruncatesFields(): void {
+    public function testCreateTrimsAndTruncatesFields(): void
+    {
         $long = str_repeat('a', 200);
         $data = (object)[
             'id' => '  ' . $long . '  ',
@@ -177,7 +204,8 @@ final class PayloadTest extends TestCase {
         self::assertSame($expected, $payload->nonce);
     }
 
-    public function testToString(): void {
+    public function testToString(): void
+    {
         $payload = new Payload();
         $payload->id = 'u';
         $payload->token = 't';

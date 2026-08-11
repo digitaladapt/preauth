@@ -2,13 +2,13 @@
 
 namespace App\Service;
 
-
 use Exception;
 use Psr\Cache\InvalidArgumentException;
 
 /** backup-codes are case‑insensitive alphanumeric strings
  * they are single-use and marked as used after successful authentication */
-interface BackupCodeInterface {
+interface BackupCodeInterface
+{
     /** generate a set of backup-codes and return them
      * @param int $count Number of codes to generate
      * @return string[] Generated backup codes

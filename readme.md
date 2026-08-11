@@ -7,6 +7,26 @@ So, I built a simple authentication gateway, which eventually turned into this p
 
 It sits between your reverse proxy and web service to add extra protection, while still being easy to access from anywhere.
 
+## Development
+
+### Code Style
+
+This project follows [PSR-12](https://www.php-fig.org/psr/psr-12/) and includes `php-cs-fixer` as a dev dependency.
+
+```bash
+# Check for style violations
+vendor/bin/php-cs-fixer fix --dry-run --diff
+
+# Auto-fix
+vendor/bin/php-cs-fixer fix
+```
+
+### Running Tests
+
+```bash
+vendor/bin/phpunit
+```
+
 ## Requirements
 
 * Docker

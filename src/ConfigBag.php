@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App;
@@ -7,7 +8,8 @@ use Psr\Cache\InvalidArgumentException;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
-final readonly class ConfigBag {
+final readonly class ConfigBag
+{
     private ClockInterface $clock;
     private int $cookieTtl;
     private string $totpUri;
@@ -39,35 +41,43 @@ final readonly class ConfigBag {
         $this->tooManyTitle = $tooManyTitle;
     }
 
-    public function clock(): ClockInterface {
+    public function clock(): ClockInterface
+    {
         return $this->clock;
     }
 
-    public function cookieTtl(): int {
+    public function cookieTtl(): int
+    {
         return $this->cookieTtl;
     }
 
-    public function totpUri(): string {
+    public function totpUri(): string
+    {
         return $this->totpUri;
     }
 
-    public function ipTtl(): ?int {
+    public function ipTtl(): ?int
+    {
         return $this->ipTtl;
     }
 
-    public function teapot(): bool {
+    public function teapot(): bool
+    {
         return $this->teapot;
     }
 
-    public function errorMessage(): string {
+    public function errorMessage(): string
+    {
         return $this->errorMessage;
     }
 
-    public function teapotTitle(): string {
+    public function teapotTitle(): string
+    {
         return $this->teapotTitle;
     }
 
-    public function tooManyTitle(): string {
+    public function tooManyTitle(): string
+    {
         return $this->tooManyTitle;
     }
 }

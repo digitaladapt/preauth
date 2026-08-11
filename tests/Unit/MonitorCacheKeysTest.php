@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit;
@@ -8,20 +9,24 @@ use OutOfBoundsException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
-final class MonitorCacheKeysTest extends TestCase {
-    private function wrap(?ArrayAdapter $pool = null): MonitorCacheKeys {
+final class MonitorCacheKeysTest extends TestCase
+{
+    private function wrap(?ArrayAdapter $pool = null): MonitorCacheKeys
+    {
         $pool ??= new ArrayAdapter();
         return new MonitorCacheKeys($pool);
     }
 
-    public function testConstructorInitializesEmptyPool(): void {
+    public function testConstructorInitializesEmptyPool(): void
+    {
         $monitor = $this->wrap();
 
         self::assertSame([], $monitor->getKeys());
         self::assertSame([], $monitor->getChanges());
     }
 
-    public function testSaveAddsKeyAndTracksChange(): void {
+    public function testSaveAddsKeyAndTracksChange(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('alpha');
         $item->set('value');
@@ -31,7 +36,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertSame(['alpha' => MonitorCacheKeys::UPDATED], $monitor->getChanges());
     }
 
-    public function testSaveDeferredThenCommitAddsKey(): void {
+    public function testSaveDeferredThenCommitAddsKey(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('beta');
         $item->set('value');
@@ -42,7 +48,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertSame(['beta' => MonitorCacheKeys::UPDATED], $monitor->getChanges());
     }
 
-    public function testGetItemReturnsUnderlyingItem(): void {
+    public function testGetItemReturnsUnderlyingItem(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('mykey');
         $item->set('data');
@@ -53,7 +60,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertSame('data', $fetched->get());
     }
 
-    public function testGetItemsReturnsMultipleItems(): void {
+    public function testGetItemsReturnsMultipleItems(): void
+    {
         $monitor = $this->wrap();
         $a = $monitor->getItem('a');
         $a->set(1);
@@ -70,7 +78,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertSame(['a' => 1, 'b' => 2], $keys);
     }
 
-    public function testHasItemReturnsTrueForExistingKey(): void {
+    public function testHasItemReturnsTrueForExistingKey(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('exists');
         $item->set('v');
@@ -80,7 +89,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertFalse($monitor->hasItem('missing'));
     }
 
-    public function testDeleteItemRemovesKeyAndTracksRemoval(): void {
+    public function testDeleteItemRemovesKeyAndTracksRemoval(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('doomed');
         $item->set('v');
@@ -93,7 +103,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertFalse($monitor->hasItem('doomed'));
     }
 
-    public function testDeleteItemOnMissingKeyIsNoop(): void {
+    public function testDeleteItemOnMissingKeyIsNoop(): void
+    {
         $monitor = $this->wrap();
 
         $result = $monitor->deleteItem('nonexistent');
@@ -102,7 +113,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertSame([], $monitor->getKeys());
     }
 
-    public function testDeleteItemsRemovesMultipleKeys(): void {
+    public function testDeleteItemsRemovesMultipleKeys(): void
+    {
         $monitor = $this->wrap();
         foreach (['x', 'y', 'z'] as $key) {
             $item = $monitor->getItem($key);
@@ -118,7 +130,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertSame(MonitorCacheKeys::REMOVED, $changes['y']);
     }
 
-    public function testDeleteItemsWithMissingKeysStillReturnsTrue(): void {
+    public function testDeleteItemsWithMissingKeysStillReturnsTrue(): void
+    {
         $monitor = $this->wrap();
 
         $result = $monitor->deleteItems(['ghost1', 'ghost2']);
@@ -126,7 +139,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertTrue($result);
     }
 
-    public function testClearWipesPoolWhenNotEmpty(): void {
+    public function testClearWipesPoolWhenNotEmpty(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('keep');
         $item->set('v');
@@ -138,7 +152,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertSame([], $monitor->getKeys());
     }
 
-    public function testClearIsNoopWhenEmpty(): void {
+    public function testClearIsNoopWhenEmpty(): void
+    {
         $monitor = $this->wrap();
 
         $result = $monitor->clear();
@@ -146,7 +161,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertTrue($result);
     }
 
-    public function testMarkCleanResetsChangeList(): void {
+    public function testMarkCleanResetsChangeList(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('temp');
         $item->set('v');
@@ -160,13 +176,15 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertSame(['temp'], $monitor->getKeys());
     }
 
-    public function testCommitPassesThrough(): void {
+    public function testCommitPassesThrough(): void
+    {
         $monitor = $this->wrap();
 
         self::assertTrue($monitor->commit());
     }
 
-    public function testSaveKeyListThrowsOutOfBoundsException(): void {
+    public function testSaveKeyListThrowsOutOfBoundsException(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('__key_list');
 
@@ -174,7 +192,8 @@ final class MonitorCacheKeysTest extends TestCase {
         $monitor->save($item);
     }
 
-    public function testSaveChangeListThrowsOutOfBoundsException(): void {
+    public function testSaveChangeListThrowsOutOfBoundsException(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('__chg_list');
 
@@ -182,35 +201,40 @@ final class MonitorCacheKeysTest extends TestCase {
         $monitor->save($item);
     }
 
-    public function testDeleteKeyListThrowsOutOfBoundsException(): void {
+    public function testDeleteKeyListThrowsOutOfBoundsException(): void
+    {
         $monitor = $this->wrap();
 
         $this->expectException(OutOfBoundsException::class);
         $monitor->deleteItem('__key_list');
     }
 
-    public function testDeleteChangeListThrowsOutOfBoundsException(): void {
+    public function testDeleteChangeListThrowsOutOfBoundsException(): void
+    {
         $monitor = $this->wrap();
 
         $this->expectException(OutOfBoundsException::class);
         $monitor->deleteItem('__chg_list');
     }
 
-    public function testDeleteItemsWithKeyListThrowsOutOfBoundsException(): void {
+    public function testDeleteItemsWithKeyListThrowsOutOfBoundsException(): void
+    {
         $monitor = $this->wrap();
 
         $this->expectException(OutOfBoundsException::class);
         $monitor->deleteItems(['safe', '__key_list']);
     }
 
-    public function testDeleteItemsWithChangeListThrowsOutOfBoundsException(): void {
+    public function testDeleteItemsWithChangeListThrowsOutOfBoundsException(): void
+    {
         $monitor = $this->wrap();
 
         $this->expectException(OutOfBoundsException::class);
         $monitor->deleteItems(['__chg_list']);
     }
 
-    public function testSaveDeferredOnKeyListThrowsOutOfBoundsException(): void {
+    public function testSaveDeferredOnKeyListThrowsOutOfBoundsException(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('safe');
         $item->set('value');
@@ -223,7 +247,8 @@ final class MonitorCacheKeysTest extends TestCase {
         $monitor->saveDeferred($keyListItem);
     }
 
-    public function testSaveDeferredOnChangeListThrowsOutOfBoundsException(): void {
+    public function testSaveDeferredOnChangeListThrowsOutOfBoundsException(): void
+    {
         $monitor = $this->wrap();
         $changeListItem = $monitor->getItem('__chg_list');
 
@@ -231,7 +256,8 @@ final class MonitorCacheKeysTest extends TestCase {
         $monitor->saveDeferred($changeListItem);
     }
 
-    public function testGetKeysReturnsEmptyArrayWhenKeyListMissing(): void {
+    public function testGetKeysReturnsEmptyArrayWhenKeyListMissing(): void
+    {
         // If the underlying pool loses its key list, getKeys should return []
         $pool = new ArrayAdapter();
         $monitor = new MonitorCacheKeys($pool);
@@ -249,7 +275,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertSame([], $monitor2->getKeys());
     }
 
-    public function testDeleteItemReturnsTrueForExistingKey(): void {
+    public function testDeleteItemReturnsTrueForExistingKey(): void
+    {
         $monitor = $this->wrap();
         $item = $monitor->getItem('to-delete');
         $item->set('value');
@@ -259,7 +286,8 @@ final class MonitorCacheKeysTest extends TestCase {
         self::assertNotContains('to-delete', $monitor->getKeys());
     }
 
-    public function testDeleteItemsReturnsTrue(): void {
+    public function testDeleteItemsReturnsTrue(): void
+    {
         $monitor = $this->wrap();
         foreach (['a', 'b', 'c'] as $key) {
             $item = $monitor->getItem($key);

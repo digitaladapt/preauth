@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Listener;
@@ -23,7 +24,8 @@ use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
-final readonly class LoginListener {
+final readonly class LoginListener
+{
     use CookieNameTrait;
     use HasLoggerTrait;
     use MakeNonceTrait;
@@ -32,18 +34,19 @@ final readonly class LoginListener {
     private RateLimiterFactoryInterface $rateLimiter;
 
     public function __construct(
-        private                    Environment                 $twig,
+        private Environment                 $twig,
         #[Target('login_limiter')] RateLimiterFactoryInterface $rateLimiter,
-        private                    DomainInterface             $domainManager,
-        private                    LoginInterface              $loginManager,
-        private                    ConfigBag                   $config,
+        private DomainInterface             $domainManager,
+        private LoginInterface              $loginManager,
+        private ConfigBag                   $config,
     ) {
         $this->rateLimiter  = $rateLimiter;
     }
 
     /** @throws InvalidArgumentException|LoaderError|RuntimeError|SyntaxError */
     #[AsEventListener(priority: 66)]
-    public function onKernelRequest(RequestEvent $event): void {
+    public function onKernelRequest(RequestEvent $event): void
+    {
         $payload  = null;
         $response = null;
 
@@ -51,7 +54,7 @@ final readonly class LoginListener {
             /* if request contains our "X-Preauth" header */
             $data = $event->getRequest()->headers->get($this->headerName());
             $payload = Payload::decode($data);
-        } else if ($event->getRequest()->isMethod(Request::METHOD_POST) &&
+        } elseif ($event->getRequest()->isMethod(Request::METHOD_POST) &&
             $this->domainManager->getAuthSubdomain() === $event->getRequest()->getHost()
         ) {
             /* if request is a POST to the auth-subdomain */
@@ -76,18 +79,23 @@ final readonly class LoginListener {
         $limitReached = $this->logFailure($event->getRequest());
 
         $this->logger->debug("logging failure for: {$event->getRequest()->getClientIp()}");
-        $event->setResponse($this->makeFailedResponse($limitReached, $payload->json ?? true,
-            $event->getRequest()->getHost(), $this->makeCacheKey($payload ? $payload->id : '')
+        $event->setResponse($this->makeFailedResponse(
+            $limitReached,
+            $payload->json ?? true,
+            $event->getRequest()->getHost(),
+            $this->makeCacheKey($payload ? $payload->id : '')
         ));
     }
 
-    private function logFailure(Request $request): bool {
+    private function logFailure(Request $request): bool
+    {
         $limiter = $this->rateLimiter->create($request->getClientIp());
         return ($limiter->consume(1)->getRemainingTokens() < 1);
     }
 
     /** @throws InvalidArgumentException|RuntimeError|SyntaxError|LoaderError */
-    private function makeFailedResponse(bool $limited, bool $json, string $host, string $username): Response {
+    private function makeFailedResponse(bool $limited, bool $json, string $host, string $username): Response
+    {
         if ($limited) {
             $status = $this->config->teapot() ? Response::HTTP_I_AM_A_TEAPOT
                 : Response::HTTP_TOO_MANY_REQUESTS;

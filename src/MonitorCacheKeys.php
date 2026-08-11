@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App;
@@ -10,7 +11,8 @@ use Psr\Cache\InvalidArgumentException;
 
 /* we must *NOT* store the key-list item or values within this object
  * because it can change from outside this object instance */
-final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
+final readonly class MonitorCacheKeys implements CacheItemPoolInterface
+{
     private const string KEY_LIST = '__key_list';
     private const string CHANGE_LIST = '__chg_list';
     public const int UPDATED = 1;
@@ -19,11 +21,12 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
     private CacheItemPoolInterface $cache;
 
     /** @throws InvalidArgumentException */
-    public function __construct(CacheItemPoolInterface $cache) {
+    public function __construct(CacheItemPoolInterface $cache)
+    {
         $this->cache = $cache;
         $items = $cache->getItems([self::KEY_LIST, self::CHANGE_LIST]);
         foreach ($items as $item) {
-            if ( ! $item->isHit()) {
+            if (! $item->isHit()) {
                 $this->initialize();
                 break;
             }
@@ -31,7 +34,8 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
     }
 
     /** @throws InvalidArgumentException */
-    private function initialize(): void {
+    private function initialize(): void
+    {
         $keyList = $this->cache->getItem(self::KEY_LIST);
         $changeList = $this->cache->getItem(self::CHANGE_LIST);
         $keyList->set([]);
@@ -42,42 +46,49 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
     }
 
     /** @throws InvalidArgumentException */
-    public function getKeys(): array {
+    public function getKeys(): array
+    {
         $keyList = $this->cache->getItem(self::KEY_LIST);
         return array_keys($keyList->get() ?? []);
     }
 
     /** @throws InvalidArgumentException */
-    public function getChanges(): array {
+    public function getChanges(): array
+    {
         $changeList = $this->cache->getItem(self::CHANGE_LIST);
         return $changeList->get() ?? [];
     }
 
     /** @throws InvalidArgumentException */
-    public function markClean(): void {
+    public function markClean(): void
+    {
         $changeList = $this->cache->getItem(self::CHANGE_LIST);
         $changeList->set([]);
         $this->cache->save($changeList);
     }
 
-    public function getItem(string $key): CacheItemInterface {
+    public function getItem(string $key): CacheItemInterface
+    {
         return $this->cache->getItem($key);
     }
 
     /** @return CacheItemInterface[]
      *  @throws InvalidArgumentException */
-    public function getItems(array $keys = []): iterable {
+    public function getItems(array $keys = []): iterable
+    {
         return $this->cache->getItems($keys);
     }
 
-    public function hasItem(string $key): bool {
+    public function hasItem(string $key): bool
+    {
         return $this->cache->hasItem($key);
     }
 
     /** @throws InvalidArgumentException */
-    public function clear(): bool {
+    public function clear(): bool
+    {
         /* only bother clearing the pool if it is not empty */
-        if ( ! empty($this->getKeys())) {
+        if (! empty($this->getKeys())) {
             $response = $this->cache->clear();
 
             $this->initialize();
@@ -86,7 +97,8 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
         return true;
     }
 
-    public function deleteItem(string $key): bool {
+    public function deleteItem(string $key): bool
+    {
         $this->isValid($key);
         $keyList = $this->cache->getItem(self::KEY_LIST);
         $keyValues = $keyList->get();
@@ -101,7 +113,8 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
         return $this->cache->deleteItem($key);
     }
 
-    public function deleteItems(array $keys): bool {
+    public function deleteItems(array $keys): bool
+    {
         $this->allValid($keys);
         $keyList = $this->cache->getItem(self::KEY_LIST);
         $keyValues = $keyList->get();
@@ -119,23 +132,27 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
     }
 
     /** @throws InvalidArgumentException */
-    public function save(CacheItemInterface $item): bool {
+    public function save(CacheItemInterface $item): bool
+    {
         $this->update($item);
         return $this->cache->save($item);
     }
 
     /** @throws InvalidArgumentException */
-    public function saveDeferred(CacheItemInterface $item): bool {
+    public function saveDeferred(CacheItemInterface $item): bool
+    {
         $this->update($item);
         return $this->cache->saveDeferred($item);
     }
 
-    public function commit(): bool {
+    public function commit(): bool
+    {
         return $this->cache->commit();
     }
 
     /** @throws InvalidArgumentException|OutOfBoundsException */
-    private function update(CacheItemInterface $item): void {
+    private function update(CacheItemInterface $item): void
+    {
         $this->isValid($item->getKey());
         $keyList = $this->cache->getItem(self::KEY_LIST);
         $keyValues = $keyList->get();
@@ -147,7 +164,8 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
     }
 
     /** @throws OutOfBoundsException */
-    private function isValid(string $key): void {
+    private function isValid(string $key): void
+    {
         if ($key === self::KEY_LIST || $key === self::CHANGE_LIST) {
             throw new OutOfBoundsException(
                 'Can not modify the private key or change lists'
@@ -156,7 +174,8 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
     }
 
     /** @throws OutOfBoundsException */
-    private function allValid(array $keys): void {
+    private function allValid(array $keys): void
+    {
         if (in_array(self::KEY_LIST, $keys, true) ||
             in_array(self::CHANGE_LIST, $keys, true)
         ) {
@@ -167,7 +186,8 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface {
     }
 
     /** @throws InvalidArgumentException */
-    private function logChange(string $key, int $code = MonitorCacheKeys::UPDATED): void {
+    private function logChange(string $key, int $code = MonitorCacheKeys::UPDATED): void
+    {
         $changeList = $this->cache->getItem(self::CHANGE_LIST);
         $changeValues = $changeList->get();
         $changeValues[$key] = $code;

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
@@ -14,19 +15,21 @@ use App\Trait\GetTotpTrait;
 
 /** backup-codes are case‑insensitive alphanumeric strings
  * they are single-use and marked as used after successful authentication */
-final readonly class BackupCodeManager implements BackupCodeInterface {
+final readonly class BackupCodeManager implements BackupCodeInterface
+{
     use GetTotpTrait;
     use HasLoggerTrait;
     use StringTrait;
 
     private const int DEFAULT_COUNT = 10;
     /* php base_convert() will break if given too long of an input */
-    const int MAX_LENGTH = 64;
+    public const int MAX_LENGTH = 64;
 
     private CacheItemPoolInterface $sessionCache;
 
     /** @throws InvalidArgumentException */
-    public function __construct(CacheItemPoolInterface $sessionCache) {
+    public function __construct(CacheItemPoolInterface $sessionCache)
+    {
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
     }
 
@@ -34,7 +37,8 @@ final readonly class BackupCodeManager implements BackupCodeInterface {
      * @param int $count Number of codes to generate
      * @return string[] Generated backup codes
      * @throws InvalidArgumentException|Exception */
-    public function generate(int $count = self::DEFAULT_COUNT): array {
+    public function generate(int $count = self::DEFAULT_COUNT): array
+    {
         $length = min($this->getTotp()->getDigits() + 2, self::MAX_LENGTH);
         $codes = [];
         for ($i = 0; $i < $count; $i++) {
@@ -49,7 +53,8 @@ final readonly class BackupCodeManager implements BackupCodeInterface {
     }
 
     /** @throws InvalidArgumentException */
-    public function expire(): void {
+    public function expire(): void
+    {
         $itemsToRemove = [];
         foreach ($this->sessionCache->getKeys() as $key) {
             if (str_starts_with($key, 'backup_')) {
@@ -65,7 +70,8 @@ final readonly class BackupCodeManager implements BackupCodeInterface {
      * @param string $code Code supplied by the client
      * @return bool true if the code is valid and unused
      * @throws InvalidArgumentException */
-    public function verifyAndConsume(string $code): bool {
+    public function verifyAndConsume(string $code): bool
+    {
         /* remove unallowed characters, since backup codes are case-insensitive alphanumeric */
         $backupKey = 'backup_' . preg_replace('/[^a-z0-9]+/', '', strtolower($code));
         $backupItem = $this->sessionCache->getItem($this->makeCacheKey($backupKey));
@@ -77,7 +83,8 @@ final readonly class BackupCodeManager implements BackupCodeInterface {
             /* per PSR6, if no expiration is set, implementation may set a default,
              * we want this to keep forever, so a few hundred years should do it */
             $backupItem->expiresAt(DateTimeImmutable::createFromFormat(
-                'Y-m-d', '2999-12-31'
+                'Y-m-d',
+                '2999-12-31'
             ));
             $this->sessionCache->save($backupItem);
 
@@ -87,7 +94,8 @@ final readonly class BackupCodeManager implements BackupCodeInterface {
     }
 
     /** @throws InvalidArgumentException */
-    private function saveCodes(array $codes): void {
+    private function saveCodes(array $codes): void
+    {
         foreach ($codes as $code) {
             $backupItem = $this->sessionCache->getItem($this->makeCacheKey(strtolower("backup_$code")));
             /* mark backup code as ready */
@@ -95,7 +103,8 @@ final readonly class BackupCodeManager implements BackupCodeInterface {
             /* per PSR6, if no expiration is set, implementation may set a default,
              * we want this to keep forever, so a few hundred years should do it */
             $backupItem->expiresAt(DateTimeImmutable::createFromFormat(
-                'Y-m-d', '2999-12-31'
+                'Y-m-d',
+                '2999-12-31'
             ));
             $this->sessionCache->saveDeferred($backupItem);
         }

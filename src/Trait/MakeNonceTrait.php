@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Trait;
@@ -10,7 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Contracts\Service\Attribute\Required;
 
-trait MakeNonceTrait {
+trait MakeNonceTrait
+{
     use HasLoggerTrait;
     use StringTrait;
 
@@ -21,12 +23,14 @@ trait MakeNonceTrait {
     protected readonly CacheItemPoolInterface $nonceCache;
 
     #[Required]
-    public function setNonceCache(CacheItemPoolInterface $nonceCache): void {
+    public function setNonceCache(CacheItemPoolInterface $nonceCache): void
+    {
         $this->nonceCache = $nonceCache;
     }
 
     /** @throws InvalidArgumentException|Exception */
-    protected function makeNonce(int $retries = 3): string {
+    protected function makeNonce(int $retries = 3): string
+    {
         /* convert raw binary into base64url */
         $nonce = rtrim(strtr(base64_encode(random_bytes(
             static::NONCE_LENGTH

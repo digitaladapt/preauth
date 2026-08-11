@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit\Listener;
@@ -14,19 +15,22 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
-final class AcceptListenerTest extends TestCase {
+final class AcceptListenerTest extends TestCase
+{
     use TotpTestHelper;
 
     private const string COOKIE_NAME = '__Host-Http-Preauth';
     private const string AUTH_COOKIE_NAME = '__Http-Domain-Preauth';
 
-    private function makeListener(ArrayAdapter $pool, DomainManager $domainManager): AcceptListener {
+    private function makeListener(ArrayAdapter $pool, DomainManager $domainManager): AcceptListener
+    {
         $listener = new AcceptListener($pool, $domainManager);
         $listener->setLogger(new NullLogger());
         return $listener;
     }
 
-    private function makeEvent(Request $request): RequestEvent {
+    private function makeEvent(Request $request): RequestEvent
+    {
         return new RequestEvent(
             $this->createStub(\Symfony\Component\HttpKernel\HttpKernelInterface::class),
             $request,
@@ -36,7 +40,8 @@ final class AcceptListenerTest extends TestCase {
 
     /* ── valid cookie session ─────────────────────────────────────────── */
 
-    public function testValidCookieSetsResponseWithRemoteUser(): void {
+    public function testValidCookieSetsResponseWithRemoteUser(): void
+    {
         $pool = new ArrayAdapter();
         $ulid = '01HXY1234567890ABCDEFGHIJK';
         $item = $pool->getItem('cookie_' . $ulid);
@@ -59,7 +64,8 @@ final class AcceptListenerTest extends TestCase {
         self::assertSame('text/plain', $response->headers->get('Content-Type'));
     }
 
-    public function testValidCookieUsesAuthCookieNameWhenUsingCentralAuth(): void {
+    public function testValidCookieUsesAuthCookieNameWhenUsingCentralAuth(): void
+    {
         $pool = new ArrayAdapter();
         $ulid = '01HXY1234567890ABCDEFGHIJK';
         $item = $pool->getItem('cookie_' . $ulid);
@@ -81,7 +87,8 @@ final class AcceptListenerTest extends TestCase {
 
     /* ── negative cases ───────────────────────────────────────────────── */
 
-    public function testNoCookieSetsNoResponse(): void {
+    public function testNoCookieSetsNoResponse(): void
+    {
         $pool = new ArrayAdapter();
         $domainManager = new DomainManager(false, '');
         $listener = $this->makeListener($pool, $domainManager);
@@ -92,7 +99,8 @@ final class AcceptListenerTest extends TestCase {
         self::assertFalse($event->hasResponse());
     }
 
-    public function testCookieWithoutSessionSetsNoResponse(): void {
+    public function testCookieWithoutSessionSetsNoResponse(): void
+    {
         $pool = new ArrayAdapter();
         $domainManager = new DomainManager(false, '');
         $listener = $this->makeListener($pool, $domainManager);
@@ -106,7 +114,8 @@ final class AcceptListenerTest extends TestCase {
         self::assertFalse($event->hasResponse());
     }
 
-    public function testEmptyCookieValueSetsNoResponse(): void {
+    public function testEmptyCookieValueSetsNoResponse(): void
+    {
         $pool = new ArrayAdapter();
         $domainManager = new DomainManager(false, '');
         $listener = $this->makeListener($pool, $domainManager);

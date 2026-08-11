@@ -2,7 +2,8 @@
 
 namespace App\Service;
 
-interface DomainInterface {
+interface DomainInterface
+{
     /** IE: "auth.example.com" or null if not using a separate subdomain
      * @return ?string Returns auth subdomain if configured, otherwise null */
     public function getAuthSubdomain(): ?string;

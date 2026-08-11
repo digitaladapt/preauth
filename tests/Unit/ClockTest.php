@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit;
@@ -6,8 +7,10 @@ namespace App\Tests\Unit;
 use App\Clock;
 use PHPUnit\Framework\TestCase;
 
-final class ClockTest extends TestCase {
-    public function testNowReturnsDateTimeImmutable(): void {
+final class ClockTest extends TestCase
+{
+    public function testNowReturnsDateTimeImmutable(): void
+    {
         $clock = new Clock();
         $before = new \DateTimeImmutable();
         $now = $clock->now();

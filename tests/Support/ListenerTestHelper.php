@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Support;
@@ -17,11 +18,13 @@ use Twig\Loader\FilesystemLoader;
  * Helpers for constructing the collaborators that the kernel listeners
  * depend on, without booting the full Symfony container.
  */
-trait ListenerTestHelper {
+trait ListenerTestHelper
+{
     use TotpTestHelper;
 
     /** Build a Twig Environment pointed at the project's real templates. */
-    private function makeTwig(): Environment {
+    private function makeTwig(): Environment
+    {
         $loader = new FilesystemLoader(dirname(__DIR__, 2) . '/templates');
         $twig = new Environment($loader, ['strict_variables' => true]);
         // the templates reference a global `env` object; supply one with the
@@ -49,32 +52,43 @@ trait ListenerTestHelper {
      * A RateLimiterFactoryInterface whose created limiter returns a RateLimit
      * with the given remaining tokens.
      */
-    private function makeRateLimiterFactory(int $remainingTokens): RateLimiterFactoryInterface {
+    private function makeRateLimiterFactory(int $remainingTokens): RateLimiterFactoryInterface
+    {
         $limiter = $this->makeLimiter($remainingTokens);
-        return new class($limiter) implements RateLimiterFactoryInterface {
-            public function __construct(private LimiterInterface $limiter) {}
-            public function create(?string $key = null): LimiterInterface {
+        return new class ($limiter) implements RateLimiterFactoryInterface {
+            public function __construct(private LimiterInterface $limiter)
+            {
+            }
+            public function create(?string $key = null): LimiterInterface
+            {
                 return $this->limiter;
             }
         };
     }
 
-    private function makeLimiter(int $remainingTokens): LimiterInterface {
+    private function makeLimiter(int $remainingTokens): LimiterInterface
+    {
         $rateLimit = new RateLimit(
             $remainingTokens,
             new \DateTimeImmutable('+10 seconds'),
             $remainingTokens > 0,
             10,
         );
-        return new class($rateLimit) implements LimiterInterface {
-            public function __construct(private RateLimit $rateLimit) {}
-            public function reserve(int $tokens = 1, ?float $maxTime = null): \Symfony\Component\RateLimiter\Reservation {
+        return new class ($rateLimit) implements LimiterInterface {
+            public function __construct(private RateLimit $rateLimit)
+            {
+            }
+            public function reserve(int $tokens = 1, ?float $maxTime = null): \Symfony\Component\RateLimiter\Reservation
+            {
                 throw new \Symfony\Component\RateLimiter\Exception\ReserveNotSupportedException();
             }
-            public function consume(int $tokens = 1): RateLimit {
+            public function consume(int $tokens = 1): RateLimit
+            {
                 return $this->rateLimit;
             }
-            public function reset(): void {}
+            public function reset(): void
+            {
+            }
         };
     }
 
@@ -82,14 +96,19 @@ trait ListenerTestHelper {
      * A factory whose limiter tracks how many consume(1) calls were made and
      * reports the limit as reached only after $threshold failures.
      */
-    private function makeCountingRateLimiterFactory(int $threshold): RateLimiterFactoryInterface {
-        $limiter = new class($threshold) implements LimiterInterface {
+    private function makeCountingRateLimiterFactory(int $threshold): RateLimiterFactoryInterface
+    {
+        $limiter = new class ($threshold) implements LimiterInterface {
             private int $consumed = 0;
-            public function __construct(private int $threshold) {}
-            public function reserve(int $tokens = 1, ?float $maxTime = null): \Symfony\Component\RateLimiter\Reservation {
+            public function __construct(private int $threshold)
+            {
+            }
+            public function reserve(int $tokens = 1, ?float $maxTime = null): \Symfony\Component\RateLimiter\Reservation
+            {
                 throw new \Symfony\Component\RateLimiter\Exception\ReserveNotSupportedException();
             }
-            public function consume(int $tokens = 1): RateLimit {
+            public function consume(int $tokens = 1): RateLimit
+            {
                 $this->consumed += $tokens;
                 $remaining = max(0, $this->threshold - $this->consumed);
                 return new RateLimit(
@@ -99,11 +118,17 @@ trait ListenerTestHelper {
                     $this->threshold,
                 );
             }
-            public function reset(): void { $this->consumed = 0; }
+            public function reset(): void
+            {
+                $this->consumed = 0;
+            }
         };
-        return new class($limiter) implements RateLimiterFactoryInterface {
-            public function __construct(private LimiterInterface $limiter) {}
-            public function create(?string $key = null): LimiterInterface {
+        return new class ($limiter) implements RateLimiterFactoryInterface {
+            public function __construct(private LimiterInterface $limiter)
+            {
+            }
+            public function create(?string $key = null): LimiterInterface
+            {
                 return $this->limiter;
             }
         };

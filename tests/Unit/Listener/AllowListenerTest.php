@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit\Listener;
@@ -13,16 +14,19 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
-final class AllowListenerTest extends TestCase {
+final class AllowListenerTest extends TestCase
+{
     use TotpTestHelper;
 
-    private function makeListener(ArrayAdapter $pool, ConfigBag $config): AllowListener {
+    private function makeListener(ArrayAdapter $pool, ConfigBag $config): AllowListener
+    {
         $listener = new AllowListener($pool, $config);
         $listener->setLogger(new NullLogger());
         return $listener;
     }
 
-    private function makeEvent(Request $request): RequestEvent {
+    private function makeEvent(Request $request): RequestEvent
+    {
         return new RequestEvent(
             $this->createStub(HttpKernelInterface::class),
             $request,
@@ -30,7 +34,8 @@ final class AllowListenerTest extends TestCase {
         );
     }
 
-    public function testValidIpSessionSetsResponseWithRemoteUser(): void {
+    public function testValidIpSessionSetsResponseWithRemoteUser(): void
+    {
         $pool = new ArrayAdapter();
         $item = $pool->getItem('ip_1.2.3.4');
         $item->set('carol');
@@ -50,7 +55,8 @@ final class AllowListenerTest extends TestCase {
         self::assertSame('text/plain', $response->headers->get('Content-Type'));
     }
 
-    public function testNoIpSessionSetsNoResponse(): void {
+    public function testNoIpSessionSetsNoResponse(): void
+    {
         $pool = new ArrayAdapter();
         $config = $this->makeConfig(ipTtl: 1800);
         $listener = $this->makeListener($pool, $config);
@@ -62,7 +68,8 @@ final class AllowListenerTest extends TestCase {
         self::assertFalse($event->hasResponse());
     }
 
-    public function testIpAccessDisabledSetsNoResponse(): void {
+    public function testIpAccessDisabledSetsNoResponse(): void
+    {
         $pool = new ArrayAdapter();
         // even though there's a stored session, ip access is disabled
         $item = $pool->getItem('ip_1.2.3.4');
@@ -79,7 +86,8 @@ final class AllowListenerTest extends TestCase {
         self::assertFalse($event->hasResponse());
     }
 
-    public function testIpAccessDisabledDoesNotCheckCache(): void {
+    public function testIpAccessDisabledDoesNotCheckCache(): void
+    {
         $pool = new ArrayAdapter();
         $config = $this->makeConfig(ipTtl: 0);
         $listener = $this->makeListener($pool, $config);
