@@ -32,7 +32,12 @@ final readonly class AllowListener
             $ipKey = $this->makeCacheKey("ip_{$event->getRequest()->getClientIp()}");
             if ($this->sessionCache->hasItem($ipKey)) {
                 /* ip address corresponds to valid existing session  */
-                $id = $this->sessionCache->getItem($ipKey)->get();
+                $item = $this->sessionCache->getItem($ipKey);
+                if (! $item->isHit()) {
+                    /* race condition: item was removed between hasItem and getItem */
+                    return;
+                }
+                $id = $item->get();
                 $this->logger->debug("has valid ip-session: $id");
                 $event->setResponse(new Response("hi $id", headers: [
                     'Content-Type' => 'text/plain',

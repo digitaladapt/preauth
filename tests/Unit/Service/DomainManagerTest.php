@@ -171,29 +171,26 @@ final class DomainManagerTest extends TestCase
 
     public function testMatchesAuthWithComAuTld(): void
     {
-        // com.au is NOT in the TLD table (table has au? no, it doesn't),
-        // so it's treated as a standard 2-part TLD: base = com.au
+        // com.au IS in the TLD table (au => [com,...], so *.com.au IS multi-part
         $manager = $this->createManager(true, 'auth.example.com.au');
-        self::assertSame('com.au', $manager->authBase());
+        self::assertSame('example.com.au', $manager->authBase());
         self::assertTrue($manager->matchesAuth('app.example.com.au'));
         self::assertFalse($manager->matchesAuth('example.com'));
     }
 
     public function testMatchesAuthWithCoJpTld(): void
     {
-        // co.jp is NOT in the TLD table (table has jpn under com, not jp under co)
-        // so base = co.jp
+        // co.jp IS in the TLD table (jp => [co,...], so *.co.jp IS multi-part
         $manager = $this->createManager(true, 'auth.example.co.jp');
-        self::assertSame('co.jp', $manager->authBase());
+        self::assertSame('example.co.jp', $manager->authBase());
         self::assertTrue($manager->matchesAuth('www.example.co.jp'));
     }
 
     public function testMatchesAuthWithComBrTld(): void
     {
-        // com.br: TLD table has com => [br], meaning *.br.com is multi-part
-        // but com.br has last=br, TLD['br'] doesn't exist, so base = com.br
+        // com.br: TLD table has br => [com,...], so *.com.br IS multi-part
         $manager = $this->createManager(true, 'auth.example.com.br');
-        self::assertSame('com.br', $manager->authBase());
+        self::assertSame('example.com.br', $manager->authBase());
         self::assertTrue($manager->matchesAuth('app.example.com.br'));
     }
 

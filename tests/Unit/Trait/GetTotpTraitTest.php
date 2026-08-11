@@ -105,7 +105,7 @@ final class GetTotpTraitTest extends TestCase
         $obj->setConfig($config);
 
         $this->expectException(HttpException::class);
-        $this->expectExceptionMessage('Internal Server Exception');
+        $this->expectExceptionMessage('Internal Server Error');
         $obj->publicGetTotp();
     }
 }

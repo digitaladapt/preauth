@@ -75,7 +75,7 @@ final readonly class BackupCodeManager implements BackupCodeInterface
         /* remove unallowed characters, since backup codes are case-insensitive alphanumeric */
         $backupKey = 'backup_' . preg_replace('/[^a-z0-9]+/', '', strtolower($code));
         $backupItem = $this->sessionCache->getItem($this->makeCacheKey($backupKey));
-        $this->logger->debug("checking backup code '{$backupKey}': " . ($backupItem->isHit() ? 'HIT & ' : 'miss & ') . ($backupItem->get() ? 'VALID' : 'invalid'));
+        $this->logger->debug('checking backup code: ' . ($backupItem->isHit() ? 'HIT & ' : 'miss & ') . ($backupItem->get() ? 'VALID' : 'invalid'));
         if ($backupItem->isHit() && $backupItem->get()) {
             $this->logger->debug("valid backup code");
             /* mark backup code as spent */

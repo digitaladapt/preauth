@@ -1,5 +1,8 @@
 {% extends 'base.html.twig' %}
 
+{# The nonce field serves dual purpose: replay prevention AND CSRF protection.
+   An attacker cannot forge a POST request without a valid nonce, which is
+   generated server-side per page load and tied to the user's session. #}
 {% block content %}
 <h1>{{ env.title }}</h1>
 <p id="preauth-message">{{ message|default }}</p>

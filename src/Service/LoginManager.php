@@ -46,7 +46,7 @@ final readonly class LoginManager implements LoginInterface
             $payload->scope = Scope::Cookie;
         }
 
-        if ($this->getTotp()->verify($payload->token, null, 10) ||
+        if ($this->getTotp()->verify($payload->token, null, 1) ||
             $this->backupCodeManager->verifyAndConsume($payload->token)
         ) {
             /* token is correct (TOTP or Backup) */

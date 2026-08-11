@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'main'
-      - 'develop'
 
 jobs:
   docker:
@@ -31,4 +30,3 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ${{ vars.DOCKERHUB_TARGET }}:develop
-

@@ -37,7 +37,12 @@ final readonly class AcceptListener
             $cookieKey = $this->makeCacheKey("cookie_$cookie");
             if ($cookie && $this->sessionCache->hasItem($cookieKey)) {
                 /* cookie sent corresponds to valid existing session */
-                $id = $this->sessionCache->getItem($cookieKey)->get();
+                $item = $this->sessionCache->getItem($cookieKey);
+                if (! $item->isHit()) {
+                    /* race condition: item was removed between hasItem and getItem */
+                    return;
+                }
+                $id = $item->get();
                 $this->logger->debug("has valid cookie-session: $id");
                 $event->setResponse(new Response("hi $id", headers: [
                     'Content-Type' => 'text/plain',
