@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Listener;
@@ -12,18 +13,21 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 
-final readonly class AllowListener {
+final readonly class AllowListener
+{
     use HasLoggerTrait;
     use StringTrait;
 
     public function __construct(
         private CacheItemPoolInterface $sessionCache,
         private ConfigBag              $config,
-    ) {}
+    ) {
+    }
 
     /** @throws InvalidArgumentException */
     #[AsEventListener(priority: 88)]
-    public function onKernelRequest(RequestEvent $event): void {
+    public function onKernelRequest(RequestEvent $event): void
+    {
         if ($this->config->ipTtl() > 0) {
             $ipKey = $this->makeCacheKey("ip_{$event->getRequest()->getClientIp()}");
             if ($this->sessionCache->hasItem($ipKey)) {

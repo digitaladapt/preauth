@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
@@ -18,7 +19,8 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-final class LoginManagerTest extends TestCase {
+final class LoginManagerTest extends TestCase
+{
     use TotpTestHelper;
     use StringTrait;
 
@@ -62,7 +64,8 @@ final class LoginManagerTest extends TestCase {
     }
 
     /** Inject a nonce directly into the manager's nonce cache. */
-    private function insertNonce(LoginManager $manager, string $nonce): string {
+    private function insertNonce(LoginManager $manager, string $nonce): string
+    {
         $reflection = new \ReflectionProperty(LoginManager::class, 'nonceCache');
         $nonceCache = $reflection->getValue($manager);
 
@@ -74,7 +77,8 @@ final class LoginManagerTest extends TestCase {
         return $nonce;
     }
 
-    public function testCheckTokenReturnsNullForInvalidTotp(): void {
+    public function testCheckTokenReturnsNullForInvalidTotp(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager, token: 'wrong-code');
 
@@ -85,7 +89,8 @@ final class LoginManagerTest extends TestCase {
         self::assertNull($manager->checkToken($payload, $request));
     }
 
-    public function testCheckTokenReturnsNullForSpentNonce(): void {
+    public function testCheckTokenReturnsNullForSpentNonce(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager);
 
@@ -103,7 +108,8 @@ final class LoginManagerTest extends TestCase {
         self::assertNull($manager->checkToken($payload, $request));
     }
 
-    public function testCheckTokenReturnsNullForMissingNonce(): void {
+    public function testCheckTokenReturnsNullForMissingNonce(): void
+    {
         $manager = $this->makeLoginManager();
 
         $this->backupCodeManager->method('verifyAndConsume')->willReturn(false);
@@ -120,7 +126,8 @@ final class LoginManagerTest extends TestCase {
         self::assertNull($manager->checkToken($payload, $request));
     }
 
-    public function testSuccessfulTotpLoginWithCookieScopeReturnsRedirect(): void {
+    public function testSuccessfulTotpLoginWithCookieScopeReturnsRedirect(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager, scope: Scope::Cookie);
 
@@ -136,7 +143,8 @@ final class LoginManagerTest extends TestCase {
         self::assertTrue($response->headers->has('Set-Cookie'));
     }
 
-    public function testSuccessfulLoginWithNoneScopeReturnsPlainResponse(): void {
+    public function testSuccessfulLoginWithNoneScopeReturnsPlainResponse(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager, scope: Scope::None);
 
@@ -154,7 +162,8 @@ final class LoginManagerTest extends TestCase {
         self::assertFalse($response->headers->has('Location'));
     }
 
-    public function testSuccessfulLoginSetsRemoteUserHeader(): void {
+    public function testSuccessfulLoginSetsRemoteUserHeader(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager, id: 'alice', scope: Scope::None);
 
@@ -168,7 +177,8 @@ final class LoginManagerTest extends TestCase {
         self::assertSame('alice', $response->headers->get('Remote-User'));
     }
 
-    public function testSuccessfulLoginJsonResponse(): void {
+    public function testSuccessfulLoginJsonResponse(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager, scope: Scope::Cookie, token: null);
         $payload->json = true;
@@ -185,7 +195,8 @@ final class LoginManagerTest extends TestCase {
         self::assertSame('Login successful', $body['message']);
     }
 
-    public function testSuccessfulLoginHtmlResponse(): void {
+    public function testSuccessfulLoginHtmlResponse(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager, scope: Scope::Cookie);
         $payload->json = false;
@@ -200,7 +211,8 @@ final class LoginManagerTest extends TestCase {
         self::assertSame('text/html', $response->headers->get('Content-Type'));
     }
 
-    public function testSuccessfulLoginWithReturnUrl(): void {
+    public function testSuccessfulLoginWithReturnUrl(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager, scope: Scope::Cookie);
 
@@ -214,7 +226,8 @@ final class LoginManagerTest extends TestCase {
         self::assertSame('https://example.com/app', $response->headers->get('Location'));
     }
 
-    public function testSuccessfulLoginWithInvalidReturnFallsBackToPath(): void {
+    public function testSuccessfulLoginWithInvalidReturnFallsBackToPath(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager, scope: Scope::Cookie);
 
@@ -229,7 +242,8 @@ final class LoginManagerTest extends TestCase {
         self::assertStringStartsWith('/login', $location);
     }
 
-    public function testIpScopeDowngradesToCookieWhenIpAccessDisabled(): void {
+    public function testIpScopeDowngradesToCookieWhenIpAccessDisabled(): void
+    {
         $manager = $this->makeLoginManager(ipTtl: 0);
         $payload = $this->makePayloadWithNonce($manager, scope: Scope::Ip);
 
@@ -244,7 +258,8 @@ final class LoginManagerTest extends TestCase {
         self::assertTrue($response->headers->has('Set-Cookie'));
     }
 
-    public function testIpScopeWhenEnabledSetsIpSession(): void {
+    public function testIpScopeWhenEnabledSetsIpSession(): void
+    {
         $manager = $this->makeLoginManager(ipTtl: 1800);
         $payload = $this->makePayloadWithNonce($manager, scope: Scope::Ip);
 
@@ -264,7 +279,8 @@ final class LoginManagerTest extends TestCase {
         self::assertTrue($sessionCache->hasItem('ip_1.2.3.4'));
     }
 
-    public function testBackupCodeAuthentication(): void {
+    public function testBackupCodeAuthentication(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager, token: 'backup-code-123');
 
@@ -278,7 +294,8 @@ final class LoginManagerTest extends TestCase {
         self::assertSame(303, $response->getStatusCode());
     }
 
-    public function testNonceIsConsumedAfterSuccessfulLogin(): void {
+    public function testNonceIsConsumedAfterSuccessfulLogin(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager);
 
@@ -296,7 +313,8 @@ final class LoginManagerTest extends TestCase {
         self::assertFalse($nonceItem->get());
     }
 
-    public function testUlidCollisionThrowsHttpException(): void {
+    public function testUlidCollisionThrowsHttpException(): void
+    {
         // Use a stub pool where every cookie_ key is already a hit (collision)
         $pool = $this->createStub(CacheItemPoolInterface::class);
         $item = $this->createStub(CacheItemInterface::class);
@@ -358,7 +376,8 @@ final class LoginManagerTest extends TestCase {
         $manager->checkToken($payload, $request);
     }
 
-    public function testCookieScopeWithCentralAuthSetsDomainOnMatchingHost(): void {
+    public function testCookieScopeWithCentralAuthSetsDomainOnMatchingHost(): void
+    {
         $manager = $this->makeLoginManager(
             subdomainRedirect: true,
             authSubdomain: 'auth.example.com',
@@ -381,7 +400,8 @@ final class LoginManagerTest extends TestCase {
         self::assertSame('__Http-Domain-Preauth', $cookies[0]->getName());
     }
 
-    public function testCookieScopeWithCentralAuthOnNonMatchingHostUsesNullDomain(): void {
+    public function testCookieScopeWithCentralAuthOnNonMatchingHostUsesNullDomain(): void
+    {
         $manager = $this->makeLoginManager(
             subdomainRedirect: true,
             authSubdomain: 'auth.example.com',
@@ -404,7 +424,8 @@ final class LoginManagerTest extends TestCase {
         self::assertSame('__Http-Domain-Preauth', $cookies[0]->getName());
     }
 
-    public function testCheckTokenWithEmptyReturnParameterFallsBackToPath(): void {
+    public function testCheckTokenWithEmptyReturnParameterFallsBackToPath(): void
+    {
         $manager = $this->makeLoginManager();
         $payload = $this->makePayloadWithNonce($manager, scope: Scope::Cookie);
 

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App;
@@ -9,7 +10,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 /* need autoconfigure so we get it from the service container in Kernel->boot() */
 #[Autoconfigure(public: true)]
-final readonly class PersistCache {
+final readonly class PersistCache
+{
     private MonitorCacheKeys $sessionCache;
     private MonitorCacheKeys $sessionStorage;
 
@@ -23,7 +25,8 @@ final readonly class PersistCache {
     }
 
     /** @throws InvalidArgumentException */
-    public function boot(): void {
+    public function boot(): void
+    {
         /* the caches are considered warm as soon as they are not empty */
         if (empty($this->sessionCache->getKeys())) {
             $items = $this->sessionStorage->getItems($this->sessionStorage->getKeys());
@@ -36,7 +39,8 @@ final readonly class PersistCache {
     }
 
     /** @throws InvalidArgumentException */
-    public function persist(): void {
+    public function persist(): void
+    {
         /* we only need to persist the changes made to the cache (if any) */
         $changes = $this->sessionCache->getChanges();
         if ($changes) {

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Functional;
@@ -14,8 +15,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * travels through RejectListener -> LoginListener -> AllowListener ->
  * AcceptListener -> InterceptListener and the services they orchestrate.
  */
-final class AuthenticationFlowTest extends WebTestCase {
-
+final class AuthenticationFlowTest extends WebTestCase
+{
     private const string TOTP_SECRET = 'JBSWY3DPEHPK3PXP';
     private const string COOKIE_NAME = '__Host-Http-Preauth';
 
@@ -32,13 +33,15 @@ final class AuthenticationFlowTest extends WebTestCase {
         return $client;
     }
 
-    private function validTotpCode(): string {
+    private function validTotpCode(): string
+    {
         // the app uses the real system clock, so generate the code for now()
         return TOTP::createFromSecret(self::TOTP_SECRET)->now();
     }
 
     /** base64url-encode a payload, matching the client-side JS / X-Preauth header. */
-    private function encodePayload(array $data): string {
+    private function encodePayload(array $data): string
+    {
         $json = json_encode($data, JSON_THROW_ON_ERROR);
         return rtrim(strtr(base64_encode($json), '+/', '-_'), '=');
     }
@@ -59,7 +62,8 @@ final class AuthenticationFlowTest extends WebTestCase {
 
     /* ── unauthenticated access ──────────────────────────────────────── */
 
-    public function testUnauthenticatedRequestShowsLoginPage(): void {
+    public function testUnauthenticatedRequestShowsLoginPage(): void
+    {
         $client = static::createClient();
         $client->request('GET', '/');
 
@@ -71,7 +75,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertSelectorExists('input[name="totp"]');
     }
 
-    public function testLoginPageContainsGeneratedNonce(): void {
+    public function testLoginPageContainsGeneratedNonce(): void
+    {
         $client = static::createClient();
         $crawler = $client->request('GET', '/');
 
@@ -81,7 +86,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertMatchesRegularExpression('/^[A-Za-z0-9_-]+$/', $nonceInput);
     }
 
-    public function testLoginFormDoesNotUsePostMethodWithoutAuthSubdomain(): void {
+    public function testLoginFormDoesNotUsePostMethodWithoutAuthSubdomain(): void
+    {
         $client = static::createClient();
         $crawler = $client->request('GET', '/');
 
@@ -93,7 +99,8 @@ final class AuthenticationFlowTest extends WebTestCase {
 
     /* ── successful TOTP login ────────────────────────────────────────── */
 
-    public function testSuccessfulTotpLoginViaHeaderSetsCookieAndRedirects(): void {
+    public function testSuccessfulTotpLoginViaHeaderSetsCookieAndRedirects(): void
+    {
         $client = static::createClient();
 
         // first, grab a valid nonce from the login page
@@ -125,7 +132,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertTrue($hasPreauthCookie, 'Expected a preauth cookie to be set after login');
     }
 
-    public function testSuccessfulLoginReturnsJsonWhenJsonRequested(): void {
+    public function testSuccessfulLoginReturnsJsonWhenJsonRequested(): void
+    {
         $client = static::createClient();
 
         $crawler = $client->request('GET', '/');
@@ -147,7 +155,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertSame('Login successful', $body['message']);
     }
 
-    public function testSuccessfulLoginReturnsHtmlWhenJsonFalse(): void {
+    public function testSuccessfulLoginReturnsHtmlWhenJsonFalse(): void
+    {
         $client = static::createClient();
 
         $crawler = $client->request('GET', '/');
@@ -167,7 +176,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertStringStartsWith('text/html', $response->headers->get('Content-Type'));
     }
 
-    public function testAuthenticatedCookieAccessAfterLogin(): void {
+    public function testAuthenticatedCookieAccessAfterLogin(): void
+    {
         $client = static::createClient();
 
         // login
@@ -204,7 +214,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertSame('dave', $response->headers->get('Remote-User'));
     }
 
-    public function testScopeNoneReturnsPlainTextWithoutRedirect(): void {
+    public function testScopeNoneReturnsPlainTextWithoutRedirect(): void
+    {
         $client = static::createClient();
 
         $crawler = $client->request('GET', '/');
@@ -229,7 +240,8 @@ final class AuthenticationFlowTest extends WebTestCase {
 
     /* ── failed login ─────────────────────────────────────────────────── */
 
-    public function testFailedLoginReturnsUnauthorizedJsonWithError(): void {
+    public function testFailedLoginReturnsUnauthorizedJsonWithError(): void
+    {
         $client = static::createClient();
 
         $crawler = $client->request('GET', '/');
@@ -254,7 +266,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertNotEmpty($body['nonce']);
     }
 
-    public function testFailedLoginReturnsHtmlWhenJsonFalse(): void {
+    public function testFailedLoginReturnsHtmlWhenJsonFalse(): void
+    {
         $client = static::createClient();
 
         $crawler = $client->request('GET', '/');
@@ -275,7 +288,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertSelectorExists('form#preauth-form');
     }
 
-    public function testFailedLoginWithSpentNonceIsRejected(): void {
+    public function testFailedLoginWithSpentNonceIsRejected(): void
+    {
         $client = static::createClient();
 
         $crawler = $client->request('GET', '/');
@@ -309,7 +323,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertSame(401, $client->getResponse()->getStatusCode());
     }
 
-    public function testFailedLoginWithInvalidNonceIsRejected(): void {
+    public function testFailedLoginWithInvalidNonceIsRejected(): void
+    {
         $client = static::createClient();
 
         // skip fetching a real nonce; use one that was never stored
@@ -327,7 +342,8 @@ final class AuthenticationFlowTest extends WebTestCase {
 
     /* ── invalid payload ──────────────────────────────────────────────── */
 
-    public function testInvalidHeaderPayloadReturnsUnauthorized(): void {
+    public function testInvalidHeaderPayloadReturnsUnauthorized(): void
+    {
         $client = static::createClient();
 
         $client->request('GET', '/', [], [], [
@@ -338,7 +354,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertSame(401, $client->getResponse()->getStatusCode());
     }
 
-    public function testPayloadWithMissingFieldsReturnsUnauthorized(): void {
+    public function testPayloadWithMissingFieldsReturnsUnauthorized(): void
+    {
         $client = static::createClient();
 
         // payload missing token
@@ -353,7 +370,8 @@ final class AuthenticationFlowTest extends WebTestCase {
 
     /* ── invalid cookie ───────────────────────────────────────────────── */
 
-    public function testInvalidCookieIsClearedAndLoginPageShown(): void {
+    public function testInvalidCookieIsClearedAndLoginPageShown(): void
+    {
         $client = static::createClient();
 
         // the cookie must be set via the CookieJar so that the HttpFoundation
@@ -361,8 +379,15 @@ final class AuthenticationFlowTest extends WebTestCase {
         // not parsed by Request::create)
         $client->getCookieJar()->set(
             new \Symfony\Component\BrowserKit\Cookie(
-                self::COOKIE_NAME, 'invalid-ulid-value',
-                null, '/', 'localhost', true, true, false, 'Strict',
+                self::COOKIE_NAME,
+                'invalid-ulid-value',
+                null,
+                '/',
+                'localhost',
+                true,
+                true,
+                false,
+                'Strict',
             )
         );
 
@@ -383,7 +408,8 @@ final class AuthenticationFlowTest extends WebTestCase {
 
     /* ── backup code authentication ───────────────────────────────────── */
 
-    public function testBackupCodeAuthenticationWorks(): void {
+    public function testBackupCodeAuthenticationWorks(): void
+    {
         $client = static::createClient();
         $container = $client->getContainer();
 
@@ -407,7 +433,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertSame(303, $client->getResponse()->getStatusCode());
     }
 
-    public function testConsumedBackupCodeCannotBeReused(): void {
+    public function testConsumedBackupCodeCannotBeReused(): void
+    {
         $client = static::createClient();
         $container = $client->getContainer();
 
@@ -442,7 +469,8 @@ final class AuthenticationFlowTest extends WebTestCase {
 
     /* ── return URL handling ──────────────────────────────────────────── */
 
-    public function testSuccessfulLoginWithValidReturnUrl(): void {
+    public function testSuccessfulLoginWithValidReturnUrl(): void
+    {
         $client = static::createClient();
 
         $crawler = $client->request('GET', '/?return=https://example.com/app');
@@ -460,7 +488,8 @@ final class AuthenticationFlowTest extends WebTestCase {
         self::assertSame('https://example.com/app', $response->headers->get('Location'));
     }
 
-    public function testSuccessfulLoginWithInvalidReturnFallsBackToPath(): void {
+    public function testSuccessfulLoginWithInvalidReturnFallsBackToPath(): void
+    {
         $client = static::createClient();
 
         $crawler = $client->request('GET', '/?return=not-a-url');

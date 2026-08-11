@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit\Listener;
@@ -17,7 +18,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
-final class LoginListenerTest extends TestCase {
+final class LoginListenerTest extends TestCase
+{
     use ListenerTestHelper;
 
     private const string HEADER_NAME = 'X-Preauth';
@@ -39,7 +41,8 @@ final class LoginListenerTest extends TestCase {
         return $listener;
     }
 
-    private function makeEvent(Request $request): RequestEvent {
+    private function makeEvent(Request $request): RequestEvent
+    {
         return new RequestEvent(
             $this->createStub(HttpKernelInterface::class),
             $request,
@@ -48,14 +51,16 @@ final class LoginListenerTest extends TestCase {
     }
 
     /** Build a base64url-encoded X-Preauth header value for a payload. */
-    private function encodePayload(array $data): string {
+    private function encodePayload(array $data): string
+    {
         $json = json_encode($data, JSON_THROW_ON_ERROR);
         return rtrim(strtr(base64_encode($json), '+/', '-_'), '=');
     }
 
     /* ── no login attempt ─────────────────────────────────────────────── */
 
-    public function testNoHeaderAndNoPostReturnsEarlyWithoutResponse(): void {
+    public function testNoHeaderAndNoPostReturnsEarlyWithoutResponse(): void
+    {
         $listener = $this->makeListener();
 
         $request = Request::create('https://example.com/', 'GET');
@@ -65,7 +70,8 @@ final class LoginListenerTest extends TestCase {
         self::assertFalse($event->hasResponse());
     }
 
-    public function testPostToNonAuthSubdomainReturnsEarlyWithoutResponse(): void {
+    public function testPostToNonAuthSubdomainReturnsEarlyWithoutResponse(): void
+    {
         // POST only counts as a login attempt when on the auth subdomain
         $domainManager = new DomainManager(true, 'auth.example.com');
         $listener = $this->makeListener(domainManager: $domainManager);
@@ -79,7 +85,8 @@ final class LoginListenerTest extends TestCase {
 
     /* ── successful login via header ──────────────────────────────────── */
 
-    public function testSuccessfulLoginViaHeaderSetsResponseFromManager(): void {
+    public function testSuccessfulLoginViaHeaderSetsResponseFromManager(): void
+    {
         $expected = new Response('hi alice', 200, ['Remote-User' => 'alice']);
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn($expected);
@@ -99,7 +106,8 @@ final class LoginListenerTest extends TestCase {
         self::assertSame($expected, $event->getResponse());
     }
 
-    public function testSuccessfulLoginViaPostToAuthSubdomain(): void {
+    public function testSuccessfulLoginViaPostToAuthSubdomain(): void
+    {
         $expected = new Response('hi bob', 303, ['Location' => '/']);
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn($expected);
@@ -120,7 +128,8 @@ final class LoginListenerTest extends TestCase {
 
     /* ── failed login ─────────────────────────────────────────────────── */
 
-    public function testFailedLoginReturnsJsonErrorWithNewNonce(): void {
+    public function testFailedLoginReturnsJsonErrorWithNewNonce(): void
+    {
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn(null);
 
@@ -148,7 +157,8 @@ final class LoginListenerTest extends TestCase {
         self::assertSame('alice', $body['username']);
     }
 
-    public function testFailedLoginHtmlResponseWhenJsonFalse(): void {
+    public function testFailedLoginHtmlResponseWhenJsonFalse(): void
+    {
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn(null);
 
@@ -169,7 +179,8 @@ final class LoginListenerTest extends TestCase {
         self::assertStringContainsString('<form', $response->getContent());
     }
 
-    public function testFailedLoginOnAuthSubdomainUsesPostForm(): void {
+    public function testFailedLoginOnAuthSubdomainUsesPostForm(): void
+    {
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn(null);
 
@@ -194,7 +205,8 @@ final class LoginListenerTest extends TestCase {
 
     /* ── rate-limited (blocked) login ─────────────────────────────────── */
 
-    public function testRateLimitedLoginReturnsTeapotWhenTeapotEnabled(): void {
+    public function testRateLimitedLoginReturnsTeapotWhenTeapotEnabled(): void
+    {
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn(null);
 
@@ -220,7 +232,8 @@ final class LoginListenerTest extends TestCase {
         self::assertSame('Teapot', $body['message']);
     }
 
-    public function testRateLimitedLoginReturnsTooManyRequestsWhenTeapotDisabled(): void {
+    public function testRateLimitedLoginReturnsTooManyRequestsWhenTeapotDisabled(): void
+    {
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn(null);
 
@@ -252,7 +265,8 @@ final class LoginListenerTest extends TestCase {
 
     /* ── invalid payload handling ─────────────────────────────────────── */
 
-    public function testInvalidHeaderPayloadStillRecordsFailureAndResponds(): void {
+    public function testInvalidHeaderPayloadStillRecordsFailureAndResponds(): void
+    {
         $loginManager = $this->createMock(LoginInterface::class);
         // checkToken should not be called with a null payload
         $loginManager->expects(self::never())->method('checkToken');
@@ -272,7 +286,8 @@ final class LoginListenerTest extends TestCase {
         self::assertSame(Response::HTTP_UNAUTHORIZED, $event->getResponse()->getStatusCode());
     }
 
-    public function testPostWithoutRequiredFieldsDoesNotAttemptLogin(): void {
+    public function testPostWithoutRequiredFieldsDoesNotAttemptLogin(): void
+    {
         $loginManager = $this->createMock(LoginInterface::class);
         $loginManager->expects(self::never())->method('checkToken');
 

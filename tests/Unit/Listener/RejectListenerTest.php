@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit\Listener;
@@ -13,7 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
-final class RejectListenerTest extends TestCase {
+final class RejectListenerTest extends TestCase
+{
     use ListenerTestHelper;
 
     private function makeListener(
@@ -29,7 +31,8 @@ final class RejectListenerTest extends TestCase {
         return $listener;
     }
 
-    private function makeEvent(Request $request): RequestEvent {
+    private function makeEvent(Request $request): RequestEvent
+    {
         return new RequestEvent(
             $this->createStub(HttpKernelInterface::class),
             $request,
@@ -37,7 +40,8 @@ final class RejectListenerTest extends TestCase {
         );
     }
 
-    public function testBlockedRequestReturnsTeapotWhenTeapotEnabled(): void {
+    public function testBlockedRequestReturnsTeapotWhenTeapotEnabled(): void
+    {
         $listener = $this->makeListener(teapot: true, remainingTokens: 0);
 
         $request = Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '1.2.3.4']);
@@ -50,7 +54,8 @@ final class RejectListenerTest extends TestCase {
         self::assertSame('text/html', $response->headers->get('Content-Type'));
     }
 
-    public function testBlockedRequestReturnsTooManyRequestsWhenTeapotDisabled(): void {
+    public function testBlockedRequestReturnsTooManyRequestsWhenTeapotDisabled(): void
+    {
         $listener = $this->makeListener(teapot: false, remainingTokens: 0);
 
         $request = Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '1.2.3.4']);
@@ -63,7 +68,8 @@ final class RejectListenerTest extends TestCase {
         self::assertSame('text/html', $response->headers->get('Content-Type'));
     }
 
-    public function testUnblockedRequestSetsNoResponse(): void {
+    public function testUnblockedRequestSetsNoResponse(): void
+    {
         $listener = $this->makeListener(remainingTokens: 5);
 
         $request = Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '1.2.3.4']);
@@ -74,7 +80,8 @@ final class RejectListenerTest extends TestCase {
         self::assertFalse($event->hasResponse());
     }
 
-    public function testBlockedResponseContainsErrorTemplateContent(): void {
+    public function testBlockedResponseContainsErrorTemplateContent(): void
+    {
         $listener = $this->makeListener(teapot: true, remainingTokens: 0);
 
         $request = Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '1.2.3.4']);

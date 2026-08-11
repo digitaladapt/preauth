@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App;
@@ -11,14 +12,17 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Clock\ClockInterface;
 
-final readonly class Utilities {
+final readonly class Utilities
+{
     public function __construct(
         private ClockInterface         $clock,
         private CacheItemPoolInterface $appPool,
-    ) {}
+    ) {
+    }
 
     /** @throws InvalidArgumentException */
-    public function loadTotp(): string {
+    public function loadTotp(): string
+    {
         /* user forgot to set their TOTP_URI in the environment */
         if ($this->appPool->hasItem('totp')) {
             $totp = $this->appPool->getItem('totp')->get();
@@ -31,7 +35,8 @@ final readonly class Utilities {
     }
 
     /** @throws InvalidArgumentException */
-    private function makeTotp(): string {
+    private function makeTotp(): string
+    {
         /* we have not stored a totp into the app cache yet */
         $totpObj = TOTP::generate($this->clock);
         $totpObj->setLabel('Preauth-TOTP');
@@ -41,21 +46,25 @@ final readonly class Utilities {
         /* per PSR6, if no expiration is set, implementation may set a default,
          * we want this to keep forever, so a few hundred years should do it */
         $totpItem->expiresAt(DateTimeImmutable::createFromFormat(
-            'Y-m-d', '2999-12-31'
+            'Y-m-d',
+            '2999-12-31'
         ));
         $this->appPool->save($totpItem);
         return $totp;
     }
 
-    private function showTotp(string $totp): void {
+    private function showTotp(string $totp): void
+    {
         $writer = new Writer(new PlainTextRenderer());
         file_put_contents(
-            'php://stderr', <<<RAW
+            'php://stderr',
+            <<<RAW
             {$writer->writeString($totp)}
             $totp
             loading TOTP, because the env is not set, please copy above into TOTP_URI
 
-            RAW, FILE_APPEND
+            RAW,
+            FILE_APPEND
         );
     }
 }

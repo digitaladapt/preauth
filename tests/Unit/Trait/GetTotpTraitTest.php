@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit\Trait;
@@ -10,20 +11,24 @@ use OTPHP\TOTPInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-final class GetTotpTraitTest extends TestCase {
+final class GetTotpTraitTest extends TestCase
+{
     use TotpTestHelper;
 
-    private function makeObject(): object {
-        return new class {
+    private function makeObject(): object
+    {
+        return new class () {
             use GetTotpTrait;
 
-            public function publicGetTotp(): TOTPInterface {
+            public function publicGetTotp(): TOTPInterface
+            {
                 return $this->getTotp();
             }
         };
     }
 
-    public function testSetConfigSetsProperty(): void {
+    public function testSetConfigSetsProperty(): void
+    {
         $obj = $this->makeObject();
         $config = $this->makeConfig();
 
@@ -33,7 +38,8 @@ final class GetTotpTraitTest extends TestCase {
         self::assertSame($config, $reflection->getValue($obj));
     }
 
-    public function testGetTotpReturnsTotpInterface(): void {
+    public function testGetTotpReturnsTotpInterface(): void
+    {
         $obj = $this->makeObject();
         $obj->setConfig($this->makeConfig());
 
@@ -42,7 +48,8 @@ final class GetTotpTraitTest extends TestCase {
         self::assertInstanceOf(TOTPInterface::class, $totp);
     }
 
-    public function testGetTotpReturnsValidCode(): void {
+    public function testGetTotpReturnsValidCode(): void
+    {
         $obj = $this->makeObject();
         $obj->setConfig($this->makeConfig());
 
@@ -52,14 +59,21 @@ final class GetTotpTraitTest extends TestCase {
         self::assertSame($this->validTotpCode(), $totp->now());
     }
 
-    public function testGetTotpThrowsOnInvalidUri(): void {
+    public function testGetTotpThrowsOnInvalidUri(): void
+    {
         $obj = $this->makeObject();
         $clock = $this->frozenClock();
         $utilities = $this->createUtilities($clock);
         $config = new ConfigBag(
-            $utilities, $clock,
-            3600, 'not-a-valid-uri', 0, false,
-            'Error', 'Teapot', 'Too Many'
+            $utilities,
+            $clock,
+            3600,
+            'not-a-valid-uri',
+            0,
+            false,
+            'Error',
+            'Teapot',
+            'Too Many'
         );
         $obj->setConfig($config);
 
@@ -70,16 +84,23 @@ final class GetTotpTraitTest extends TestCase {
         $obj->publicGetTotp();
     }
 
-    public function testGetTotpThrowsHttpExceptionWhenNotTotpType(): void {
+    public function testGetTotpThrowsHttpExceptionWhenNotTotpType(): void
+    {
         // A HOTP URI loads successfully as an OTPInterface but is NOT a TOTPInterface,
         // so the instanceof check in getTotp() should throw an HttpException(500)
         $obj = $this->makeObject();
         $clock = $this->frozenClock();
         $utilities = $this->createUtilities($clock);
         $config = new ConfigBag(
-            $utilities, $clock,
-            3600, 'otpauth://hotp/Test-HOTP?secret=JBSWY3DPEHPK3PXP&counter=0', 0, false,
-            'Error', 'Teapot', 'Too Many'
+            $utilities,
+            $clock,
+            3600,
+            'otpauth://hotp/Test-HOTP?secret=JBSWY3DPEHPK3PXP&counter=0',
+            0,
+            false,
+            'Error',
+            'Teapot',
+            'Too Many'
         );
         $obj->setConfig($config);
 

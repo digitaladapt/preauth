@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Command;
@@ -13,7 +14,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /** simple console command to generate backup codes
  * usage: php bin/console app:generate-backup-codes [count] */
-final class GenerateBackupCodesCommand extends Command {
+final class GenerateBackupCodesCommand extends Command
+{
     public function __construct(
         private readonly BackupCodeInterface $manager,
         private readonly PersistCache        $persistCache,
@@ -21,14 +23,16 @@ final class GenerateBackupCodesCommand extends Command {
         parent::__construct();
     }
 
-    protected function configure(): void {
+    protected function configure(): void
+    {
         $this->setName('app:generate-backup-codes');
         $this->setDescription('Generate single‑use backup codes')
             ->addArgument('count', InputArgument::OPTIONAL, 'Number of codes to generate', 10);
     }
 
     /** @throws InvalidArgumentException */
-    protected function execute(InputInterface $input, OutputInterface $output): int {
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
         /* since Kernel::terminate() does not get called, we must boot and persist explicitly */
         $this->persistCache->boot();
         $count = (int) $input->getArgument('count');

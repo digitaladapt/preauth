@@ -12,3 +12,12 @@
 /.phpunit.cache/
 /bin/.phpunit.result.cache
 ###< phpunit/phpunit ###
+
+###> project-specific ###
+/config/reference.php
+###< project-specific ###
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+###< friendsofphp/php-cs-fixer ###

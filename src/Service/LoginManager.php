@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
@@ -18,7 +19,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Uid\Ulid;
 
-final readonly class LoginManager implements LoginInterface {
+final readonly class LoginManager implements LoginInterface
+{
     use CookieNameTrait;
     use GetTotpTrait;
     use MakeNonceTrait;
@@ -28,7 +30,7 @@ final readonly class LoginManager implements LoginInterface {
 
     /** @throws InvalidArgumentException */
     public function __construct(
-                CacheItemPoolInterface $sessionCache,
+        CacheItemPoolInterface $sessionCache,
         private BackupCodeInterface    $backupCodeManager,
         private DomainInterface        $domainManager,
     ) {
@@ -36,7 +38,8 @@ final readonly class LoginManager implements LoginInterface {
     }
 
     /** @throws InvalidArgumentException */
-    public function checkToken(Payload $payload, Request $request): ?Response {
+    public function checkToken(Payload $payload, Request $request): ?Response
+    {
         /* when scope is IP but ip-access is disabled, scope is to be considered cookie */
         if ($payload->scope === Scope::Ip && ! $this->config->ipTtl()) {
             /* requested to grant ip access, but that is not enabled */
@@ -69,7 +72,7 @@ final readonly class LoginManager implements LoginInterface {
                     /* grant access based on the requested scope */
                     if ($payload->scope === Scope::Cookie) {
                         $response->headers->setCookie($this->setCookie($cleanId, $request->getHost()));
-                    } else if ($payload->scope === Scope::Ip) {
+                    } elseif ($payload->scope === Scope::Ip) {
                         $this->setIp($cleanId, $request->getClientIp());
                     }
 
@@ -104,7 +107,8 @@ final readonly class LoginManager implements LoginInterface {
     }
 
     /** @throws InvalidArgumentException */
-    private function setCookie(string $id, string $host): Cookie {
+    private function setCookie(string $id, string $host): Cookie
+    {
         /* successful auth with token, store session and set the cookie */
         $ulid = new Ulid();
         $sessionCookie = $this->sessionCache->getItem(
@@ -136,7 +140,8 @@ final readonly class LoginManager implements LoginInterface {
     }
 
     /** @throws InvalidArgumentException */
-    private function setIp(string $id, string $ip): void {
+    private function setIp(string $id, string $ip): void
+    {
         /* successful auth with token, requested scope of ip (and ip access enabled) */
         $ipKey = $this->makeCacheKey("ip_$ip");
 

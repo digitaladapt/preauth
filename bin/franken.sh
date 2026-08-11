@@ -1,7 +1,9 @@
 #!/bin/sh
+# Dev utility — builds and runs the preauth container locally.
+# Not for production use.
 
 docker container rm preauth
-docker build . -t digtialadapt/preauth:dev
+docker build . -t digitaladapt/preauth:dev
 docker run --name preauth \
     -e APP_ENV=dev \
     -e APP_DEBUG=true \
@@ -10,4 +12,4 @@ docker run --name preauth \
     -e DEFAULT_URI=http://localhost \
     -v ./var/share:/app/var/share \
     -p 8000:80 \
-    digtialadapt/preauth:dev
+    digitaladapt/preauth:dev

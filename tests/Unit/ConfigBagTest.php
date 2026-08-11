@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit;
@@ -10,8 +11,10 @@ use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Clock\ClockInterface;
 
-final class ConfigBagTest extends TestCase {
-    private function createUtilities(?string $totp = null): Utilities {
+final class ConfigBagTest extends TestCase
+{
+    private function createUtilities(?string $totp = null): Utilities
+    {
         $clock = $this->createStub(ClockInterface::class);
         $cache = $this->createStub(CacheItemPoolInterface::class);
 
@@ -28,14 +31,21 @@ final class ConfigBagTest extends TestCase {
         return new Utilities($clock, $cache);
     }
 
-    public function testGettersWithExplicitValues(): void {
+    public function testGettersWithExplicitValues(): void
+    {
         $clock = $this->createStub(ClockInterface::class);
         $utilities = $this->createUtilities();
 
         $config = new ConfigBag(
-            $utilities, $clock,
-            3600, 'otpauth://totp/test', 1800, true,
-            'Error!', 'Teapot!', 'Too Many!'
+            $utilities,
+            $clock,
+            3600,
+            'otpauth://totp/test',
+            1800,
+            true,
+            'Error!',
+            'Teapot!',
+            'Too Many!'
         );
 
         self::assertSame($clock, $config->clock());
@@ -48,43 +58,63 @@ final class ConfigBagTest extends TestCase {
         self::assertSame('Too Many!', $config->tooManyTitle());
     }
 
-    public function testTotpUriFallsBackToUtilitiesWhenEmpty(): void {
+    public function testTotpUriFallsBackToUtilitiesWhenEmpty(): void
+    {
         $clock = $this->createStub(ClockInterface::class);
         $utilities = $this->createUtilities('fallback-totp');
 
         $config = new ConfigBag(
-            $utilities, $clock,
-            3600, '', 1800, false,
-            'Error', 'Teapot', 'Too Many'
+            $utilities,
+            $clock,
+            3600,
+            '',
+            1800,
+            false,
+            'Error',
+            'Teapot',
+            'Too Many'
         );
 
         self::assertSame('fallback-totp', $config->totpUri());
     }
 
-    public function testIpTtlFallsBackToNullWhenZero(): void {
+    public function testIpTtlFallsBackToNullWhenZero(): void
+    {
         $clock = $this->createStub(ClockInterface::class);
         $utilities = $this->createUtilities();
 
         $config = new ConfigBag(
-            $utilities, $clock,
-            3600, 'otpauth://totp/test', 0, false,
-            'Error', 'Teapot', 'Too Many'
+            $utilities,
+            $clock,
+            3600,
+            'otpauth://totp/test',
+            0,
+            false,
+            'Error',
+            'Teapot',
+            'Too Many'
         );
 
         self::assertNull($config->ipTtl());
     }
 
-    public function testIpTtlFallsBackToNullWhenNull(): void {
+    public function testIpTtlFallsBackToNullWhenNull(): void
+    {
         $clock = $this->createStub(ClockInterface::class);
         $utilities = $this->createUtilities();
 
         $config = new ConfigBag(
-            $utilities, $clock,
-            3600, 'otpauth://totp/test', null, false,
-            'Error', 'Teapot', 'Too Many'
+            $utilities,
+            $clock,
+            3600,
+            'otpauth://totp/test',
+            null,
+            false,
+            'Error',
+            'Teapot',
+            'Too Many'
         );
 
         self::assertNull($config->ipTtl());
     }
 }
-
