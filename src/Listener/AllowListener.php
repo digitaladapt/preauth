@@ -46,7 +46,7 @@ final readonly class AllowListener
 
             $id = $item->get();
             $this->logger->debug("has valid ip-session: $id");
-            $event->setResponse($this->authSuccessResponse($id));
+            $event->setResponse($this->authSuccessResponse($id, $this->config));
         } catch (InvalidArgumentException $e) {
             /* cache failure — fail closed (don't authenticate) */
             $this->logger->error("cache error in AllowListener: {$e->getMessage()}");

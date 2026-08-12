@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Enum\RemoteUserMode;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -18,6 +19,10 @@ final readonly class ConfigBag
     private string $errorMessage;
     private string $teapotTitle;
     private string $tooManyTitle;
+    private RemoteUserMode $remoteUserMode;
+    private string $remoteUserStatic;
+    /** @var array<string,string> */
+    private array $remoteUserMap;
 
     /** @throws InvalidArgumentException */
     public function __construct(
@@ -30,6 +35,9 @@ final readonly class ConfigBag
         #[Autowire('%app.error_message%')] string  $errorMessage,
         #[Autowire('%app.teapot_title%')] string   $teapotTitle,
         #[Autowire('%app.too_many_title%')] string $tooManyTitle,
+        #[Autowire('%app.remote_user%')] string    $remoteUserMode,
+        #[Autowire('%app.remote_user_static%')] string $remoteUserStatic,
+        #[Autowire('%app.remote_user_map%')] string $remoteUserMap,
     ) {
         $this->clock        = $clock;
         $this->cookieTtl    = $cookieTtl;
@@ -39,6 +47,31 @@ final readonly class ConfigBag
         $this->errorMessage = $errorMessage;
         $this->teapotTitle  = $teapotTitle;
         $this->tooManyTitle = $tooManyTitle;
+
+        $this->remoteUserMode  = RemoteUserMode::tryFrom($remoteUserMode) ?? RemoteUserMode::Session;
+        $this->remoteUserStatic = $remoteUserStatic;
+        $this->remoteUserMap   = $this->parseUserMap($remoteUserMap);
+    }
+
+    /**
+     * Parse a comma-separated map string ("id1:user1,id2:user2") into an array.
+     *
+     * @return array<string,string>
+     */
+    private function parseUserMap(string $map): array
+    {
+        if ($map === '') {
+            return [];
+        }
+
+        $result = [];
+        foreach (explode(',', $map) as $pair) {
+            $parts = explode(':', trim($pair), 2);
+            if (count($parts) === 2) {
+                $result[trim($parts[0])] = trim($parts[1]);
+            }
+        }
+        return $result;
     }
 
     public function clock(): ClockInterface
@@ -79,5 +112,23 @@ final readonly class ConfigBag
     public function tooManyTitle(): string
     {
         return $this->tooManyTitle;
+    }
+
+    public function remoteUserMode(): RemoteUserMode
+    {
+        return $this->remoteUserMode;
+    }
+
+    public function remoteUserStatic(): string
+    {
+        return $this->remoteUserStatic;
+    }
+
+    /**
+     * @return array<string,string>
+     */
+    public function remoteUserMap(): array
+    {
+        return $this->remoteUserMap;
     }
 }

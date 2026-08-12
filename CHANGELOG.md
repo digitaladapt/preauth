@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- Made `Remote-User` header value configurable via `REMOTE_USER` environment
+  variable with four modes: `session` (default), `static`, `mapped`, and `none`.
+  This allows deployments to prevent user-controlled header values from reaching
+  backend services.
 - Added `SecurityHeadersListener` to set `X-Content-Type-Options`, `X-Frame-Options`,
   `Content-Security-Policy`, `Referrer-Policy`, and `Strict-Transport-Security`
   headers on all responses.

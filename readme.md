@@ -112,6 +112,21 @@ for the complete reference.
 | `IP_TTL` | `0` | Seconds to allow all traffic from an IP after login (0 = disabled). |
 | `TEAPOT` | `1` | Respond with 418 instead of 429 when rate-limited (boolean). |
 
+### Remote-User Header
+
+The `Remote-User` header sent to backends on successful auth is configurable:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REMOTE_USER` | `session` | Mode: `session`, `static`, `mapped`, or `none`. |
+| `REMOTE_USER_STATIC` | `authenticated` | Value sent when mode is `static`. |
+| `REMOTE_USER_MAP` | _(empty)_ | Comma-separated map for `mapped` mode (e.g. `alice:admin,bob:user`). |
+
+- **`session`** (default): Sends the session id. Backward-compatible.
+- **`static`**: Sends a fixed string for all authenticated requests.
+- **`mapped`**: Looks up the session id in the map; falls back to session id if not found.
+- **`none`**: Omits the header entirely (Caddy still accepts based on status code).
+
 ### Rate Limiting
 
 Rate limiting **cannot be disabled**. It uses a compound sliding window:

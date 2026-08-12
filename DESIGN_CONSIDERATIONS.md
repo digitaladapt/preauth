@@ -24,13 +24,16 @@ Strict-Transport-Security: max-age=31536000
 
 The inline `<script>` and `<style>` in the templates mean a CSP with `'unsafe-inline'` for `script-src` and `style-src` is the strictest practical policy today. Moving scripts/styles to external files would allow a stricter CSP in the future.
 
-### 1.2 Remote-User Header Value is User-Controlled [HIGH PRIORITY] ⬜ Open
+### 1.2 Remote-User Header Value is User-Controlled [HIGH PRIORITY] ✅ Addressed
 
-**Current state:** The `Remote-User` header sent back to Caddy (and forwarded to the protected backend) is set to the `id` field from the user's login payload. This value is sanitized via `makeCacheKey()` (which restricts to `[A-Za-z0-9_.]` and truncates to 128 chars), but it is otherwise arbitrary — a user who passes TOTP authentication can set their `Remote-User` to `admin`, `root`, or any other value.
+**Current state:** Fixed. The `Remote-User` header value is now configurable via the `REMOTE_USER` environment variable, which supports four modes:
 
-**Recommendation:** If this is a single-user gate (which it currently is), document this explicitly: "The Remote-User header identifies the session, not a system user. Backend services must not use it for authorization decisions." If multi-user support is added (as planned in the ROADMAP), the `id` field should be validated against a registered user list before being echoed as `Remote-User`.
+- **`session`** (default, backward-compatible): Sends the session id, as before. The value is still sanitized via `makeCacheKey()`.
+- **`static`**: Sends a fixed string (configurable via `REMOTE_USER_STATIC`, default `authenticated`) for all authenticated requests. This eliminates the user-controlled header issue entirely.
+- **`mapped`**: Looks up the session id in a configured map (`REMOTE_USER_MAP`, format: `id1:user1,id2:user2`) and sends the mapped value. Falls back to the session id if not found in the map. This is the path to multi-user support.
+- **`none`**: Omits the `Remote-User` header entirely. Caddy's `forward_auth` still accepts the request based on the 200 status code.
 
-**Why:** A backend service that trusts `Remote-User` for access control (e.g., granting admin privileges to `Remote-User: admin`) would be trivially exploitable by any authenticated preauth user. This is the most important architectural caveat to document, even if it's intentional for the current single-user model. The README's Security Model section now mentions that `Remote-User` identifies the session, but a dedicated `docs/SECURITY.md` would be valuable.
+The `RemoteUserMode` enum (`src/Enum/RemoteUserMode.php`) encapsulates the modes. `StringTrait::authSuccessResponse()` resolves the header value based on the configured mode, and `ConfigBag` handles parsing the map string and validating the mode (invalid values fall back to `session`). `AcceptListener` now receives `ConfigBag` as a constructor dependency to support this.
 
 ### 1.3 No CSRF Protection on POST Form Login [MEDIUM PRIORITY] ✅ Addressed
 

@@ -73,7 +73,10 @@ final class GetTotpTraitTest extends TestCase
             false,
             'Error',
             'Teapot',
-            'Too Many'
+            'Too Many',
+            'session',
+            'authenticated',
+            '',
         );
         $obj->setConfig($config);
 
@@ -100,7 +103,10 @@ final class GetTotpTraitTest extends TestCase
             false,
             'Error',
             'Teapot',
-            'Too Many'
+            'Too Many',
+            'session',
+            'authenticated',
+            '',
         );
         $obj->setConfig($config);
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Listener;
 
+use App\ConfigBag;
 use App\Service\DomainInterface;
 use App\Trait\CookieNameTrait;
 use App\Trait\HasLoggerTrait;
@@ -22,6 +23,7 @@ final readonly class AcceptListener
     public function __construct(
         private CacheItemPoolInterface $sessionCache,
         private DomainInterface        $domainManager,
+        private ConfigBag              $config,
     ) {
     }
 
@@ -51,7 +53,7 @@ final readonly class AcceptListener
 
             $id = $item->get();
             $this->logger->debug("has valid cookie-session: $id");
-            $event->setResponse($this->authSuccessResponse($id));
+            $event->setResponse($this->authSuccessResponse($id, $this->config));
         } catch (InvalidArgumentException $e) {
             /* cache failure — fail closed (don't authenticate) */
             $this->logger->error("cache error in AcceptListener: {$e->getMessage()}");

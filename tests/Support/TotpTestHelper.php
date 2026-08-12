@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Support;
 
 use App\ConfigBag;
+use App\Enum\RemoteUserMode;
 use App\Utilities;
 use DateTimeImmutable;
 use OTPHP\TOTP;
@@ -72,6 +73,9 @@ trait TotpTestHelper
         string $errorMessage = 'Error',
         string $teapotTitle = 'Teapot',
         string $tooManyTitle = 'Too Many',
+        string $remoteUserMode = 'session',
+        string $remoteUserStatic = 'authenticated',
+        string $remoteUserMap = '',
     ): ConfigBag {
         $clock = $this->frozenClock();
         $utilities = $this->createUtilities($clock);
@@ -85,6 +89,9 @@ trait TotpTestHelper
             $errorMessage,
             $teapotTitle,
             $tooManyTitle,
+            $remoteUserMode,
+            $remoteUserStatic,
+            $remoteUserMap,
         );
     }
 

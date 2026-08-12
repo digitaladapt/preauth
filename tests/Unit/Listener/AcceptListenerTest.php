@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Listener;
 
+use App\ConfigBag;
 use App\Listener\AcceptListener;
 use App\Service\DomainManager;
 use App\Tests\Support\TotpTestHelper;
@@ -22,9 +23,12 @@ final class AcceptListenerTest extends TestCase
     private const string COOKIE_NAME = '__Host-Http-Preauth';
     private const string AUTH_COOKIE_NAME = '__Http-Domain-Preauth';
 
-    private function makeListener(ArrayAdapter $pool, DomainManager $domainManager): AcceptListener
-    {
-        $listener = new AcceptListener($pool, $domainManager);
+    private function makeListener(
+        ArrayAdapter $pool,
+        DomainManager $domainManager,
+        ?ConfigBag $config = null,
+    ): AcceptListener {
+        $listener = new AcceptListener($pool, $domainManager, $config ?? $this->makeConfig());
         $listener->setLogger(new NullLogger());
         return $listener;
     }
@@ -129,5 +133,132 @@ final class AcceptListenerTest extends TestCase
 
         // empty cookie value should not be treated as a valid session
         self::assertFalse($event->hasResponse());
+    }
+
+    /* ── Remote-User header modes ─────────────────────────────────────── */
+
+    public function testRemoteUserSessionModeSendsSessionId(): void
+    {
+        $pool = new ArrayAdapter();
+        $ulid = '01HXY1234567890ABCDEFGHIJK';
+        $item = $pool->getItem('cookie_' . $ulid);
+        $item->set('alice');
+        $pool->save($item);
+
+        $domainManager = new DomainManager(false, '');
+        $listener = $this->makeListener(
+            $pool,
+            $domainManager,
+            $this->makeConfig(remoteUserMode: 'session'),
+        );
+
+        $request = Request::create('/', 'GET');
+        $request->cookies->set(self::COOKIE_NAME, $ulid);
+
+        $event = $this->makeEvent($request);
+        $listener->onKernelRequest($event);
+
+        self::assertTrue($event->hasResponse());
+        self::assertSame('alice', $event->getResponse()->headers->get('Remote-User'));
+    }
+
+    public function testRemoteUserStaticModeSendsFixedValue(): void
+    {
+        $pool = new ArrayAdapter();
+        $ulid = '01HXY1234567890ABCDEFGHIJK';
+        $item = $pool->getItem('cookie_' . $ulid);
+        $item->set('alice');
+        $pool->save($item);
+
+        $domainManager = new DomainManager(false, '');
+        $listener = $this->makeListener(
+            $pool,
+            $domainManager,
+            $this->makeConfig(remoteUserMode: 'static', remoteUserStatic: 'authenticated'),
+        );
+
+        $request = Request::create('/', 'GET');
+        $request->cookies->set(self::COOKIE_NAME, $ulid);
+
+        $event = $this->makeEvent($request);
+        $listener->onKernelRequest($event);
+
+        self::assertTrue($event->hasResponse());
+        self::assertSame('authenticated', $event->getResponse()->headers->get('Remote-User'));
+    }
+
+    public function testRemoteUserMappedModeSendsMappedValue(): void
+    {
+        $pool = new ArrayAdapter();
+        $ulid = '01HXY1234567890ABCDEFGHIJK';
+        $item = $pool->getItem('cookie_' . $ulid);
+        $item->set('alice');
+        $pool->save($item);
+
+        $domainManager = new DomainManager(false, '');
+        $listener = $this->makeListener(
+            $pool,
+            $domainManager,
+            $this->makeConfig(remoteUserMode: 'mapped', remoteUserMap: 'alice:admin,bob:user'),
+        );
+
+        $request = Request::create('/', 'GET');
+        $request->cookies->set(self::COOKIE_NAME, $ulid);
+
+        $event = $this->makeEvent($request);
+        $listener->onKernelRequest($event);
+
+        self::assertTrue($event->hasResponse());
+        self::assertSame('admin', $event->getResponse()->headers->get('Remote-User'));
+    }
+
+    public function testRemoteUserMappedModeFallsBackToSessionIdWhenNotInMap(): void
+    {
+        $pool = new ArrayAdapter();
+        $ulid = '01HXY1234567890ABCDEFGHIJK';
+        $item = $pool->getItem('cookie_' . $ulid);
+        $item->set('unknown_user');
+        $pool->save($item);
+
+        $domainManager = new DomainManager(false, '');
+        $listener = $this->makeListener(
+            $pool,
+            $domainManager,
+            $this->makeConfig(remoteUserMode: 'mapped', remoteUserMap: 'alice:admin'),
+        );
+
+        $request = Request::create('/', 'GET');
+        $request->cookies->set(self::COOKIE_NAME, $ulid);
+
+        $event = $this->makeEvent($request);
+        $listener->onKernelRequest($event);
+
+        self::assertTrue($event->hasResponse());
+        self::assertSame('unknown_user', $event->getResponse()->headers->get('Remote-User'));
+    }
+
+    public function testRemoteUserNoneModeOmitsHeader(): void
+    {
+        $pool = new ArrayAdapter();
+        $ulid = '01HXY1234567890ABCDEFGHIJK';
+        $item = $pool->getItem('cookie_' . $ulid);
+        $item->set('alice');
+        $pool->save($item);
+
+        $domainManager = new DomainManager(false, '');
+        $listener = $this->makeListener(
+            $pool,
+            $domainManager,
+            $this->makeConfig(remoteUserMode: 'none'),
+        );
+
+        $request = Request::create('/', 'GET');
+        $request->cookies->set(self::COOKIE_NAME, $ulid);
+
+        $event = $this->makeEvent($request);
+        $listener->onKernelRequest($event);
+
+        self::assertTrue($event->hasResponse());
+        self::assertFalse($event->getResponse()->headers->has('Remote-User'));
     }
 }
