@@ -17,6 +17,8 @@ For when you want a belt and suspenders.
 - **Caddy native** — Designed for Caddy's `forward_auth` directive
 - **Docker-first** — Single container, persistent volumes, no database
 - **Rate limiting** — Per-IP burst and sustained limits (cannot be disabled)
+- **Public rate-limited access** — Optional, allow unauthenticated access
+  to specific paths with separate rate limiting (e.g., public Gitea repos)
 - **Central auth** — Optional subdomain-based SSO across multiple services
 - **IP-based bypass** — Optional, for services that don't handle cookies
 - **Customizable** — Colors, labels, messages, and error text via env vars
@@ -138,6 +140,56 @@ Rate limiting **cannot be disabled**. It uses a compound sliding window:
 | `UPPER_COUNT` | `10` | Max attempts per upper window. |
 | `UPPER_TIME` | `3600` | Upper window in seconds (1 hour). |
 
+### Public Rate-Limited Access
+
+Preauth can provide rate-limited unauthenticated access to select public
+paths. This is useful for exposing public content (e.g., public repositories
+in Gitea) without requiring TOTP authentication, while protecting server
+resources from bot traffic.
+
+When `PUBLIC_PATHS` is configured, requests to matching paths from
+unauthenticated users are allowed through with a separate rate limiter.
+Authenticated users bypass the public rate limiter entirely.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PUBLIC_PATHS` | `''` (disabled) | Comma-separated path patterns. See below. |
+| `PUBLIC_BURST_COUNT` | `100` | Max requests per burst window per IP. |
+| `PUBLIC_BURST_TIME` | `60` | Burst window in seconds. |
+| `PUBLIC_UPPER_COUNT` | `500` | Max requests per sustained window per IP. |
+| `PUBLIC_UPPER_TIME` | `3600` | Sustained window in seconds (1 hour). |
+
+**Path pattern syntax:**
+
+- Patterns are matched against the request path only (query string ignored).
+- Patterns must start with `/`.
+- `*` matches one or more characters within a single path segment (not crossing `/`).
+- `**` matches zero or more characters including `/` (crosses path segments).
+- An optional host prefix can restrict a pattern to a specific host
+  (e.g., `code.example.com/public/**`).
+
+| Pattern | Matches | Does NOT match |
+|---------|---------|----------------|
+| `/public` | `/public` | `/public/`, `/public/repo` |
+| `/public/*` | `/public/repo` | `/public`, `/public/a/b` |
+| `/public/**` | `/public/repo`, `/public/a/b/c` | `/public` |
+| `host.com/api/**` | `host.com/api/v1/status` | `other.com/api/v1/status` |
+
+**Example:** Allow public access to Gitea's `/public/` paths:
+
+```env
+PUBLIC_PATHS=/public/**
+PUBLIC_BURST_COUNT=100
+PUBLIC_BURST_TIME=60
+PUBLIC_UPPER_COUNT=500
+PUBLIC_UPPER_TIME=3600
+```
+
+When a visitor exceeds the rate limit, they receive a `429 Too Many Requests`
+response with a `Retry-After` header. When within limits, they receive a
+`200 OK` response (with no `Remote-User` header). Authenticated users receive
+`200 OK` with their `Remote-User` header as normal.
+
 ### Styling
 
 All UI text and colors are configurable:
@@ -168,10 +220,12 @@ passes through a priority-ordered chain of listeners:
 
 1. **AcceptListener** (priority 99) — Checks for valid session cookie.
 2. **AllowListener** (priority 88) — Checks for valid IP-based session.
-3. **RejectListener** (priority 77) — Rate-limiting gate.
-4. **LoginListener** (priority 66) — Processes login attempts.
-5. **InterceptListener** (priority 55) — Renders login page or redirects.
-6. **SecurityHeadersListener** (response) — Adds security headers.
+3. **PublicAccessListener** (priority 84) — If public paths are configured,
+   allows rate-limited unauthenticated access to matching paths.
+4. **RejectListener** (priority 77) — Rate-limiting gate.
+5. **LoginListener** (priority 66) — Processes login attempts.
+6. **InterceptListener** (priority 55) — Renders login page or redirects.
+7. **SecurityHeadersListener** (response) — Adds security headers.
 
 ### Security Model
 
@@ -213,7 +267,7 @@ vendor/bin/php-cs-fixer fix
 vendor/bin/phpunit
 ```
 
-The test suite includes 222 tests with 100% code coverage (lines, methods,
+The test suite includes 293 tests with 100% code coverage (lines, methods,
 and classes). Both unit tests and functional tests (full HTTP kernel flow)
 are included.
 

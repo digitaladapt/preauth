@@ -26,3 +26,25 @@ protected.example.com {
 auth.example.com {
 	reverse_proxy preauth
 }
+
+# --- public rate-limited access (v1.1) ---
+# Configure PUBLIC_PATHS env var to specify which paths are public.
+# Example: PUBLIC_PATHS=/public/**
+# Unauthenticated visitors to public paths are rate-limited separately
+# from login attempts. Authenticated users bypass the public rate limiter.
+#
+# This example protects all of Gitea except /public/** which is
+# publicly accessible but rate-limited (e.g., 100 req/min, 500 req/hr).
+git.example.com {
+	forward_auth preauth {
+		uri {uri}
+		copy_headers Remote-User
+	}
+	reverse_proxy gitea:3000
+}
+# In preauth's .env:
+#   PUBLIC_PATHS=/public/**
+#   PUBLIC_BURST_COUNT=100
+#   PUBLIC_BURST_TIME=60
+#   PUBLIC_UPPER_COUNT=500
+#   PUBLIC_UPPER_TIME=3600

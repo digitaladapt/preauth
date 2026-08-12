@@ -5,7 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] — v1.1
+
+### Added
+- **Public rate-limited access** — Select paths can now be made publicly
+  accessible without TOTP authentication, with separate per-IP rate limiting.
+  This is useful for exposing public content (e.g., public Gitea repositories)
+  while protecting server resources from bot traffic.
+  - New `PUBLIC_PATHS` env var: comma-separated path patterns with `*` (single
+    segment) and `**` (cross-segment) wildcard support. Optional host prefix
+    (e.g., `code.example.com/public/**`). When empty (default), the feature
+    is fully disabled.
+  - New `PUBLIC_BURST_COUNT` / `PUBLIC_BURST_TIME` env vars for burst rate
+    limiting (default: 100 requests per 60 seconds).
+  - New `PUBLIC_UPPER_COUNT` / `PUBLIC_UPPER_TIME` env vars for sustained
+    rate limiting (default: 500 requests per 3600 seconds).
+  - Authenticated users bypass the public rate limiter entirely.
+  - Over-limit responses include a `Retry-After` header.
+  - New `PublicPathMatcher` service for path pattern matching.
+  - New `PublicAccessListener` (priority 84) in the request pipeline.
+
+## [1.0.0] — v1.0 Release
 
 ### Security
 - Made `Remote-User` header value configurable via `REMOTE_USER` environment

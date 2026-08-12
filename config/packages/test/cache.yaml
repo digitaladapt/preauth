@@ -10,3 +10,5 @@ framework:
                 adapters: cache.adapter.array
             sessionStorage:
                 adapters: cache.adapter.array
+            publicRateLimitCache:
+                adapters: cache.adapter.array
