@@ -176,6 +176,25 @@ final class PublicPathMatcherTest extends TestCase
         self::assertFalse($matcher->matches('other.host', '/public/repo'));
     }
 
+    public function testDomainPrefixedRootPathMatchesRoot(): void
+    {
+        // host/  — the trailing slash is the entire path, nothing after it
+        $matcher = new PublicPathMatcher('code.example.com/');
+        self::assertTrue($matcher->matches('code.example.com', '/'));
+        self::assertFalse($matcher->matches('code.example.com', '/public'));
+        self::assertFalse($matcher->matches('other.example.com', '/'));
+    }
+
+    public function testDomainPrefixedRootWithOtherPatterns(): void
+    {
+        // The exact scenario from the bug report
+        $matcher = new PublicPathMatcher('code.example.com/,code.example.com/public/**');
+        self::assertTrue($matcher->matches('code.example.com', '/'));
+        self::assertTrue($matcher->matches('code.example.com', '/public/repo'));
+        self::assertFalse($matcher->matches('code.example.com', '/private'));
+        self::assertFalse($matcher->matches('other.example.com', '/'));
+    }
+
     public function testDomainPrefixIsCaseInsensitive(): void
     {
         $matcher = new PublicPathMatcher('Code.Example.COM/public/**');

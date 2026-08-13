@@ -79,7 +79,7 @@ final readonly class PublicPathMatcher implements PublicPathMatcherInterface
             $host = null;
             $path = $entry;
 
-            if (preg_match('/^([a-z0-9.-]+)(\/.+)$/i', $entry, $m)) {
+            if (preg_match('/^([a-z0-9.-]+)(\/.*)$/i', $entry, $m)) {
                 $host = strtolower($m[1]);
                 $path = $m[2];
             }
