@@ -45,6 +45,16 @@ parameters:
     env(UPPER_COUNT): 10            # 10 per hour
     env(UPPER_TIME): 3600           # seconds (1 hour)
 
+    # --- public access (rate-limited, no auth required) ---
+    # Comma-separated path patterns for public access. Wildcards: * (single
+    # segment), ** (cross segments). Optional host prefix: host.com/path/**
+    # When empty (default), the feature is fully disabled.
+    env(PUBLIC_PATHS): ''
+    env(PUBLIC_BURST_COUNT): 100    # max requests per burst window per IP
+    env(PUBLIC_BURST_TIME): 60      # burst window in seconds
+    env(PUBLIC_UPPER_COUNT): 500    # max requests per sustained window per IP
+    env(PUBLIC_UPPER_TIME): 3600    # sustained window in seconds (1 hour)
+
     # --- styling options ---
     env(TITLE): 'Pre-Authentication System'
     env(BG_COLOR): '#029386'        # teal
@@ -76,6 +86,12 @@ parameters:
     app.remote_user: '%env(REMOTE_USER)%'
     app.remote_user_static: '%env(REMOTE_USER_STATIC)%'
     app.remote_user_map: '%env(REMOTE_USER_MAP)%'
+
+    app.public_paths: '%env(PUBLIC_PATHS)%'
+    app.public_burst_count: '%env(int:PUBLIC_BURST_COUNT)%'
+    app.public_burst_time: '%env(int:PUBLIC_BURST_TIME)%'
+    app.public_upper_count: '%env(int:PUBLIC_UPPER_COUNT)%'
+    app.public_upper_time: '%env(int:PUBLIC_UPPER_TIME)%'
 
     app.error_message: '%env(ERROR_MESSAGE)%'
     app.teapot_title: '%env(TEAPOT_TITLE)%'

@@ -10,6 +10,8 @@ framework:
                 adapters: cache.adapter.apcu
             sessionStorage:
                 adapters: cache.adapter.filesystem
+            publicRateLimitCache:
+                adapters: cache.adapter.apcu
 
         # Unique name of your app: used to compute stable namespaces for cache keys.
         prefix_seed: digitaladapt/preauth

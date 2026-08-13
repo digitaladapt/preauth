@@ -13,3 +13,17 @@ framework:
         login_limiter:
             policy: compound
             limiters: [burst, upper]
+
+        public_burst:
+            policy: 'sliding_window'
+            limit: '%env(int:PUBLIC_BURST_COUNT)%'
+            interval: '%env(int:PUBLIC_BURST_TIME)% seconds'
+            cache_pool: 'publicRateLimitCache'
+        public_upper:
+            policy: 'sliding_window'
+            limit: '%env(int:PUBLIC_UPPER_COUNT)%'
+            interval: '%env(int:PUBLIC_UPPER_TIME)% seconds'
+            cache_pool: 'publicRateLimitCache'
+        public_limiter:
+            policy: compound
+            limiters: [public_burst, public_upper]

@@ -38,12 +38,16 @@ Client → Caddy → forward_auth → Preauth listeners (priority order) → 200
    If found → `200 OK` + `Remote-User` header → Caddy proxies to backend.
 2. **AllowListener** (priority 88) — If `IP_TTL` is enabled, checks for
    valid IP-based session. If found → `200 OK` + `Remote-User`.
-3. **RejectListener** (priority 77) — Rate-limiting gate. If IP has
+3. **PublicAccessListener** (priority 84) — If `PUBLIC_PATHS` is
+   configured and the request matches a public path pattern, applies
+   per-IP rate limiting. Within limit → `200 OK`. Over limit → `429`.
+   Authenticated users never reach this listener.
+4. **RejectListener** (priority 77) — Rate-limiting gate. If IP has
    exceeded login attempt threshold → `418 I'm a Teapot` (or `429`).
-4. **LoginListener** (priority 66) — Detects login attempts via
+5. **LoginListener** (priority 66) — Detects login attempts via
    `X-Preauth` header (base64url JSON) or POST form on auth subdomain.
    Validates TOTP/backup codes through `LoginManager`.
-5. **InterceptListener** (priority 55) — Fallback: if no listener has
+6. **InterceptListener** (priority 55) — Fallback: if no listener has
    set a response, either redirects to auth subdomain (central auth) or
    renders the Twig login page with a fresh nonce.
 
@@ -76,8 +80,8 @@ Client → Caddy → forward_auth → Preauth listeners (priority order) → 200
 
 | Metric       | Value                          |
 |--------------|--------------------------------|
-| **Tests**    | 222                            |
-| **Assertions** | 469                          |
+| **Tests**    | 293                            |
+| **Assertions** | 605                          |
 | **Pass**     | 222 (100%)                     |
 | **Fail**     | 0                              |
 | **Errors**   | 0                              |
@@ -109,12 +113,14 @@ Every class, method, and line in `src/` is covered.
 | `Data/Payload.php`                       | `Unit/Data/PayloadTest.php`                        | Unit     |
 | `Enum/Scope.php`                         | `Unit/Enum/ScopeTest.php`                          | Unit     |
 | `Listener/AcceptListener.php`            | `Unit/Listener/AcceptListenerTest.php`             | Unit     |
+| `Listener/PublicAccessListener.php`      | `Unit/Listener/PublicAccessListenerTest.php`       | Unit     |
 | `Listener/AllowListener.php`             | `Unit/Listener/AllowListenerTest.php`              | Unit     |
 | `Listener/InterceptListener.php`         | `Unit/Listener/InterceptListenerTest.php`          | Unit     |
 | `Listener/LoginListener.php`             | `Unit/Listener/LoginListenerTest.php`              | Unit     |
 | `Listener/RejectListener.php`            | `Unit/Listener/RejectListenerTest.php`             | Unit     |
 | `Service/BackupCodeManager.php`          | `Unit/Service/BackupCodeManagerTest.php`           | Unit     |
 | `Service/DomainManager.php`              | `Unit/Service/DomainManagerTest.php`               | Unit     |
+| `Service/PublicPathMatcher.php`          | `Unit/Service/PublicPathMatcherTest.php`           | Unit     |
 | `Service/LoginManager.php`               | `Unit/Service/LoginManagerTest.php`                | Unit     |
 | `Trait/CookieNameTrait.php`              | `Unit/Trait/CookieNameTraitTest.php`               | Unit     |
 | `Trait/GetTotpTrait.php`                 | `Unit/Trait/GetTotpTraitTest.php`                  | Unit     |
@@ -122,6 +128,7 @@ Every class, method, and line in `src/` is covered.
 | `Trait/MakeNonceTrait.php`               | `Unit/Trait/MakeNonceTraitTest.php`                | Unit     |
 | `Trait/StringTrait.php`                  | `Unit/Trait/StringTraitTest.php`                   | Unit     |
 | *(All listeners + services)*             | `Functional/AuthenticationFlowTest.php`            | Functional |
+| *(Public access flow)*                   | `Functional/PublicAccessFlowTest.php`              | Functional |
 
 ### Test Quality Assessment
 
@@ -157,7 +164,7 @@ Every class, method, and line in `src/` is covered.
 
 ## Roadmap
 
-### Phase 1 — Public but Rate-Limited Access ✦
+### Phase 1 — Public but Rate-Limited Access ✅ Completed (v1.1)
 
 **Goal:** Allow select services to be publicly accessible (no TOTP
 required) but with aggressive per-IP rate limiting to prevent bot
@@ -169,53 +176,39 @@ bandwidth, forcing it back to fully private. The solution isn't more
 authentication — it's bandwidth/resource protection for public-facing
 services.
 
-**Design:**
+**Implementation:**
 
 - New config variables:
-  - `PUBLIC_MODE=false` — Enable public access for specific services
-  - `PUBLIC_RATE_LIMIT=10` — Max requests per minute from a single IP
-    on public paths
-  - `PUBLIC_RATE_WINDOW=60` — Sliding window in seconds
-  - `PUBLIC_BURST=20` — Allow short bursts above the sustained rate
+  - `PUBLIC_PATHS` — Comma-separated path patterns with `*` (single
+    segment) and `**` (cross-segment) wildcard support. Optional host
+    prefix (e.g., `code.example.com/public/**`). When empty (default),
+    the feature is fully disabled.
+  - `PUBLIC_BURST_COUNT` / `PUBLIC_BURST_TIME` — Burst rate limiting
+    (default: 100 requests per 60 seconds).
+  - `PUBLIC_UPPER_COUNT` / `PUBLIC_UPPER_TIME` — Sustained rate limiting
+    (default: 500 requests per 3600 seconds).
 
-- New listener: **PublicListener** (priority 95, between AcceptListener
-  and AllowListener):
-  - Checks if the request matches a public path pattern (configured per
-    service via Caddy's `forward_auth` URI or a header like
-    `X-Preauth-Public: true`).
-  - If public mode is enabled for this request, applies aggressive
-    per-IP rate limiting (separate from the login rate limiter).
-  - If within rate limit → `200 OK` (no `Remote-User` header, or a
-    `Remote-User: public` marker).
-  - If over rate limit → `429 Too Many Requests` with `Retry-After`
-    header.
+- New listener: **PublicAccessListener** (priority 84, after
+  AcceptListener and AllowListener, before RejectListener):
+  - Checks if the request path matches a configured public path pattern.
+  - If public and within rate limit → `200 OK` (no `Remote-User` header).
+  - If public and over rate limit → `429 Too Many Requests` with
+    `Retry-After` header.
+  - Authenticated users bypass this listener entirely (AcceptListener
+    or AllowListener returns 200 first).
 
-- Caddy config would use different `forward_auth` snippets for public
-  vs. protected services:
-  ```caddyfile
-  # Protected service — requires TOTP
-  bitwarden.example.com {
-      forward_auth preauth { copy_headers Remote-User }
-      reverse_proxy bitwarden:80
-  }
-  
-  # Public but rate-limited service
-  git.example.com {
-      forward_auth preauth/public { copy_headers Remote-User }
-      reverse_proxy gitea:3000
-  }
-  ```
+- New service: **PublicPathMatcher** — Parses path patterns and matches
+  request paths with wildcard support.
 
-- Consider integration with Caddy's own rate limiting as a second layer
-  of defense (rate limit at the reverse proxy before traffic even hits
-  preauth).
+- Separate `public_limiter` compound rate limiter (independent from
+  the login attempt rate limiter).
 
-- [ ] Design public path detection mechanism (URI-based or header-based)
-- [ ] Implement `PublicListener` with separate rate limiter pool
-- [ ] Add config variables and defaults
-- [ ] Update Caddyfile example with public service snippet
-- [ ] Tests for public mode (within limit, over limit, burst behavior)
-- [ ] Documentation in README
+- [x] Design public path detection mechanism (path-based with wildcards)
+- [x] Implement `PublicAccessListener` with separate rate limiter pool
+- [x] Add config variables and defaults
+- [x] Update Caddyfile example with public service snippet
+- [x] Tests for public mode (within limit, over limit, burst behavior)
+- [x] Documentation in README
 
 ### Phase 2 — Session Management & Audit
 

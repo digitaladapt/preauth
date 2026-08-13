@@ -22,6 +22,12 @@
         <!-- high rate limits so functional tests don't get blocked -->
         <server name="BURST_COUNT" value="10000" />
         <server name="UPPER_COUNT" value="10000" />
+        <!-- public access: enable for functional tests with low limits -->
+        <server name="PUBLIC_PATHS" value="/public/**" />
+        <server name="PUBLIC_BURST_COUNT" value="3" />
+        <server name="PUBLIC_BURST_TIME" value="60" />
+        <server name="PUBLIC_UPPER_COUNT" value="10000" />
+        <server name="PUBLIC_UPPER_TIME" value="3600" />
     </php>
 
     <testsuites>
