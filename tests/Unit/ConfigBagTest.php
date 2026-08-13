@@ -45,7 +45,10 @@ final class ConfigBagTest extends TestCase
             true,
             'Error!',
             'Teapot!',
-            'Too Many!'
+            'Too Many!',
+            'session',
+            'authenticated',
+            '',
         );
 
         self::assertSame($clock, $config->clock());
@@ -72,7 +75,10 @@ final class ConfigBagTest extends TestCase
             false,
             'Error',
             'Teapot',
-            'Too Many'
+            'Too Many',
+            'session',
+            'authenticated',
+            '',
         );
 
         self::assertSame('fallback-totp', $config->totpUri());
@@ -92,7 +98,10 @@ final class ConfigBagTest extends TestCase
             false,
             'Error',
             'Teapot',
-            'Too Many'
+            'Too Many',
+            'session',
+            'authenticated',
+            '',
         );
 
         self::assertNull($config->ipTtl());
@@ -112,7 +121,10 @@ final class ConfigBagTest extends TestCase
             false,
             'Error',
             'Teapot',
-            'Too Many'
+            'Too Many',
+            'session',
+            'authenticated',
+            '',
         );
 
         self::assertNull($config->ipTtl());

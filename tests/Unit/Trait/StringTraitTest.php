@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Trait;
 
+use App\Tests\Support\TotpTestHelper;
 use App\Trait\StringTrait;
 use PHPUnit\Framework\TestCase;
 
 final class StringTraitTest extends TestCase
 {
     use StringTrait;
+    use TotpTestHelper;
 
     public function testMakeCacheKeySanitizesInvalidChars(): void
     {
@@ -66,5 +68,51 @@ final class StringTraitTest extends TestCase
     {
         $result = $this->makeCacheKey('a🎉b');
         self::assertSame('a_b', $result);
+    }
+
+    /* ── authSuccessResponse ──────────────────────────────────────────── */
+
+    public function testAuthSuccessResponseSessionMode(): void
+    {
+        $config = $this->makeConfig(remoteUserMode: 'session');
+        $response = $this->authSuccessResponse('alice', $config);
+
+        self::assertSame('hi alice', $response->getContent());
+        self::assertSame('text/plain', $response->headers->get('Content-Type'));
+        self::assertSame('alice', $response->headers->get('Remote-User'));
+    }
+
+    public function testAuthSuccessResponseStaticMode(): void
+    {
+        $config = $this->makeConfig(remoteUserMode: 'static', remoteUserStatic: 'authenticated');
+        $response = $this->authSuccessResponse('alice', $config);
+
+        self::assertSame('hi alice', $response->getContent());
+        self::assertSame('authenticated', $response->headers->get('Remote-User'));
+    }
+
+    public function testAuthSuccessResponseMappedMode(): void
+    {
+        $config = $this->makeConfig(remoteUserMode: 'mapped', remoteUserMap: 'alice:admin');
+        $response = $this->authSuccessResponse('alice', $config);
+
+        self::assertSame('admin', $response->headers->get('Remote-User'));
+    }
+
+    public function testAuthSuccessResponseMappedModeFallback(): void
+    {
+        $config = $this->makeConfig(remoteUserMode: 'mapped', remoteUserMap: 'alice:admin');
+        $response = $this->authSuccessResponse('unknown', $config);
+
+        self::assertSame('unknown', $response->headers->get('Remote-User'));
+    }
+
+    public function testAuthSuccessResponseNoneModeOmitsHeader(): void
+    {
+        $config = $this->makeConfig(remoteUserMode: 'none');
+        $response = $this->authSuccessResponse('alice', $config);
+
+        self::assertSame('hi alice', $response->getContent());
+        self::assertFalse($response->headers->has('Remote-User'));
     }
 }

@@ -53,9 +53,7 @@ form.addEventListener('submit', (event) => {
                 console.log('got html response');
             {% endif -%}
             response.text().then((html) => {
-                document.open();
-                document.write(html);
-                document.close();
+                document.documentElement.innerHTML = html;
             }).catch((error) => {
                 console.log('failed to get html from response');
                 console.log(error);

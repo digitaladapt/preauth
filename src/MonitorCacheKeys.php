@@ -67,6 +67,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
         $this->cache->save($changeList);
     }
 
+    /** @throws InvalidArgumentException */
     public function getItem(string $key): CacheItemInterface
     {
         return $this->cache->getItem($key);
@@ -79,6 +80,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
         return $this->cache->getItems($keys);
     }
 
+    /** @throws InvalidArgumentException */
     public function hasItem(string $key): bool
     {
         return $this->cache->hasItem($key);
@@ -97,6 +99,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
         return true;
     }
 
+    /** @throws InvalidArgumentException */
     public function deleteItem(string $key): bool
     {
         $this->isValid($key);
@@ -113,6 +116,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
         return $this->cache->deleteItem($key);
     }
 
+    /** @throws InvalidArgumentException */
     public function deleteItems(array $keys): bool
     {
         $this->allValid($keys);
@@ -145,6 +149,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
         return $this->cache->saveDeferred($item);
     }
 
+    /** @throws InvalidArgumentException */
     public function commit(): bool
     {
         return $this->cache->commit();

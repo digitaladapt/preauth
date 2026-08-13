@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\AppConstants;
 use App\MonitorCacheKeys;
 use App\Trait\HasLoggerTrait;
 use App\Trait\StringTrait;
@@ -75,7 +76,7 @@ final readonly class BackupCodeManager implements BackupCodeInterface
         /* remove unallowed characters, since backup codes are case-insensitive alphanumeric */
         $backupKey = 'backup_' . preg_replace('/[^a-z0-9]+/', '', strtolower($code));
         $backupItem = $this->sessionCache->getItem($this->makeCacheKey($backupKey));
-        $this->logger->debug("checking backup code '{$backupKey}': " . ($backupItem->isHit() ? 'HIT & ' : 'miss & ') . ($backupItem->get() ? 'VALID' : 'invalid'));
+        $this->logger->debug('checking backup code: ' . ($backupItem->isHit() ? 'HIT & ' : 'miss & ') . ($backupItem->get() ? 'VALID' : 'invalid'));
         if ($backupItem->isHit() && $backupItem->get()) {
             $this->logger->debug("valid backup code");
             /* mark backup code as spent */
@@ -84,7 +85,7 @@ final readonly class BackupCodeManager implements BackupCodeInterface
              * we want this to keep forever, so a few hundred years should do it */
             $backupItem->expiresAt(DateTimeImmutable::createFromFormat(
                 'Y-m-d',
-                '2999-12-31'
+                AppConstants::FAR_FUTURE_DATE
             ));
             $this->sessionCache->save($backupItem);
 
@@ -104,7 +105,7 @@ final readonly class BackupCodeManager implements BackupCodeInterface
              * we want this to keep forever, so a few hundred years should do it */
             $backupItem->expiresAt(DateTimeImmutable::createFromFormat(
                 'Y-m-d',
-                '2999-12-31'
+                AppConstants::FAR_FUTURE_DATE
             ));
             $this->sessionCache->saveDeferred($backupItem);
         }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service;
 
 use Exception;
@@ -13,7 +15,7 @@ interface BackupCodeInterface
      * @param int $count Number of codes to generate
      * @return string[] Generated backup codes
      * @throws InvalidArgumentException|Exception */
-    public function generate(int $count = 0): array;
+    public function generate(int $count = 10): array;
 
     /** @throws InvalidArgumentException */
     public function expire(): void;

@@ -24,6 +24,15 @@ use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
+/**
+ * Handles login attempts via X-Preauth header (AJAX) or POST form submission.
+ *
+ * CSRF Protection: The nonce field serves as CSRF protection for the POST form
+ * path. Nonces are server-generated, single-use, and have a 120-second TTL.
+ * An attacker cannot forge a POST request without first loading the login page
+ * to obtain a valid nonce, which requires being on the auth subdomain.
+ * For the AJAX (header) path, the nonce is embedded in the base64url payload.
+ */
 final readonly class LoginListener
 {
     use CookieNameTrait;
@@ -81,9 +90,9 @@ final readonly class LoginListener
         $this->logger->debug("logging failure for: {$event->getRequest()->getClientIp()}");
         $event->setResponse($this->makeFailedResponse(
             $limitReached,
-            $payload->json ?? true,
+            $payload?->json ?? true,
             $event->getRequest()->getHost(),
-            $this->makeCacheKey($payload ? $payload->id : '')
+            $this->makeCacheKey($payload?->id ?? '')
         ));
     }
 

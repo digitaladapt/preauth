@@ -73,7 +73,10 @@ final class GetTotpTraitTest extends TestCase
             false,
             'Error',
             'Teapot',
-            'Too Many'
+            'Too Many',
+            'session',
+            'authenticated',
+            '',
         );
         $obj->setConfig($config);
 
@@ -100,12 +103,15 @@ final class GetTotpTraitTest extends TestCase
             false,
             'Error',
             'Teapot',
-            'Too Many'
+            'Too Many',
+            'session',
+            'authenticated',
+            '',
         );
         $obj->setConfig($config);
 
         $this->expectException(HttpException::class);
-        $this->expectExceptionMessage('Internal Server Exception');
+        $this->expectExceptionMessage('Internal Server Error');
         $obj->publicGetTotp();
     }
 }

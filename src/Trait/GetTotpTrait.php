@@ -7,6 +7,7 @@ namespace App\Trait;
 use App\ConfigBag;
 use OTPHP\Factory;
 use OTPHP\TOTPInterface;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -29,6 +30,6 @@ trait GetTotpTrait
         if ($otp instanceof TOTPInterface) {
             return $otp;
         }
-        throw new HttpException(500, 'Internal Server Exception');
+        throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Internal Server Error');
     }
 }

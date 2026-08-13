@@ -28,8 +28,10 @@ class Kernel extends BaseKernel
     /** @throws InvalidArgumentException */
     public function terminate(Request $request, Response $response): void
     {
-        $this->persistCache->persist();
-
-        parent::terminate($request, $response);
+        try {
+            $this->persistCache->persist();
+        } finally {
+            parent::terminate($request, $response);
+        }
     }
 }

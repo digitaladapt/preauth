@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Command;
 
 use App\Command\GenerateBackupCodesCommand;
+use Symfony\Component\Console\Exception\InvalidArgumentException;
 use App\PersistCache;
 use App\Service\BackupCodeInterface;
 use PHPUnit\Framework\TestCase;
@@ -101,8 +102,9 @@ final class GenerateBackupCodesCommandTest extends TestCase
         self::assertSame(0, $exit);
     }
 
-    public function testZeroCodesOutputsNothing(): void
+    public function testZeroCodesThrowsException(): void
     {
+        // count must be a positive integer — zero is rejected
         $command = new GenerateBackupCodesCommand(
             $this->makeManagerStub([]),
             $this->makePersistCache()
@@ -110,16 +112,14 @@ final class GenerateBackupCodesCommandTest extends TestCase
         $command->setName('app:generate-backup-codes');
 
         $tester = new CommandTester($command);
-        $exit = $tester->execute(['count' => 0]);
-
-        self::assertSame(0, $exit);
-        self::assertSame('', trim($tester->getDisplay()));
+        $this->expectException(\Symfony\Component\Console\Exception\InvalidArgumentException::class);
+        $tester->execute(['count' => 0]);
     }
 
     public function testCommandNameAndDescriptionAreConfigured(): void
     {
         $command = new GenerateBackupCodesCommand(
-            $this->makeManagerStub([]),
+            $this->makeManagerStub(['dummy']),
             $this->makePersistCache()
         );
         // configuring via the Application runs the protected configure()

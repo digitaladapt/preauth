@@ -33,9 +33,12 @@ RUN composer dump-env prod --empty
 # start creating final image
 FROM dunglas/frankenphp:php8.5-trixie
 
-# install APCu
+# install APCu and curl (needed for healthcheck)
 RUN pecl install apcu && \
     docker-php-ext-enable apcu
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
 
 # symfony required environment variables
 ENV APP_DEBUG=0

@@ -56,7 +56,7 @@ final readonly class InterceptListener
                 'post'  => $this->domainManager->getAuthSubdomain() === $event->getRequest()->getHost(),
             ]);
             $hasCookie = (bool) $event->getRequest()->cookies->get(
-                $this->domainManager->authBase() ? $this->authCookieName() : $this->cookieName()
+                $this->sessionCookieName($this->domainManager)
             );
             $event->setResponse($this->pruneInvalidCookie(new Response(
                 $content,
@@ -69,12 +69,10 @@ final readonly class InterceptListener
     private function pruneInvalidCookie(Response $response, bool $hasCookie, string $host): Response
     {
         if ($hasCookie) {
-            /* input here must match LoginListener::setCookie() */
             $response->headers->clearCookie(
-                $this->domainManager->authBase() ? $this->authCookieName() : $this->cookieName(),
+                $this->sessionCookieName($this->domainManager),
                 '/',
-                /* if using central auth, only set the domain if the host matches */
-                $this->domainManager->matchesAuth($host) ? $this->domainManager->authBase() : null,
+                $this->sessionCookieDomain($this->domainManager, $host),
                 true,
                 true,
                 Cookie::SAMESITE_STRICT

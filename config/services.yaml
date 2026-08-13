@@ -27,6 +27,16 @@ parameters:
     # once blocked, do we respond with "I'm a teapot", false to use "Too many requests"
     env(TEAPOT): '1' # boolean
 
+    # --- remote-user header ---
+    # Controls the value sent in the Remote-User header on successful auth.
+    # session: the session id (default, backward-compatible)
+    # static:  a fixed string (set via REMOTE_USER_STATIC)
+    # mapped:  look up session id in REMOTE_USER_MAP (format: id1:user1,id2:user2)
+    # none:    do not send the Remote-User header at all
+    env(REMOTE_USER): 'session'
+    env(REMOTE_USER_STATIC): 'authenticated'
+    env(REMOTE_USER_MAP): ''
+
     # --- rate limiting ---
     # Note: rate limiting can *NOT* be disabled, but you could allow hundreds of logins a second
     # rate limiting, default is the lower of 2 per 30 seconds or 10 per hour
@@ -56,12 +66,16 @@ parameters:
 
     # --- application variables ---
     app.totp_uri: '%env(TOTP_URI)%'
-    app.cookie_ttl: '%env(COOKIE_TTL)%'
-    app.subdomain_redirect: '%env(SUBDOMAIN_REDIRECT)%'
+    app.cookie_ttl: '%env(int:COOKIE_TTL)%'
+    app.subdomain_redirect: '%env(bool:SUBDOMAIN_REDIRECT)%'
     app.auth_subdomain: '%env(AUTH_SUBDOMAIN)%'
 
-    app.ip_ttl: '%env(IP_TTL)%'
-    app.teapot: '%env(TEAPOT)%'
+    app.ip_ttl: '%env(int:IP_TTL)%'
+    app.teapot: '%env(bool:TEAPOT)%'
+
+    app.remote_user: '%env(REMOTE_USER)%'
+    app.remote_user_static: '%env(REMOTE_USER_STATIC)%'
+    app.remote_user_map: '%env(REMOTE_USER_MAP)%'
 
     app.error_message: '%env(ERROR_MESSAGE)%'
     app.teapot_title: '%env(TEAPOT_TITLE)%'

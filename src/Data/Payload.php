@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Data;
 
+use App\AppConstants;
 use App\Enum\Scope;
 use Symfony\Component\HttpFoundation\InputBag;
 
@@ -59,11 +60,11 @@ final class Payload
 
         /* all input is limited */
         $payload = new Payload();
-        $payload->id    = mb_substr(trim($data->id), 0, 128);
-        $payload->nonce = mb_substr(trim($data->nonce), 0, 128);
+        $payload->id    = mb_substr(trim($data->id), 0, AppConstants::MAX_INPUT_LENGTH);
+        $payload->nonce = mb_substr(trim($data->nonce), 0, AppConstants::MAX_INPUT_LENGTH);
         $payload->json  = ($data->json ?? true);
         $payload->scope = Scope::tryFrom($data->scope ?? '') ?? Scope::Cookie;
-        $payload->token = mb_substr(trim($data->token), 0, 128);
+        $payload->token = mb_substr(trim($data->token), 0, AppConstants::MAX_INPUT_LENGTH);
 
         return Payload::constrict($payload);
     }

@@ -3,7 +3,7 @@ name: Push Docker
 on:
   push:
     tags:
-      - '*.*.*'
+      - 'v*.*.*'
 
 jobs:
   docker:
@@ -22,6 +22,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - name: Build image
         uses: docker/build-push-action@v5
         with:
@@ -30,5 +34,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ${{ vars.DOCKERHUB_TARGET }}:latest
-            ${{ vars.DOCKERHUB_TARGET }}:${{ github.ref_name }}
-
+            ${{ vars.DOCKERHUB_TARGET }}:${{ steps.version.outputs.VERSION }}
