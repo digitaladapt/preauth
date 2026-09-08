@@ -45,6 +45,15 @@ ENV APP_DEBUG=0
 ENV APP_ENV=prod
 ENV APP_SHARE_DIR=/data/preauth
 
+# worker thread lifecycle: restart each PHP thread after N requests to
+# contain slow memory growth. Matches the previous default loop count of
+# runtime/frankenphp-symfony (removed in the Symfony 8.1 upgrade).
+# Expose as a build arg so images can bake in a different default;
+# MAX_REQUESTS=0 disables restarts. Runtime override: the same env var is
+# read by the Caddyfile placeholder.
+ARG MAX_REQUESTS=500
+ENV MAX_REQUESTS=$MAX_REQUESTS
+
 # load application into final image
 WORKDIR /app
 COPY --from=build /data/preauth /data/preauth

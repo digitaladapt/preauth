@@ -113,6 +113,7 @@ for the complete reference.
 |----------|---------|-------------|
 | `IP_TTL` | `0` | Seconds to allow all traffic from an IP after login (0 = disabled). |
 | `TEAPOT` | `1` | Respond with 418 instead of 429 when rate-limited (boolean). |
+| `MAX_REQUESTS` | `500` | Restart each FrankenPHP worker thread after this many requests to contain memory growth (`0` = unlimited). Maps to the Caddyfile `max_requests` directive. |
 
 ### Remote-User Header
 
