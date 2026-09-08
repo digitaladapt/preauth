@@ -46,7 +46,7 @@ REQUIRED_PHP_EXTS=(
 )
 
 # Apt packages for PHP + extensions
-# Note: preauth uses Symfony 7.4 which requires PHP >=8.1.
+# Note: preauth uses Symfony 8.1 which requires PHP >=8.4.
 # We install PHP 8.4 (available in Debian 13/Trixie) for consistency.
 PHP_APT_PACKAGES=(
     php8.4-cli

@@ -25,6 +25,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New `PublicPathMatcher` service for path pattern matching.
   - New `PublicAccessListener` (priority 84) in the request pipeline.
 
+### Changed
+- **Upgraded Symfony 7.4 → 8.1** — All `symfony/*` components bumped to
+  `8.1.*` (resolved to 8.1.2–8.1.6). The 7.4 deprecation sweep was clean
+  (test suite runs with `failOnDeprecation`), so the major-version jump
+  required no application code changes. See
+  `docs/symfony-8.1-upgrade-plan.md`.
+
+### Removed
+- **`runtime/frankenphp-symfony`** — No longer needed: `symfony/runtime`
+  8.1 handles FrankenPHP worker mode natively via its built-in
+  `FrankenPhpWorkerRunner`. The `extra.runtime` override in
+  `composer.json` was removed so the runtime auto-detects FrankenPHP.
+  Note: the old package's `FRANKENPHP_LOOP_MAX` env var (default 500
+  requests per worker) is no longer read; worker lifecycle is now managed
+  by FrankenPHP itself.
+
 ## [1.0.0] — v1.0 Release
 
 ### Security
