@@ -10,7 +10,7 @@ authentication — it's a gate that prevents outsiders from even seeing
 what service is running.
 
 - **Location:** `projects/preauth/`
-- **Framework:** Symfony 7.4 (PHP ≥ 8.4)
+- **Framework:** Symfony 8.1 (PHP ≥ 8.4)
 - **Serving:** FrankenPHP (Docker image)
 - **Cache:** Dual-layer — APCu (in-memory) + file-based persistence
 - **Auth:** TOTP (single secret) + single-use backup codes
@@ -329,7 +329,7 @@ struggle with TOTP apps.
   command or initial-setup flow to register a passkey).
 
 - [ ] Research `web-auth/webauthn-framework` integration with Symfony
-      7.4 and FrankenPHP
+      8.1 and FrankenPHP
 - [ ] Design passkey registration flow (console command? first-visit
       setup? separate registration endpoint?)
 - [ ] Implement challenge generation and storage (extend existing

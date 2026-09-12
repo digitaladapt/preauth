@@ -1,3 +1,17 @@
+{
+	frankenphp {
+		# Restart each PHP worker thread after this many requests, containing
+		# slow memory growth across long uptime. Preserves the 7.4-era default
+		# loop count of runtime/frankenphp-symfony (500) after the Symfony 8.1
+		# upgrade. Set MAX_REQUESTS=0 to disable restarts. The Dockerfile bakes
+		# in the default of 500 via build arg; override at runtime with:
+		#   docker run -e MAX_REQUESTS=5000 ...
+		# For full control, the stock FRANKENPHP_CONFIG env var can inject any
+		# directive under this block instead.
+		max_requests {$MAX_REQUESTS}
+	}
+}
+
 http://
 root public/
 rewrite index.php

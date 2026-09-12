@@ -25,6 +25,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New `PublicPathMatcher` service for path pattern matching.
   - New `PublicAccessListener` (priority 84) in the request pipeline.
 
+### Changed
+- **Upgraded Symfony 7.4 → 8.1** — All `symfony/*` components bumped to
+  `8.1.*` (resolved to 8.1.2–8.1.6). The 7.4 deprecation sweep was clean
+  (test suite runs with `failOnDeprecation`), so the major-version jump
+  required no application code changes. See
+  `docs/symfony-8.1-upgrade-plan.md`.
+
+### Removed
+- **`runtime/frankenphp-symfony`** — No longer needed: `symfony/runtime`
+  8.1 handles FrankenPHP worker mode natively via its built-in
+  `FrankenPhpWorkerRunner`. The `extra.runtime` override in
+  `composer.json` was removed so the runtime auto-detects FrankenPHP.
+  The old package's `FRANKENPHP_LOOP_MAX` env var is no longer read;
+  an equivalent recycle limit is restored via the new `MAX_REQUESTS`
+  setting below.
+
+### Added
+- **`MAX_REQUESTS` worker-thread recycle limit** — The `Caddyfile` now
+  sets FrankenPHP's native `max_requests` from the `MAX_REQUESTS`
+  environment variable: each PHP worker thread is gracefully restarted
+  after N requests while others keep serving, containing slow memory
+  growth across long uptime. The image default is **500** (matching the
+  previous `runtime/frankenphp-symfony` default), baked in as a Docker
+  build arg and overridable at runtime (`MAX_REQUESTS=0` disables
+  restarts). Arbitrary `frankenphp`-block configuration is still
+  possible via the stock `FRANKENPHP_CONFIG` env var.
+
 ## [1.0.0] — v1.0 Release
 
 ### Security
