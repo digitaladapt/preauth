@@ -70,13 +70,24 @@ service.example.com {
     forward_auth preauth {
         uri {uri}
         copy_headers Remote-User
+
+        # keep the login flow out of browser/proxy caches
+        header_down Cache-Control "no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0"
+        header_down Pragma "no-cache"
+        header_down Expires "0"
+        header_down Surrogate-Control "no-store"
+        header_down Vary "*"
     }
     reverse_proxy your-service:80
 }
 ```
 
 See `docs/Caddyfile` for more examples, including path-specific protection
-and central auth subdomain configuration.
+and central auth subdomain configuration. The `header_down` lines above are
+optional — preauth already sends these headers itself — but they guarantee
+at the edge that no part of the login flow is ever cached. (2xx auth
+responses are consumed by `forward_auth` and never reach the browser, so
+your service's own cache headers are unaffected.)
 
 ### 5. Generate backup codes (optional)
 
@@ -237,6 +248,14 @@ passes through a priority-ordered chain of listeners:
 - **Rate limiting**: Per-IP, compound sliding window, cannot be disabled
 - **Security headers**: CSP, X-Frame-Options, X-Content-Type-Options,
   Referrer-Policy, HSTS
+- **No cacheable login flow**: The login page, failed logins, redirects,
+  and rate-limit pages are sent with strict anti-caching headers
+  (`no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0,
+  s-maxage=0` plus `Pragma`, `Expires`, `Surrogate-Control`, and
+  `Vary: *`), and the login form's `fetch()` opts out of the HTTP cache.
+  Successful (2xx) responses are deliberately excluded — they are
+  consumed by the proxy's `forward_auth` check and never reach the
+  browser, so a protected service's own caching is not affected.
 
 ### Cache
 

@@ -19,6 +19,8 @@ form.addEventListener('submit', (event) => {
     fetch(window.location.href, {
         method: 'GET',
         headers: { 'X-Preauth': data },
+        // never serve this request from, or store it in, the HTTP cache
+        cache: 'no-store',
     }).then((response) => {
         {% if env.debug > 2 -%}
             console.log(response);
@@ -28,7 +30,8 @@ form.addEventListener('submit', (event) => {
             {% if env.debug > 2 -%}
                 console.log('got redirect response');
             {% endif -%}
-            window.location.href = response.headers.get('Location');
+            // replace() keeps the login page out of history and the back-forward cache
+            window.location.replace(response.headers.get('Location'));
         } else if (response.headers.get('Content-Type')?.toLowerCase().includes('application/json') ?? false) {
             {# got json, update the page #}
             {% if env.debug > 2 -%}

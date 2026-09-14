@@ -52,6 +52,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   restarts). Arbitrary `frankenphp`-block configuration is still
   possible via the stock `FRANKENPHP_CONFIG` env var.
 
+### Fixed
+- **Login flow responses are no longer cacheable** — the login page,
+  failed logins, redirects, and rate-limit/error pages now send strict
+  anti-caching headers (`Cache-Control: no-store, no-cache,
+  must-revalidate, proxy-revalidate, max-age=0, s-maxage=0` plus
+  `Pragma`, `Expires`, `Surrogate-Control`, and `Vary: *`), the login
+  form's `fetch()` bypasses the HTTP cache, and the example Caddyfile
+  guards every `forward_auth` block with matching `header_down` rules.
+  This prevents browsers — notably older Safari — from replaying a stale
+  pre-auth response on refresh (previously: log in successfully, refresh,
+  and land back on the login page). Successful (2xx) responses are
+  deliberately excluded: they are consumed by the proxy's `forward_auth`
+  check and never reach the browser.
+
 ## [1.0.0] — v1.0 Release
 
 ### Security
