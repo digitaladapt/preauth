@@ -1,9 +1,34 @@
+# preauth example Caddyfile
+
+# --- anti-caching guard for the login flow ---
+# The login page, failed logins, redirects, and rate-limit pages must never
+# be stored or replayed by a browser or intermediate cache. If they are,
+# an aggressive cache (notably older Safari) can resurrect a stale pre-auth
+# response — appearing to log a user back out after a refresh. preauth
+# sends these headers itself; mirroring them here with `header_down` keeps
+# the guarantee at the edge. Import this snippet inside every `forward_auth`
+# block:
+#
+#   forward_auth preauth { ...; import preauth_no_store }
+#
+# Note: 2xx auth responses are consumed by Caddy's forward_auth check and
+# never reach the browser, and the protected service's own responses are
+# not affected — so the cache headers of your services are left alone.
+(preauth_no_store) {
+	header_down Cache-Control "no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0"
+	header_down Pragma "no-cache"
+	header_down Expires "0"
+	header_down Surrogate-Control "no-store"
+	header_down Vary "*"
+}
+
 # example of securing full service
 # TODO replace domain and service name and port
 service.example.com {
 	forward_auth preauth {
 		uri {uri}
 		copy_headers Remote-User
+		import preauth_no_store
 	}
 	reverse_proxy service-container:80
 }
@@ -16,6 +41,7 @@ protected.example.com {
 	forward_auth /secure/* preauth {
 		uri {uri}
 		copy_headers Remote-User
+		import preauth_no_store
 	}
 	reverse_proxy protected-service:9000
 }
@@ -39,6 +65,7 @@ git.example.com {
 	forward_auth preauth {
 		uri {uri}
 		copy_headers Remote-User
+		import preauth_no_store
 	}
 	reverse_proxy gitea:3000
 }

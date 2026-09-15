@@ -63,5 +63,25 @@ final readonly class SecurityHeadersListener
 
         /* HSTS — enforce HTTPS for one year (app is designed for HTTPS behind a proxy) */
         $headers->set('Strict-Transport-Security', 'max-age=31536000');
+
+        /* Prevent any part of the login flow from being cached: the login
+         * page, failed logins, redirects, and rate-limit/error pages must
+         * never be stored or replayed by the browser or an intermediate
+         * cache — older Safari builds in particular may otherwise resurrect
+         * a stale pre-auth response, appearing to log the user out after a
+         * refresh or showing a previous session after logging in again.
+         *
+         * Only non-2xx responses are touched: the 2xx responses that grant
+         * access ("already authenticated" or public) are consumed by the
+         * reverse proxy's forward_auth check before reaching the browser,
+         * and the protected service's own cache headers must remain
+         * untouched. */
+        if (! $response->isSuccessful()) {
+            $headers->set('Cache-Control', 'no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+            $headers->set('Pragma', 'no-cache');
+            $headers->set('Expires', '0');
+            $headers->set('Surrogate-Control', 'no-store');
+            $headers->set('Vary', '*');
+        }
     }
 }
