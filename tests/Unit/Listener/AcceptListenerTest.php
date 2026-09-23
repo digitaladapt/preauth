@@ -12,7 +12,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
@@ -30,13 +29,14 @@ final class AcceptListenerTest extends TestCase
     ): AcceptListener {
         $listener = new AcceptListener($pool, $domainManager, $config ?? $this->makeConfig());
         $listener->setLogger(new NullLogger());
+
         return $listener;
     }
 
     private function makeEvent(Request $request): RequestEvent
     {
         return new RequestEvent(
-            $this->createStub(\Symfony\Component\HttpKernel\HttpKernelInterface::class),
+            $this->createStub(HttpKernelInterface::class),
             $request,
             HttpKernelInterface::MAIN_REQUEST,
         );
@@ -44,11 +44,11 @@ final class AcceptListenerTest extends TestCase
 
     /* ── valid cookie session ─────────────────────────────────────────── */
 
-    public function testValidCookieSetsResponseWithRemoteUser(): void
+    public function test_valid_cookie_sets_response_with_remote_user(): void
     {
         $pool = new ArrayAdapter();
         $ulid = '01HXY1234567890ABCDEFGHIJK';
-        $item = $pool->getItem('cookie_' . $ulid);
+        $item = $pool->getItem('cookie_'.$ulid);
         $item->set('alice');
         $pool->save($item);
 
@@ -68,11 +68,11 @@ final class AcceptListenerTest extends TestCase
         self::assertSame('text/plain', $response->headers->get('Content-Type'));
     }
 
-    public function testValidCookieUsesAuthCookieNameWhenUsingCentralAuth(): void
+    public function test_valid_cookie_uses_auth_cookie_name_when_using_central_auth(): void
     {
         $pool = new ArrayAdapter();
         $ulid = '01HXY1234567890ABCDEFGHIJK';
-        $item = $pool->getItem('cookie_' . $ulid);
+        $item = $pool->getItem('cookie_'.$ulid);
         $item->set('bob');
         $pool->save($item);
 
@@ -91,7 +91,7 @@ final class AcceptListenerTest extends TestCase
 
     /* ── negative cases ───────────────────────────────────────────────── */
 
-    public function testNoCookieSetsNoResponse(): void
+    public function test_no_cookie_sets_no_response(): void
     {
         $pool = new ArrayAdapter();
         $domainManager = new DomainManager(false, '');
@@ -103,7 +103,7 @@ final class AcceptListenerTest extends TestCase
         self::assertFalse($event->hasResponse());
     }
 
-    public function testCookieWithoutSessionSetsNoResponse(): void
+    public function test_cookie_without_session_sets_no_response(): void
     {
         $pool = new ArrayAdapter();
         $domainManager = new DomainManager(false, '');
@@ -118,7 +118,7 @@ final class AcceptListenerTest extends TestCase
         self::assertFalse($event->hasResponse());
     }
 
-    public function testEmptyCookieValueSetsNoResponse(): void
+    public function test_empty_cookie_value_sets_no_response(): void
     {
         $pool = new ArrayAdapter();
         $domainManager = new DomainManager(false, '');
@@ -137,11 +137,11 @@ final class AcceptListenerTest extends TestCase
 
     /* ── Remote-User header modes ─────────────────────────────────────── */
 
-    public function testRemoteUserSessionModeSendsSessionId(): void
+    public function test_remote_user_session_mode_sends_session_id(): void
     {
         $pool = new ArrayAdapter();
         $ulid = '01HXY1234567890ABCDEFGHIJK';
-        $item = $pool->getItem('cookie_' . $ulid);
+        $item = $pool->getItem('cookie_'.$ulid);
         $item->set('alice');
         $pool->save($item);
 
@@ -162,11 +162,11 @@ final class AcceptListenerTest extends TestCase
         self::assertSame('alice', $event->getResponse()->headers->get('Remote-User'));
     }
 
-    public function testRemoteUserStaticModeSendsFixedValue(): void
+    public function test_remote_user_static_mode_sends_fixed_value(): void
     {
         $pool = new ArrayAdapter();
         $ulid = '01HXY1234567890ABCDEFGHIJK';
-        $item = $pool->getItem('cookie_' . $ulid);
+        $item = $pool->getItem('cookie_'.$ulid);
         $item->set('alice');
         $pool->save($item);
 
@@ -187,11 +187,11 @@ final class AcceptListenerTest extends TestCase
         self::assertSame('authenticated', $event->getResponse()->headers->get('Remote-User'));
     }
 
-    public function testRemoteUserMappedModeSendsMappedValue(): void
+    public function test_remote_user_mapped_mode_sends_mapped_value(): void
     {
         $pool = new ArrayAdapter();
         $ulid = '01HXY1234567890ABCDEFGHIJK';
-        $item = $pool->getItem('cookie_' . $ulid);
+        $item = $pool->getItem('cookie_'.$ulid);
         $item->set('alice');
         $pool->save($item);
 
@@ -212,11 +212,11 @@ final class AcceptListenerTest extends TestCase
         self::assertSame('admin', $event->getResponse()->headers->get('Remote-User'));
     }
 
-    public function testRemoteUserMappedModeFallsBackToSessionIdWhenNotInMap(): void
+    public function test_remote_user_mapped_mode_falls_back_to_session_id_when_not_in_map(): void
     {
         $pool = new ArrayAdapter();
         $ulid = '01HXY1234567890ABCDEFGHIJK';
-        $item = $pool->getItem('cookie_' . $ulid);
+        $item = $pool->getItem('cookie_'.$ulid);
         $item->set('unknown_user');
         $pool->save($item);
 
@@ -237,11 +237,11 @@ final class AcceptListenerTest extends TestCase
         self::assertSame('unknown_user', $event->getResponse()->headers->get('Remote-User'));
     }
 
-    public function testRemoteUserNoneModeOmitsHeader(): void
+    public function test_remote_user_none_mode_omits_header(): void
     {
         $pool = new ArrayAdapter();
         $ulid = '01HXY1234567890ABCDEFGHIJK';
-        $item = $pool->getItem('cookie_' . $ulid);
+        $item = $pool->getItem('cookie_'.$ulid);
         $item->set('alice');
         $pool->save($item);
 

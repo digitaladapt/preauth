@@ -41,6 +41,7 @@ final class PublicAccessListenerTest extends TestCase
             $this->makeRateLimiterFactory($remainingTokens),
         );
         $listener->setLogger(new NullLogger());
+
         return $listener;
     }
 
@@ -55,7 +56,7 @@ final class PublicAccessListenerTest extends TestCase
 
     /* ── feature disabled ──────────────────────────────────────────────── */
 
-    public function testNoPublicPathsReturnsWithoutResponse(): void
+    public function test_no_public_paths_returns_without_response(): void
     {
         $listener = $this->makeListener(publicPaths: '');
 
@@ -68,7 +69,7 @@ final class PublicAccessListenerTest extends TestCase
 
     /* ── non-public path ───────────────────────────────────────────────── */
 
-    public function testNonPublicPathReturnsWithoutResponse(): void
+    public function test_non_public_path_returns_without_response(): void
     {
         $listener = $this->makeListener(publicPaths: '/public/**');
 
@@ -81,7 +82,7 @@ final class PublicAccessListenerTest extends TestCase
 
     /* ── public path within rate limit ─────────────────────────────────── */
 
-    public function testPublicPathWithinRateLimitReturns200(): void
+    public function test_public_path_within_rate_limit_returns200(): void
     {
         $listener = $this->makeListener(publicPaths: '/public/**', remainingTokens: 10);
 
@@ -99,7 +100,7 @@ final class PublicAccessListenerTest extends TestCase
 
     /* ── public path rate limited ──────────────────────────────────────── */
 
-    public function testPublicPathOverRateLimitReturns429(): void
+    public function test_public_path_over_rate_limit_returns429(): void
     {
         $listener = $this->makeListener(publicPaths: '/public/**', remainingTokens: 0);
 
@@ -114,7 +115,7 @@ final class PublicAccessListenerTest extends TestCase
         self::assertTrue($response->headers->has('Retry-After'));
     }
 
-    public function testRateLimitedResponseContainsErrorTemplate(): void
+    public function test_rate_limited_response_contains_error_template(): void
     {
         $listener = $this->makeListener(publicPaths: '/public/**', remainingTokens: 0);
 
@@ -129,7 +130,7 @@ final class PublicAccessListenerTest extends TestCase
 
     /* ── auth subdomain is never public ────────────────────────────────── */
 
-    public function testAuthSubdomainRequestIsSkipped(): void
+    public function test_auth_subdomain_request_is_skipped(): void
     {
         $listener = $this->makeListener(
             publicPaths: '/**',
@@ -147,7 +148,7 @@ final class PublicAccessListenerTest extends TestCase
 
     /* ── query string is ignored ───────────────────────────────────────── */
 
-    public function testQueryStringIsIgnoredForPathMatching(): void
+    public function test_query_string_is_ignored_for_path_matching(): void
     {
         $listener = $this->makeListener(publicPaths: '/public', remainingTokens: 10);
 
@@ -161,7 +162,7 @@ final class PublicAccessListenerTest extends TestCase
 
     /* ── domain-scoped paths ───────────────────────────────────────────── */
 
-    public function testDomainScopedPathMatchesCorrectHost(): void
+    public function test_domain_scoped_path_matches_correct_host(): void
     {
         $listener = $this->makeListener(publicPaths: 'code.example.com/public/**', remainingTokens: 10);
 
@@ -173,7 +174,7 @@ final class PublicAccessListenerTest extends TestCase
         self::assertSame(Response::HTTP_OK, $event->getResponse()->getStatusCode());
     }
 
-    public function testDomainScopedPathDoesNotMatchOtherHost(): void
+    public function test_domain_scoped_path_does_not_match_other_host(): void
     {
         $listener = $this->makeListener(publicPaths: 'code.example.com/public/**', remainingTokens: 10);
 
@@ -186,7 +187,7 @@ final class PublicAccessListenerTest extends TestCase
 
     /* ── wildcard matching ─────────────────────────────────────────────── */
 
-    public function testSingleWildcardMatching(): void
+    public function test_single_wildcard_matching(): void
     {
         $listener = $this->makeListener(publicPaths: '/public/*', remainingTokens: 10);
 
@@ -198,7 +199,7 @@ final class PublicAccessListenerTest extends TestCase
         self::assertSame(Response::HTTP_OK, $event->getResponse()->getStatusCode());
     }
 
-    public function testSingleWildcardDoesNotMatchDeepPath(): void
+    public function test_single_wildcard_does_not_match_deep_path(): void
     {
         $listener = $this->makeListener(publicPaths: '/public/*', remainingTokens: 10);
 
@@ -211,7 +212,7 @@ final class PublicAccessListenerTest extends TestCase
 
     /* ── 200 response includes remaining token count ───────────────────── */
 
-    public function testOkResponseIncludesRetryAfterHeader(): void
+    public function test_ok_response_includes_retry_after_header(): void
     {
         // The 200 response includes a Retry-After header showing remaining tokens
         $listener = $this->makeListener(publicPaths: '/public/**', remainingTokens: 42);

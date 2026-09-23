@@ -34,7 +34,8 @@ final class CacheControlFlowTest extends WebTestCase
 
     private function encodePayload(array $data): string
     {
-        $json = json_encode($data, JSON_THROW_ON_ERROR);
+        $json = json_encode($data, \JSON_THROW_ON_ERROR);
+
         return rtrim(strtr(base64_encode($json), '+/', '-_'), '=');
     }
 
@@ -61,7 +62,7 @@ final class CacheControlFlowTest extends WebTestCase
 
     /* ── login flow: nothing may be cached ────────────────────────────── */
 
-    public function testLoginPageIsNotCacheable(): void
+    public function test_login_page_is_not_cacheable(): void
     {
         $client = static::createClient();
         $client->request('GET', '/');
@@ -71,7 +72,7 @@ final class CacheControlFlowTest extends WebTestCase
         $this->assertNotCacheable($response);
     }
 
-    public function testLoginPageFetchBypassesHttpCache(): void
+    public function test_login_page_fetch_bypasses_http_cache(): void
     {
         $client = static::createClient();
         $client->request('GET', '/');
@@ -83,7 +84,7 @@ final class CacheControlFlowTest extends WebTestCase
         self::assertStringContainsString('window.location.replace(', $content);
     }
 
-    public function testFailedLoginIsNotCacheable(): void
+    public function test_failed_login_is_not_cacheable(): void
     {
         $client = static::createClient();
 
@@ -101,7 +102,7 @@ final class CacheControlFlowTest extends WebTestCase
         $this->assertNotCacheable($response);
     }
 
-    public function testSuccessfulLoginRedirectIsNotCacheable(): void
+    public function test_successful_login_redirect_is_not_cacheable(): void
     {
         $client = static::createClient();
 
@@ -121,7 +122,7 @@ final class CacheControlFlowTest extends WebTestCase
         self::assertTrue($response->headers->has('Location'));
     }
 
-    public function testLoginPageOnAnotherHostIsNotCacheable(): void
+    public function test_login_page_on_another_host_is_not_cacheable(): void
     {
         // the listener applies to every main response, not only the primary
         // host; subdomain redirection itself is covered by InterceptListener
@@ -134,13 +135,13 @@ final class CacheControlFlowTest extends WebTestCase
         $this->assertNotCacheable($response);
     }
 
-    public function testRateLimitedResponseIsNotCacheable(): void
+    public function test_rate_limited_response_is_not_cacheable(): void
     {
         $client = static::createClient();
 
         // the login limiter is raised for tests, so exercise the public
         // limiter instead (test config: PUBLIC_BURST_COUNT=3)
-        for ($i = 0; $i < 4; $i++) {
+        for ($i = 0; $i < 4; ++$i) {
             $client->request('GET', '/public/repo');
         }
 
@@ -151,7 +152,7 @@ final class CacheControlFlowTest extends WebTestCase
 
     /* ── 2xx grants: must stay untouched ──────────────────────────────── */
 
-    public function testAuthenticatedAccessResponseIsNotModifiedByAntiCachingHeaders(): void
+    public function test_authenticated_access_response_is_not_modified_by_anti_caching_headers(): void
     {
         $client = static::createClient();
 
@@ -176,7 +177,7 @@ final class CacheControlFlowTest extends WebTestCase
         $this->assertCacheable($response);
     }
 
-    public function testPublicAccessResponseIsNotModifiedByAntiCachingHeaders(): void
+    public function test_public_access_response_is_not_modified_by_anti_caching_headers(): void
     {
         $client = static::createClient();
         $client->request('GET', '/public/repo');

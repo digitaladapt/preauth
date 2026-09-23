@@ -64,7 +64,7 @@ final class SecurityHeadersListenerTest extends TestCase
 
     /* ── non-2xx: the login flow must not be cacheable ────────────────── */
 
-    public function testLoginPageResponseIsNotCacheable(): void
+    public function test_login_page_response_is_not_cacheable(): void
     {
         $listener = $this->makeListener();
         $response = new Response('<form>login</form>', Response::HTTP_UNAUTHORIZED);
@@ -75,7 +75,7 @@ final class SecurityHeadersListenerTest extends TestCase
         $this->assertNoStoreHeaders($response);
     }
 
-    public function testRedirectResponseIsNotCacheable(): void
+    public function test_redirect_response_is_not_cacheable(): void
     {
         $listener = $this->makeListener();
         $response = new Response('', Response::HTTP_SEE_OTHER, [
@@ -90,7 +90,7 @@ final class SecurityHeadersListenerTest extends TestCase
         self::assertSame('https://example.com/dashboard', $response->headers->get('Location'));
     }
 
-    public function testRateLimitedResponseIsNotCacheable(): void
+    public function test_rate_limited_response_is_not_cacheable(): void
     {
         $listener = $this->makeListener();
         $response = new Response('<h1>teapot</h1>', Response::HTTP_I_AM_A_TEAPOT);
@@ -101,7 +101,7 @@ final class SecurityHeadersListenerTest extends TestCase
         $this->assertNoStoreHeaders($response);
     }
 
-    public function testServerErrorResponseIsNotCacheable(): void
+    public function test_server_error_response_is_not_cacheable(): void
     {
         $listener = $this->makeListener();
         $response = new Response('error', Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -114,7 +114,7 @@ final class SecurityHeadersListenerTest extends TestCase
 
     /* ── 2xx: authenticated / public grants stay untouched ────────────── */
 
-    public function testSuccessfulAuthenticatedResponseIsNotTouched(): void
+    public function test_successful_authenticated_response_is_not_touched(): void
     {
         $listener = $this->makeListener();
         $response = new Response('hi alice', Response::HTTP_OK, [
@@ -133,7 +133,7 @@ final class SecurityHeadersListenerTest extends TestCase
         self::assertSame('alice', $response->headers->get('Remote-User'));
     }
 
-    public function testSuccessfulResponseKeepsItsOwnCacheHeaders(): void
+    public function test_successful_response_keeps_its_own_cache_headers(): void
     {
         $listener = $this->makeListener();
         $response = new Response('ok', Response::HTTP_OK, [
@@ -152,7 +152,7 @@ final class SecurityHeadersListenerTest extends TestCase
 
     /* ── sub-requests ─────────────────────────────────────────────────── */
 
-    public function testSubRequestsAreSkipped(): void
+    public function test_sub_requests_are_skipped(): void
     {
         $listener = $this->makeListener();
         $response = new Response('login', Response::HTTP_UNAUTHORIZED);
@@ -166,7 +166,7 @@ final class SecurityHeadersListenerTest extends TestCase
 
     /* ── the pre-existing security headers ────────────────────────────── */
 
-    public function testSecurityHeadersAreApplied(): void
+    public function test_security_headers_are_applied(): void
     {
         $listener = $this->makeListener();
         $response = new Response('<form>login</form>', Response::HTTP_UNAUTHORIZED);
@@ -180,7 +180,7 @@ final class SecurityHeadersListenerTest extends TestCase
         self::assertSame('max-age=31536000', $response->headers->get('Strict-Transport-Security'));
     }
 
-    public function testCspAllowsSameOriginConnectWhenInlineScriptIsUsed(): void
+    public function test_csp_allows_same_origin_connect_when_inline_script_is_used(): void
     {
         // not on the auth subdomain: the login form uses an inline fetch()
         $listener = $this->makeListener('auth.example.com');
@@ -192,7 +192,7 @@ final class SecurityHeadersListenerTest extends TestCase
         self::assertStringContainsString("connect-src 'self';", $response->headers->get('Content-Security-Policy'));
     }
 
-    public function testCspDoesNotAllowConnectWhenOnAuthSubdomain(): void
+    public function test_csp_does_not_allow_connect_when_on_auth_subdomain(): void
     {
         // on the auth subdomain the form POSTs normally — no inline fetch
         $listener = $this->makeListener('auth.example.com');

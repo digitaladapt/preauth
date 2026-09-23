@@ -27,6 +27,7 @@ final class PublicAccessFlowTest extends WebTestCase
     {
         $client = parent::createClient($options, $server);
         $client->disableReboot();
+
         return $client;
     }
 
@@ -37,13 +38,14 @@ final class PublicAccessFlowTest extends WebTestCase
 
     private function encodePayload(array $data): string
     {
-        $json = json_encode($data, JSON_THROW_ON_ERROR);
+        $json = json_encode($data, \JSON_THROW_ON_ERROR);
+
         return rtrim(strtr(base64_encode($json), '+/', '-_'), '=');
     }
 
     /* ── public path accessible without auth ───────────────────────────── */
 
-    public function testPublicPathAccessibleWithoutAuthentication(): void
+    public function test_public_path_accessible_without_authentication(): void
     {
         $client = static::createClient();
         $client->request('GET', '/public/some-repo');
@@ -54,7 +56,7 @@ final class PublicAccessFlowTest extends WebTestCase
         self::assertFalse($response->headers->has('Remote-User'));
     }
 
-    public function testPublicPathWithQuerystringAccessible(): void
+    public function test_public_path_with_querystring_accessible(): void
     {
         $client = static::createClient();
         $client->request('GET', '/public/repo?tab=issues&page=2');
@@ -62,7 +64,7 @@ final class PublicAccessFlowTest extends WebTestCase
         self::assertSame(200, $client->getResponse()->getStatusCode());
     }
 
-    public function testDeepPublicPathAccessible(): void
+    public function test_deep_public_path_accessible(): void
     {
         $client = static::createClient();
         $client->request('GET', '/public/org/repo/issues/42');
@@ -72,7 +74,7 @@ final class PublicAccessFlowTest extends WebTestCase
 
     /* ── non-public path requires auth ─────────────────────────────────── */
 
-    public function testNonPublicPathShowsLoginPage(): void
+    public function test_non_public_path_shows_login_page(): void
     {
         $client = static::createClient();
         $client->request('GET', '/private/settings');
@@ -81,7 +83,7 @@ final class PublicAccessFlowTest extends WebTestCase
         self::assertSelectorExists('form#preauth-form');
     }
 
-    public function testRootPathShowsLoginPage(): void
+    public function test_root_path_shows_login_page(): void
     {
         $client = static::createClient();
         $client->request('GET', '/');
@@ -89,7 +91,7 @@ final class PublicAccessFlowTest extends WebTestCase
         self::assertSame(401, $client->getResponse()->getStatusCode());
     }
 
-    public function testExactPublicPathWithoutSlashNotMatched(): void
+    public function test_exact_public_path_without_slash_not_matched(): void
     {
         // /public/** does NOT match /public (no trailing content)
         $client = static::createClient();
@@ -100,17 +102,17 @@ final class PublicAccessFlowTest extends WebTestCase
 
     /* ── rate limiting ─────────────────────────────────────────────────── */
 
-    public function testRateLimitEnforcedAfterBurstExceeded(): void
+    public function test_rate_limit_enforced_after_burst_exceeded(): void
     {
         $client = static::createClient();
 
         // PUBLIC_BURST_COUNT=3 — first 3 requests succeed
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < 3; ++$i) {
             $client->request('GET', '/public/repo');
             self::assertSame(
                 200,
                 $client->getResponse()->getStatusCode(),
-                "Request $i should have been allowed"
+                "Request $i should have been allowed",
             );
         }
 
@@ -125,12 +127,12 @@ final class PublicAccessFlowTest extends WebTestCase
 
     /* ── authenticated user bypasses public rate limiter ───────────────── */
 
-    public function testAuthenticatedUserBypassesPublicRateLimit(): void
+    public function test_authenticated_user_bypasses_public_rate_limit(): void
     {
         $client = static::createClient();
 
         // First, exhaust the public rate limiter
-        for ($i = 0; $i < 4; $i++) {
+        for ($i = 0; $i < 4; ++$i) {
             $client->request('GET', '/public/repo');
         }
         // Confirm rate limit is in effect
@@ -145,10 +147,10 @@ final class PublicAccessFlowTest extends WebTestCase
 
         $client->request('GET', '/private', [], [], [
             'HTTP_X-Preauth' => $this->encodePayload([
-                'id'    => 'alice',
+                'id' => 'alice',
                 'token' => $this->validTotpCode(),
                 'nonce' => $nonce,
-                'json'  => true,
+                'json' => true,
             ]),
         ]);
         self::assertSame(303, $client->getResponse()->getStatusCode());
@@ -166,7 +168,7 @@ final class PublicAccessFlowTest extends WebTestCase
 
     /* ── 200 response has correct content type ─────────────────────────── */
 
-    public function testPublicAccessResponseIsPlainText(): void
+    public function test_public_access_response_is_plain_text(): void
     {
         $client = static::createClient();
         $client->request('GET', '/public/repo');
@@ -178,12 +180,12 @@ final class PublicAccessFlowTest extends WebTestCase
 
     /* ── 429 response renders error template ───────────────────────────── */
 
-    public function testRateLimitedResponseRendersErrorTemplate(): void
+    public function test_rate_limited_response_renders_error_template(): void
     {
         $client = static::createClient();
 
         // Exhaust rate limit
-        for ($i = 0; $i < 4; $i++) {
+        for ($i = 0; $i < 4; ++$i) {
             $client->request('GET', '/public/repo');
         }
 
@@ -198,7 +200,7 @@ final class PublicAccessFlowTest extends WebTestCase
 
     /* ── security headers still applied to public responses ────────────── */
 
-    public function testSecurityHeadersOnPublicAccess(): void
+    public function test_security_headers_on_public_access(): void
     {
         $client = static::createClient();
         $client->request('GET', '/public/repo');

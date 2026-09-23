@@ -18,7 +18,7 @@ final class ConfigBagTest extends TestCase
         $clock = $this->createStub(ClockInterface::class);
         $cache = $this->createStub(CacheItemPoolInterface::class);
 
-        if ($totp !== null) {
+        if (null !== $totp) {
             $item = $this->createStub(CacheItemInterface::class);
             $item->method('isHit')->willReturn(true);
             $item->method('get')->willReturn($totp);
@@ -31,7 +31,7 @@ final class ConfigBagTest extends TestCase
         return new Utilities($clock, $cache);
     }
 
-    public function testGettersWithExplicitValues(): void
+    public function test_getters_with_explicit_values(): void
     {
         $clock = $this->createStub(ClockInterface::class);
         $utilities = $this->createUtilities();
@@ -61,7 +61,7 @@ final class ConfigBagTest extends TestCase
         self::assertSame('Too Many!', $config->tooManyTitle());
     }
 
-    public function testTotpUriFallsBackToUtilitiesWhenEmpty(): void
+    public function test_totp_uri_falls_back_to_utilities_when_empty(): void
     {
         $clock = $this->createStub(ClockInterface::class);
         $utilities = $this->createUtilities('fallback-totp');
@@ -84,7 +84,7 @@ final class ConfigBagTest extends TestCase
         self::assertSame('fallback-totp', $config->totpUri());
     }
 
-    public function testIpTtlFallsBackToNullWhenZero(): void
+    public function test_ip_ttl_falls_back_to_null_when_zero(): void
     {
         $clock = $this->createStub(ClockInterface::class);
         $utilities = $this->createUtilities();
@@ -107,7 +107,7 @@ final class ConfigBagTest extends TestCase
         self::assertNull($config->ipTtl());
     }
 
-    public function testIpTtlFallsBackToNullWhenNull(): void
+    public function test_ip_ttl_falls_back_to_null_when_null(): void
     {
         $clock = $this->createStub(ClockInterface::class);
         $utilities = $this->createUtilities();

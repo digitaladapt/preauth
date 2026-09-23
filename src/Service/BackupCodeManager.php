@@ -6,13 +6,13 @@ namespace App\Service;
 
 use App\AppConstants;
 use App\MonitorCacheKeys;
+use App\Trait\GetTotpTrait;
 use App\Trait\HasLoggerTrait;
 use App\Trait\StringTrait;
 use DateTimeImmutable;
 use Exception;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
-use App\Trait\GetTotpTrait;
 
 /** backup-codes are case‑insensitive alphanumeric strings
  * they are single-use and marked as used after successful authentication */
@@ -34,22 +34,25 @@ final readonly class BackupCodeManager implements BackupCodeInterface
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
     }
 
-    /** generate a set of backup-codes and return them
+    /** generate a set of backup-codes and return them.
      * @param int $count Number of codes to generate
+     *
      * @return string[] Generated backup codes
+     *
      * @throws InvalidArgumentException|Exception */
     public function generate(int $count = self::DEFAULT_COUNT): array
     {
         $length = min($this->getTotp()->getDigits() + 2, self::MAX_LENGTH);
         $codes = [];
-        for ($i = 0; $i < $count; $i++) {
+        for ($i = 0; $i < $count; ++$i) {
             /* output is alphanumeric string of given length */
             $codes[] = strtolower(str_pad(substr(base_convert(bin2hex(
-                random_bytes($length)
-            ), 16, 36), 0, $length), $length, '0', STR_PAD_LEFT));
+                random_bytes($length),
+            ), 16, 36), 0, $length), $length, '0', \STR_PAD_LEFT));
         }
         $this->saveCodes($codes);
         $this->logger->info("generated {$count} backup codes");
+
         return $codes;
     }
 
@@ -62,35 +65,38 @@ final readonly class BackupCodeManager implements BackupCodeInterface
                 $itemsToRemove[] = $key;
             }
         }
-        if (count($itemsToRemove) > 0) {
+        if (\count($itemsToRemove) > 0) {
             $this->sessionCache->deleteItems($itemsToRemove);
         }
     }
 
-    /** check if backup-code is valid and mark it as used
+    /** check if backup-code is valid and mark it as used.
      * @param string $code Code supplied by the client
+     *
      * @return bool true if the code is valid and unused
+     *
      * @throws InvalidArgumentException */
     public function verifyAndConsume(string $code): bool
     {
         /* remove unallowed characters, since backup codes are case-insensitive alphanumeric */
-        $backupKey = 'backup_' . preg_replace('/[^a-z0-9]+/', '', strtolower($code));
+        $backupKey = 'backup_'.preg_replace('/[^a-z0-9]+/', '', strtolower($code));
         $backupItem = $this->sessionCache->getItem($this->makeCacheKey($backupKey));
-        $this->logger->debug('checking backup code: ' . ($backupItem->isHit() ? 'HIT & ' : 'miss & ') . ($backupItem->get() ? 'VALID' : 'invalid'));
+        $this->logger->debug('checking backup code: '.($backupItem->isHit() ? 'HIT & ' : 'miss & ').($backupItem->get() ? 'VALID' : 'invalid'));
         if ($backupItem->isHit() && $backupItem->get()) {
-            $this->logger->debug("valid backup code");
+            $this->logger->debug('valid backup code');
             /* mark backup code as spent */
             $backupItem->set(false); /* used */
             /* per PSR6, if no expiration is set, implementation may set a default,
              * we want this to keep forever, so a few hundred years should do it */
             $backupItem->expiresAt(DateTimeImmutable::createFromFormat(
                 'Y-m-d',
-                AppConstants::FAR_FUTURE_DATE
+                AppConstants::FAR_FUTURE_DATE,
             ));
             $this->sessionCache->save($backupItem);
 
             return true;
         }
+
         return false;
     }
 
@@ -105,7 +111,7 @@ final readonly class BackupCodeManager implements BackupCodeInterface
              * we want this to keep forever, so a few hundred years should do it */
             $backupItem->expiresAt(DateTimeImmutable::createFromFormat(
                 'Y-m-d',
-                AppConstants::FAR_FUTURE_DATE
+                AppConstants::FAR_FUTURE_DATE,
             ));
             $this->sessionCache->saveDeferred($backupItem);
         }

@@ -28,7 +28,7 @@ class TestKernel extends AppKernel
     {
         parent::build($container);
 
-        $container->addCompilerPass(new class () implements CompilerPassInterface {
+        $container->addCompilerPass(new class implements CompilerPassInterface {
             public function process(ContainerBuilder $container): void
             {
                 foreach (['nonceCache', 'rateLimitCache', 'sessionCache', 'sessionStorage', 'publicRateLimitCache'] as $poolId) {

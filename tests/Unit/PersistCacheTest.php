@@ -11,7 +11,7 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 final class PersistCacheTest extends TestCase
 {
-    public function testBootWithEmptyStorageIsNoop(): void
+    public function test_boot_with_empty_storage_is_noop(): void
     {
         $sessionCache = new ArrayAdapter();
         $sessionStorage = new ArrayAdapter();
@@ -24,7 +24,7 @@ final class PersistCacheTest extends TestCase
         self::assertSame([], $monitor->getKeys());
     }
 
-    public function testBootLoadsFromStorageIntoCache(): void
+    public function test_boot_loads_from_storage_into_cache(): void
     {
         $sessionCache = new ArrayAdapter();
         $sessionStorage = new ArrayAdapter();
@@ -47,7 +47,7 @@ final class PersistCacheTest extends TestCase
         self::assertSame([], $cacheMonitor->getChanges());
     }
 
-    public function testBootDoesNotReloadWhenCacheAlreadyWarm(): void
+    public function test_boot_does_not_reload_when_cache_already_warm(): void
     {
         $sessionCache = new ArrayAdapter();
         $sessionStorage = new ArrayAdapter();
@@ -73,7 +73,7 @@ final class PersistCacheTest extends TestCase
         self::assertNotContains('cookie_new', $monitor->getKeys());
     }
 
-    public function testPersistWritesChangesToStorage(): void
+    public function test_persist_writes_changes_to_storage(): void
     {
         $sessionCache = new ArrayAdapter();
         $sessionStorage = new ArrayAdapter();
@@ -95,7 +95,7 @@ final class PersistCacheTest extends TestCase
         self::assertSame('user2', $storageMonitor->getItem('cookie_xyz')->get());
     }
 
-    public function testPersistHandlesRemovals(): void
+    public function test_persist_handles_removals(): void
     {
         $sessionCache = new ArrayAdapter();
         $sessionStorage = new ArrayAdapter();
@@ -121,7 +121,7 @@ final class PersistCacheTest extends TestCase
         self::assertNotContains('cookie_to_remove', $storageMonitor->getKeys());
     }
 
-    public function testPersistIsNoopWhenNoChanges(): void
+    public function test_persist_is_noop_when_no_changes(): void
     {
         $sessionCache = new ArrayAdapter();
         $sessionStorage = new ArrayAdapter();
@@ -134,7 +134,7 @@ final class PersistCacheTest extends TestCase
         self::assertSame([], $storageMonitor->getKeys());
     }
 
-    public function testFullBootModifyPersistCycle(): void
+    public function test_full_boot_modify_persist_cycle(): void
     {
         $sessionCache = new ArrayAdapter();
         $sessionStorage = new ArrayAdapter();
@@ -160,7 +160,7 @@ final class PersistCacheTest extends TestCase
         self::assertSame('cycled-user', $monitor->getItem('cookie_cycle')->get());
     }
 
-    public function testPersistHandlesMixedUpdatesAndRemovals(): void
+    public function test_persist_handles_mixed_updates_and_removals(): void
     {
         $sessionCache = new ArrayAdapter();
         $sessionStorage = new ArrayAdapter();
@@ -194,7 +194,7 @@ final class PersistCacheTest extends TestCase
         self::assertNotContains('cookie_remove', $storageMonitor->getKeys());
     }
 
-    public function testMultipleBootModifyPersistCycles(): void
+    public function test_multiple_boot_modify_persist_cycles(): void
     {
         $sessionCache = new ArrayAdapter();
         $sessionStorage = new ArrayAdapter();

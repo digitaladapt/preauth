@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Utilities;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -15,10 +16,11 @@ final class UtilitiesTest extends TestCase
     {
         $pool ??= new ArrayAdapter();
         $clock ??= $this->createStub(ClockInterface::class);
+
         return new Utilities($clock, $pool);
     }
 
-    public function testLoadTotpReturnsCachedValueWhenPresent(): void
+    public function test_load_totp_returns_cached_value_when_present(): void
     {
         $pool = new ArrayAdapter();
         $item = $pool->getItem('totp');
@@ -32,7 +34,7 @@ final class UtilitiesTest extends TestCase
         self::assertSame('otpauth://totp/cached?secret=ABCDEFGH', $result);
     }
 
-    public function testLoadTotpGeneratesAndStoresWhenMissing(): void
+    public function test_load_totp_generates_and_stores_when_missing(): void
     {
         $pool = new ArrayAdapter();
         $utilities = $this->makeUtilities($pool);
@@ -48,7 +50,7 @@ final class UtilitiesTest extends TestCase
         self::assertSame($result, $cached->get());
     }
 
-    public function testLoadTotpSetsFarFutureExpiry(): void
+    public function test_load_totp_sets_far_future_expiry(): void
     {
         $pool = new ArrayAdapter();
         $utilities = $this->makeUtilities($pool);
@@ -58,10 +60,10 @@ final class UtilitiesTest extends TestCase
         $cached = $pool->getItem('totp');
         $expiry = $cached->getMetadata()['expiry'];
         // 2999-12-31 is well in the future, far beyond any reasonable test timestamp
-        self::assertGreaterThan((new \DateTimeImmutable('+10 years'))->getTimestamp(), (int) $expiry);
+        self::assertGreaterThan((new DateTimeImmutable('+10 years'))->getTimestamp(), (int) $expiry);
     }
 
-    public function testLoadTotpIsIdempotentAfterGeneration(): void
+    public function test_load_totp_is_idempotent_after_generation(): void
     {
         $pool = new ArrayAdapter();
         $utilities = $this->makeUtilities($pool);

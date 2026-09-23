@@ -22,6 +22,7 @@ final class AllowListenerTest extends TestCase
     {
         $listener = new AllowListener($pool, $config);
         $listener->setLogger(new NullLogger());
+
         return $listener;
     }
 
@@ -34,7 +35,7 @@ final class AllowListenerTest extends TestCase
         );
     }
 
-    public function testValidIpSessionSetsResponseWithRemoteUser(): void
+    public function test_valid_ip_session_sets_response_with_remote_user(): void
     {
         $pool = new ArrayAdapter();
         $item = $pool->getItem('ip_1.2.3.4');
@@ -55,7 +56,7 @@ final class AllowListenerTest extends TestCase
         self::assertSame('text/plain', $response->headers->get('Content-Type'));
     }
 
-    public function testNoIpSessionSetsNoResponse(): void
+    public function test_no_ip_session_sets_no_response(): void
     {
         $pool = new ArrayAdapter();
         $config = $this->makeConfig(ipTtl: 1800);
@@ -68,7 +69,7 @@ final class AllowListenerTest extends TestCase
         self::assertFalse($event->hasResponse());
     }
 
-    public function testIpAccessDisabledSetsNoResponse(): void
+    public function test_ip_access_disabled_sets_no_response(): void
     {
         $pool = new ArrayAdapter();
         // even though there's a stored session, ip access is disabled
@@ -86,7 +87,7 @@ final class AllowListenerTest extends TestCase
         self::assertFalse($event->hasResponse());
     }
 
-    public function testIpAccessDisabledDoesNotCheckCache(): void
+    public function test_ip_access_disabled_does_not_check_cache(): void
     {
         $pool = new ArrayAdapter();
         $config = $this->makeConfig(ipTtl: 0);

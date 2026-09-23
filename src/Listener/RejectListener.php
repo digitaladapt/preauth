@@ -9,8 +9,8 @@ use App\Trait\HasLoggerTrait;
 use App\Trait\StringTrait;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
-use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Twig\Environment;
 use Twig\Error\LoaderError;
@@ -25,8 +25,8 @@ final readonly class RejectListener
     private RateLimiterFactoryInterface $rateLimiter;
 
     public function __construct(
-        private ConfigBag                   $config,
-        private Environment                 $twig,
+        private ConfigBag $config,
+        private Environment $twig,
         #[Target('login_limiter')] RateLimiterFactoryInterface $rateLimiter,
     ) {
         $this->rateLimiter = $rateLimiter;
@@ -43,9 +43,9 @@ final readonly class RejectListener
             $html = $this->twig->render('error.html.twig');
             $event->setResponse(new Response(
                 $html,
-                ($this->config->teapot()
-                ? Response::HTTP_I_AM_A_TEAPOT : Response::HTTP_TOO_MANY_REQUESTS),
-                ['Content-Type' => 'text/html']
+                $this->config->teapot()
+                ? Response::HTTP_I_AM_A_TEAPOT : Response::HTTP_TOO_MANY_REQUESTS,
+                ['Content-Type' => 'text/html'],
             ));
         }
     }

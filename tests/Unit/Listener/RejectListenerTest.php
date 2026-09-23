@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Listener;
 
 use App\Listener\RejectListener;
-use App\Service\DomainManager;
 use App\Tests\Support\ListenerTestHelper;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -28,6 +27,7 @@ final class RejectListenerTest extends TestCase
             $this->makeRateLimiterFactory($remainingTokens),
         );
         $listener->setLogger(new NullLogger());
+
         return $listener;
     }
 
@@ -40,7 +40,7 @@ final class RejectListenerTest extends TestCase
         );
     }
 
-    public function testBlockedRequestReturnsTeapotWhenTeapotEnabled(): void
+    public function test_blocked_request_returns_teapot_when_teapot_enabled(): void
     {
         $listener = $this->makeListener(teapot: true, remainingTokens: 0);
 
@@ -54,7 +54,7 @@ final class RejectListenerTest extends TestCase
         self::assertSame('text/html', $response->headers->get('Content-Type'));
     }
 
-    public function testBlockedRequestReturnsTooManyRequestsWhenTeapotDisabled(): void
+    public function test_blocked_request_returns_too_many_requests_when_teapot_disabled(): void
     {
         $listener = $this->makeListener(teapot: false, remainingTokens: 0);
 
@@ -68,7 +68,7 @@ final class RejectListenerTest extends TestCase
         self::assertSame('text/html', $response->headers->get('Content-Type'));
     }
 
-    public function testUnblockedRequestSetsNoResponse(): void
+    public function test_unblocked_request_sets_no_response(): void
     {
         $listener = $this->makeListener(remainingTokens: 5);
 
@@ -80,7 +80,7 @@ final class RejectListenerTest extends TestCase
         self::assertFalse($event->hasResponse());
     }
 
-    public function testBlockedResponseContainsErrorTemplateContent(): void
+    public function test_blocked_response_contains_error_template_content(): void
     {
         $listener = $this->makeListener(teapot: true, remainingTokens: 0);
 

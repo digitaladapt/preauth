@@ -26,7 +26,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
         $this->cache = $cache;
         $items = $cache->getItems([self::KEY_LIST, self::CHANGE_LIST]);
         foreach ($items as $item) {
-            if (! $item->isHit()) {
+            if (!$item->isHit()) {
                 $this->initialize();
                 break;
             }
@@ -49,6 +49,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
     public function getKeys(): array
     {
         $keyList = $this->cache->getItem(self::KEY_LIST);
+
         return array_keys($keyList->get() ?? []);
     }
 
@@ -56,6 +57,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
     public function getChanges(): array
     {
         $changeList = $this->cache->getItem(self::CHANGE_LIST);
+
         return $changeList->get() ?? [];
     }
 
@@ -90,12 +92,14 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
     public function clear(): bool
     {
         /* only bother clearing the pool if it is not empty */
-        if (! empty($this->getKeys())) {
+        if (!empty($this->getKeys())) {
             $response = $this->cache->clear();
 
             $this->initialize();
+
             return $response;
         }
+
         return true;
     }
 
@@ -109,7 +113,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
             unset($keyValues[$key]);
             $keyList->set($keyValues);
             $this->cache->saveDeferred($keyList);
-            $this->logChange($key, MonitorCacheKeys::REMOVED);
+            $this->logChange($key, self::REMOVED);
             $this->cache->commit();
         }
 
@@ -125,7 +129,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
         foreach ($keys as $key) {
             if (isset($keyValues[$key])) {
                 unset($keyValues[$key]);
-                $this->logChange($key, MonitorCacheKeys::REMOVED);
+                $this->logChange($key, self::REMOVED);
             }
         }
         $keyList->set($keyValues);
@@ -139,6 +143,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
     public function save(CacheItemInterface $item): bool
     {
         $this->update($item);
+
         return $this->cache->save($item);
     }
 
@@ -146,6 +151,7 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
     public function saveDeferred(CacheItemInterface $item): bool
     {
         $this->update($item);
+
         return $this->cache->saveDeferred($item);
     }
 
@@ -171,27 +177,23 @@ final readonly class MonitorCacheKeys implements CacheItemPoolInterface
     /** @throws OutOfBoundsException */
     private function isValid(string $key): void
     {
-        if ($key === self::KEY_LIST || $key === self::CHANGE_LIST) {
-            throw new OutOfBoundsException(
-                'Can not modify the private key or change lists'
-            );
+        if (self::KEY_LIST === $key || self::CHANGE_LIST === $key) {
+            throw new OutOfBoundsException('Can not modify the private key or change lists');
         }
     }
 
     /** @throws OutOfBoundsException */
     private function allValid(array $keys): void
     {
-        if (in_array(self::KEY_LIST, $keys, true) ||
-            in_array(self::CHANGE_LIST, $keys, true)
+        if (\in_array(self::KEY_LIST, $keys, true)
+            || \in_array(self::CHANGE_LIST, $keys, true)
         ) {
-            throw new OutOfBoundsException(
-                'Can not modify the private key or change lists'
-            );
+            throw new OutOfBoundsException('Can not modify the private key or change lists');
         }
     }
 
     /** @throws InvalidArgumentException */
-    private function logChange(string $key, int $code = MonitorCacheKeys::UPDATED): void
+    private function logChange(string $key, int $code = self::UPDATED): void
     {
         $changeList = $this->cache->getItem(self::CHANGE_LIST);
         $changeValues = $changeList->get();

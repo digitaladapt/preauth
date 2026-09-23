@@ -32,23 +32,23 @@ final readonly class PublicPathMatcher implements PublicPathMatcherInterface
 
     public function isEmpty(): bool
     {
-        return $this->patterns === [];
+        return [] === $this->patterns;
     }
 
     public function matches(string $host, string $path): bool
     {
-        if ($this->patterns === []) {
+        if ([] === $this->patterns) {
             return false;
         }
 
         $host = strtolower($host);
 
         foreach ($this->patterns as $entry) {
-            if ($entry['host'] !== null && $entry['host'] !== $host) {
+            if (null !== $entry['host'] && $entry['host'] !== $host) {
                 continue;
             }
 
-            if (preg_match($entry['regex'], $path) === 1) {
+            if (1 === preg_match($entry['regex'], $path)) {
                 return true;
             }
         }
@@ -63,7 +63,7 @@ final readonly class PublicPathMatcher implements PublicPathMatcherInterface
      */
     private function parse(string $publicPaths): array
     {
-        if (trim($publicPaths) === '') {
+        if ('' === trim($publicPaths)) {
             return [];
         }
 
@@ -71,7 +71,7 @@ final readonly class PublicPathMatcher implements PublicPathMatcherInterface
 
         foreach (explode(',', $publicPaths) as $raw) {
             $entry = trim($raw);
-            if ($entry === '') {
+            if ('' === $entry) {
                 continue;
             }
 
@@ -90,7 +90,7 @@ final readonly class PublicPathMatcher implements PublicPathMatcherInterface
             }
 
             $patterns[] = [
-                'host'  => $host,
+                'host' => $host,
                 'regex' => $this->compilePattern($path),
             ];
         }
@@ -109,33 +109,33 @@ final readonly class PublicPathMatcher implements PublicPathMatcherInterface
     private function compilePattern(string $pattern): string
     {
         $regex = '';
-        $length = strlen($pattern);
+        $length = \strlen($pattern);
         $i = 0;
 
         while ($i < $length) {
             // Check for ** (must be at current position)
-            if ($i + 1 < $length && $pattern[$i] === '*' && $pattern[$i + 1] === '*') {
+            if ($i + 1 < $length && '*' === $pattern[$i] && '*' === $pattern[$i + 1]) {
                 $i += 2;
                 if ($i >= $length) {
                     // ** at end of pattern: zero or more chars including /
                     $regex .= '.*';
-                } elseif ($pattern[$i] === '/') {
+                } elseif ('/' === $pattern[$i]) {
                     // /**/  in middle: zero or more intermediate segments
                     $regex .= '(?:.*/)?';
-                    $i += 1; // skip the / after **
+                    ++$i; // skip the / after **
                 } else {
                     // ** not followed by / or end, treat as .*
                     $regex .= '.*';
                 }
-            } elseif ($pattern[$i] === '*') {
+            } elseif ('*' === $pattern[$i]) {
                 $regex .= '[^/]+';
-                $i += 1;
+                ++$i;
             } else {
                 $regex .= preg_quote($pattern[$i], '#');
-                $i += 1;
+                ++$i;
             }
         }
 
-        return '#^' . $regex . '$#';
+        return '#^'.$regex.'$#';
     }
 }

@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Support;
 
 use App\ConfigBag;
-use App\Enum\RemoteUserMode;
 use App\Utilities;
 use DateTimeImmutable;
 use OTPHP\TOTP;
-use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Clock\ClockInterface as PsrClockInterface;
@@ -31,10 +29,12 @@ trait TotpTestHelper
     private function frozenClock(): PsrClockInterface
     {
         $time = self::FROZEN_TIME;
-        return new class ($time) implements PsrClockInterface {
+
+        return new class($time) implements PsrClockInterface {
             public function __construct(private string $time)
             {
             }
+
             public function now(): DateTimeImmutable
             {
                 return new DateTimeImmutable($this->time);
@@ -47,6 +47,7 @@ trait TotpTestHelper
     {
         $totp = TOTP::createFromSecret(self::TOTP_SECRET, $this->frozenClock());
         $totp->setLabel('Test-TOTP');
+
         return $totp->getProvisioningUri();
     }
 
@@ -79,6 +80,7 @@ trait TotpTestHelper
     ): ConfigBag {
         $clock = $this->frozenClock();
         $utilities = $this->createUtilities($clock);
+
         return new ConfigBag(
             $utilities,
             $clock,
@@ -107,6 +109,7 @@ trait TotpTestHelper
         $item = $this->createStub(CacheItemInterface::class);
         $item->method('isHit')->willReturn(false);
         $cache->method('getItem')->willReturn($item);
+
         return new Utilities($clock, $cache);
     }
 }

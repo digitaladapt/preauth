@@ -26,31 +26,31 @@ final readonly class ConfigBag
 
     /** @throws InvalidArgumentException */
     public function __construct(
-        Utilities                                  $utilities,
-        ClockInterface                             $clock,
-        #[Autowire('%app.cookie_ttl%')] int        $cookieTtl,
-        #[Autowire('%app.totp_uri%')] string       $totpUri,
-        #[Autowire('%app.ip_ttl%')] ?int           $ipTtl,
-        #[Autowire('%app.teapot%')] bool           $teapot,
-        #[Autowire('%app.error_message%')] string  $errorMessage,
-        #[Autowire('%app.teapot_title%')] string   $teapotTitle,
+        Utilities $utilities,
+        ClockInterface $clock,
+        #[Autowire('%app.cookie_ttl%')] int $cookieTtl,
+        #[Autowire('%app.totp_uri%')] string $totpUri,
+        #[Autowire('%app.ip_ttl%')] ?int $ipTtl,
+        #[Autowire('%app.teapot%')] bool $teapot,
+        #[Autowire('%app.error_message%')] string $errorMessage,
+        #[Autowire('%app.teapot_title%')] string $teapotTitle,
         #[Autowire('%app.too_many_title%')] string $tooManyTitle,
-        #[Autowire('%app.remote_user%')] string    $remoteUserMode,
+        #[Autowire('%app.remote_user%')] string $remoteUserMode,
         #[Autowire('%app.remote_user_static%')] string $remoteUserStatic,
         #[Autowire('%app.remote_user_map%')] string $remoteUserMap,
     ) {
-        $this->clock        = $clock;
-        $this->cookieTtl    = $cookieTtl;
-        $this->totpUri      = $totpUri ?: $utilities->loadTotp();
-        $this->ipTtl        = $ipTtl ?: null;
-        $this->teapot       = $teapot;
+        $this->clock = $clock;
+        $this->cookieTtl = $cookieTtl;
+        $this->totpUri = $totpUri ?: $utilities->loadTotp();
+        $this->ipTtl = $ipTtl ?: null;
+        $this->teapot = $teapot;
         $this->errorMessage = $errorMessage;
-        $this->teapotTitle  = $teapotTitle;
+        $this->teapotTitle = $teapotTitle;
         $this->tooManyTitle = $tooManyTitle;
 
-        $this->remoteUserMode  = RemoteUserMode::tryFrom($remoteUserMode) ?? RemoteUserMode::Session;
+        $this->remoteUserMode = RemoteUserMode::tryFrom($remoteUserMode) ?? RemoteUserMode::Session;
         $this->remoteUserStatic = $remoteUserStatic;
-        $this->remoteUserMap   = $this->parseUserMap($remoteUserMap);
+        $this->remoteUserMap = $this->parseUserMap($remoteUserMap);
     }
 
     /**
@@ -60,17 +60,18 @@ final readonly class ConfigBag
      */
     private function parseUserMap(string $map): array
     {
-        if ($map === '') {
+        if ('' === $map) {
             return [];
         }
 
         $result = [];
         foreach (explode(',', $map) as $pair) {
             $parts = explode(':', trim($pair), 2);
-            if (count($parts) === 2) {
+            if (2 === \count($parts)) {
                 $result[trim($parts[0])] = trim($parts[1]);
             }
         }
+
         return $result;
     }
 

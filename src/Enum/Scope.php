@@ -8,6 +8,6 @@ namespace App\Enum;
 enum Scope: string
 {
     case Cookie = 'cookie';
-    case Ip     = 'ip';
-    case None   = 'none';
+    case Ip = 'ip';
+    case None = 'none';
 }

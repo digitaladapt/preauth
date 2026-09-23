@@ -44,7 +44,7 @@ docker pull digitaladapt/preauth:latest
 openssl rand -base64 30
 ```
 
-Create a `.env` file (see `docs/example.env` for all options):
+Create a `.env` file (see `docs/examples/.env.example` for all options):
 
 ```env
 APP_SECRET=your-random-secret-here
@@ -61,7 +61,7 @@ COOKIE_TTL=2592000
 docker compose up -d
 ```
 
-See `docs/compose.yaml` for an example Docker Compose file.
+See `docs/examples/compose.yaml` for an example Docker Compose file.
 
 ### 4. Configure Caddy
 
@@ -82,7 +82,7 @@ service.example.com {
 }
 ```
 
-See `docs/Caddyfile` for more examples, including path-specific protection
+See `docs/examples/Caddyfile` for more examples, including path-specific protection
 and central auth subdomain configuration. The `header_down` lines above are
 optional — preauth already sends these headers itself — but they guarantee
 at the edge that no part of the login flow is ever cached. (2xx auth
@@ -106,7 +106,7 @@ capabilities may work, but only Caddy is officially supported.
 
 ## Configuration
 
-All configuration is via environment variables. See `docs/example.env`
+All configuration is via environment variables. See `docs/examples/.env.example`
 for the complete reference.
 
 ### Main Options
