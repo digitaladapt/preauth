@@ -1,3 +1,6 @@
+# Push Develop — thin caller for the shared reusable workflow.
+#
+# INLINED until 2026-09. The build/push steps live in private/ci now.
 name: Push Develop
 
 on:
@@ -7,26 +10,20 @@ on:
 
 jobs:
   docker:
-    runs-on: ubuntu-latest
+    uses: private/ci/.gitea/workflows/docker-publish.yaml@v1
+    with:
+      mode: develop
+      # Passed explicitly rather than resolved inside the shared workflow:
+      # `vars` context behaviour inside a reusable workflow is not something to
+      # rely on across Gitea versions, so the caller reads it where it is
+      # unambiguous and hands over a plain string.
+      image-target: ${{ vars.DOCKERHUB_TARGET }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      # The build definition — Dockerfile target, platforms, tags, build args —
+      # lives in docker-bake.hcl so it is version-controlled with the code and
+      # reviewable in a diff. Change the build there, not here.
+      build-backend: 'bake'
 
-      - name: Setup Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ vars.DOCKERHUB_TARGET }}:develop
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
