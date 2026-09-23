@@ -31,7 +31,10 @@ RUN composer install --no-dev --optimize-autoloader
 RUN composer dump-env prod --empty
 
 # start creating final image
-FROM dunglas/frankenphp:php8.5-trixie
+# Named `app` so docker-bake.hcl can target it explicitly. Naming the final
+# stage changes nothing for a plain `docker build` — the last stage is still
+# the default build target.
+FROM dunglas/frankenphp:php8.5-trixie AS app
 
 # install APCu and curl (needed for healthcheck)
 RUN pecl install apcu && \
