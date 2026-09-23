@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service;
 
 use App\Service\BackupCodeManager;
 use App\Tests\Support\TotpTestHelper;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -20,10 +21,11 @@ final class BackupCodeManagerTest extends TestCase
         $manager = new BackupCodeManager($pool);
         $manager->setConfig($this->makeConfig());
         $manager->setLogger(new NullLogger());
+
         return $manager;
     }
 
-    public function testGenerateReturnsRequestedCount(): void
+    public function test_generate_returns_requested_count(): void
     {
         $manager = $this->makeManager();
 
@@ -37,7 +39,7 @@ final class BackupCodeManagerTest extends TestCase
         }
     }
 
-    public function testGenerateDefaultCount(): void
+    public function test_generate_default_count(): void
     {
         $manager = $this->makeManager();
 
@@ -46,7 +48,7 @@ final class BackupCodeManagerTest extends TestCase
         self::assertCount(10, $codes);
     }
 
-    public function testGenerateZeroReturnsEmptyArray(): void
+    public function test_generate_zero_returns_empty_array(): void
     {
         $manager = $this->makeManager();
 
@@ -55,7 +57,7 @@ final class BackupCodeManagerTest extends TestCase
         self::assertSame([], $codes);
     }
 
-    public function testGeneratedCodesAreStoredInCache(): void
+    public function test_generated_codes_are_stored_in_cache(): void
     {
         $pool = new ArrayAdapter();
         $manager = $this->makeManager($pool);
@@ -64,15 +66,15 @@ final class BackupCodeManagerTest extends TestCase
 
         // each code should be stored as a backup_ key
         foreach ($codes as $code) {
-            $key = 'backup_' . strtolower($code);
+            $key = 'backup_'.strtolower($code);
             // the manager uses makeCacheKey which sanitizes, but for alphanumeric it's identity
             $item = $pool->getItem($key);
             self::assertTrue($item->isHit(), "Expected cache hit for key: $key");
-            self::assertTrue($item->get(), "Expected code to be marked valid (true)");
+            self::assertTrue($item->get(), 'Expected code to be marked valid (true)');
         }
     }
 
-    public function testGeneratedCodesHaveFarFutureExpiry(): void
+    public function test_generated_codes_have_far_future_expiry(): void
     {
         $pool = new ArrayAdapter();
         $manager = $this->makeManager($pool);
@@ -80,12 +82,12 @@ final class BackupCodeManagerTest extends TestCase
         $codes = $manager->generate(1);
         $code = $codes[0];
 
-        $item = $pool->getItem('backup_' . strtolower($code));
+        $item = $pool->getItem('backup_'.strtolower($code));
         $expiry = $item->getMetadata()['expiry'];
-        self::assertGreaterThan((new \DateTimeImmutable('+10 years'))->getTimestamp(), (int) $expiry);
+        self::assertGreaterThan((new DateTimeImmutable('+10 years'))->getTimestamp(), (int) $expiry);
     }
 
-    public function testVerifyAndConsumeValidCode(): void
+    public function test_verify_and_consume_valid_code(): void
     {
         $manager = $this->makeManager();
         $codes = $manager->generate(2);
@@ -95,7 +97,7 @@ final class BackupCodeManagerTest extends TestCase
         self::assertTrue($manager->verifyAndConsume($code));
     }
 
-    public function testVerifyAndConsumeMarksCodeAsUsed(): void
+    public function test_verify_and_consume_marks_code_as_used(): void
     {
         $pool = new ArrayAdapter();
         $manager = $this->makeManager($pool);
@@ -109,14 +111,14 @@ final class BackupCodeManagerTest extends TestCase
         self::assertFalse($manager->verifyAndConsume($code));
     }
 
-    public function testVerifyAndConsumeInvalidCode(): void
+    public function test_verify_and_consume_invalid_code(): void
     {
         $manager = $this->makeManager();
 
         self::assertFalse($manager->verifyAndConsume('nonexistent_code'));
     }
 
-    public function testVerifyAndConsumeIsCaseInsensitive(): void
+    public function test_verify_and_consume_is_case_insensitive(): void
     {
         $manager = $this->makeManager();
         $codes = $manager->generate(1);
@@ -126,17 +128,17 @@ final class BackupCodeManagerTest extends TestCase
         self::assertTrue($manager->verifyAndConsume(strtoupper($code)));
     }
 
-    public function testVerifyAndConsumeStripsInvalidCharacters(): void
+    public function test_verify_and_consume_strips_invalid_characters(): void
     {
         $manager = $this->makeManager();
         $codes = $manager->generate(1);
         $code = $codes[0];
 
         // inject spaces and special chars — should be stripped
-        self::assertTrue($manager->verifyAndConsume('  ' . $code . '!!'));
+        self::assertTrue($manager->verifyAndConsume('  '.$code.'!!'));
     }
 
-    public function testExpireRemovesAllBackupCodes(): void
+    public function test_expire_removes_all_backup_codes(): void
     {
         $pool = new ArrayAdapter();
         $manager = $this->makeManager($pool);
@@ -146,11 +148,11 @@ final class BackupCodeManagerTest extends TestCase
 
         // all backup keys should be gone
         foreach ($codes as $code) {
-            self::assertFalse($pool->hasItem('backup_' . strtolower($code)));
+            self::assertFalse($pool->hasItem('backup_'.strtolower($code)));
         }
     }
 
-    public function testExpireWhenNoBackupCodesIsNoop(): void
+    public function test_expire_when_no_backup_codes_is_noop(): void
     {
         $pool = new ArrayAdapter();
         $manager = $this->makeManager($pool);
@@ -162,7 +164,7 @@ final class BackupCodeManagerTest extends TestCase
         self::assertTrue(true);
     }
 
-    public function testExpireRemovesOnlyBackupPrefixedKeys(): void
+    public function test_expire_removes_only_backup_prefixed_keys(): void
     {
         $pool = new ArrayAdapter();
         $manager = $this->makeManager($pool);
@@ -181,11 +183,11 @@ final class BackupCodeManagerTest extends TestCase
 
         // backup keys are gone
         foreach ($codes as $code) {
-            self::assertFalse($pool->hasItem('backup_' . strtolower($code)));
+            self::assertFalse($pool->hasItem('backup_'.strtolower($code)));
         }
     }
 
-    public function testVerifyAndConsumeEmptyStringReturnsFalse(): void
+    public function test_verify_and_consume_empty_string_returns_false(): void
     {
         $manager = $this->makeManager();
 
@@ -193,7 +195,7 @@ final class BackupCodeManagerTest extends TestCase
         self::assertFalse($manager->verifyAndConsume(''));
     }
 
-    public function testVerifyAndConsumeCodeWithValueFalseReturnsFalse(): void
+    public function test_verify_and_consume_code_with_value_false_returns_false(): void
     {
         $pool = new ArrayAdapter();
         $manager = $this->makeManager($pool);
@@ -204,7 +206,7 @@ final class BackupCodeManagerTest extends TestCase
         self::assertTrue($manager->verifyAndConsume($code));
 
         // the code is now marked as false (used); isHit is true but get() is false
-        $key = 'backup_' . strtolower($code);
+        $key = 'backup_'.strtolower($code);
         $item = $pool->getItem($key);
         self::assertTrue($item->isHit());
         self::assertFalse($item->get());
@@ -213,7 +215,7 @@ final class BackupCodeManagerTest extends TestCase
         self::assertFalse($manager->verifyAndConsume($code));
     }
 
-    public function testGenerateProducesUniqueCodes(): void
+    public function test_generate_produces_unique_codes(): void
     {
         $manager = $this->makeManager();
 
@@ -223,13 +225,13 @@ final class BackupCodeManagerTest extends TestCase
         self::assertCount(50, array_unique($codes), 'All generated codes should be unique');
     }
 
-    public function testGenerateCodeLengthIsDigitsPlusTwo(): void
+    public function test_generate_code_length_is_digits_plus_two(): void
     {
         $manager = $this->makeManager();
 
         $codes = $manager->generate(1);
 
         // default TOTP digits is 6, so code length should be 6 + 2 = 8
-        self::assertSame(8, strlen($codes[0]));
+        self::assertSame(8, \strlen($codes[0]));
     }
 }

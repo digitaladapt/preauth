@@ -35,6 +35,7 @@ final class InterceptListenerTest extends TestCase
         );
         $listener->setLogger(new NullLogger());
         $listener->setNonceCache($nonceCache ?? new ArrayAdapter());
+
         return $listener;
     }
 
@@ -49,7 +50,7 @@ final class InterceptListenerTest extends TestCase
 
     /* ── central-auth redirect branch ─────────────────────────────────── */
 
-    public function testRedirectsToAuthSubdomainWhenHostMatchesBaseDomain(): void
+    public function test_redirects_to_auth_subdomain_when_host_matches_base_domain(): void
     {
         $domainManager = new DomainManager(true, 'auth.example.com');
         $listener = $this->makeListener($domainManager);
@@ -68,7 +69,7 @@ final class InterceptListenerTest extends TestCase
         self::assertStringContainsString(urlencode('https://app.example.com/dashboard'), $location);
     }
 
-    public function testDoesNotRedirectWhenAlreadyOnAuthSubdomain(): void
+    public function test_does_not_redirect_when_already_on_auth_subdomain(): void
     {
         $domainManager = new DomainManager(true, 'auth.example.com');
         $listener = $this->makeListener($domainManager);
@@ -86,7 +87,7 @@ final class InterceptListenerTest extends TestCase
 
     /* ── login page rendering branch ──────────────────────────────────── */
 
-    public function testPresentsLoginPageWithUnauthorizedStatus(): void
+    public function test_presents_login_page_with_unauthorized_status(): void
     {
         $domainManager = new DomainManager(false, '');
         $listener = $this->makeListener($domainManager);
@@ -105,7 +106,7 @@ final class InterceptListenerTest extends TestCase
         self::assertStringContainsString('name="nonce"', $content);
     }
 
-    public function testGeneratedNonceIsStoredInCache(): void
+    public function test_generated_nonce_is_stored_in_cache(): void
     {
         $nonceCache = new ArrayAdapter();
         $domainManager = new DomainManager(false, '');
@@ -123,10 +124,10 @@ final class InterceptListenerTest extends TestCase
             }
         }
         // ArrayAdapter stores raw values; verify at least one item was saved
-        self::assertTrue(count($nonceCache->getValues()) > 0);
+        self::assertTrue(\count($nonceCache->getValues()) > 0);
     }
 
-    public function testLoginTemplateUsesPostFormWhenOnAuthSubdomain(): void
+    public function test_login_template_uses_post_form_when_on_auth_subdomain(): void
     {
         $domainManager = new DomainManager(true, 'auth.example.com');
         $listener = $this->makeListener($domainManager);
@@ -140,7 +141,7 @@ final class InterceptListenerTest extends TestCase
         self::assertStringContainsString('method="post"', $content);
     }
 
-    public function testLoginTemplateDoesNotUsePostFormWhenNotOnAuthSubdomain(): void
+    public function test_login_template_does_not_use_post_form_when_not_on_auth_subdomain(): void
     {
         $domainManager = new DomainManager(false, '');
         $listener = $this->makeListener($domainManager);
@@ -156,7 +157,7 @@ final class InterceptListenerTest extends TestCase
 
     /* ── invalid cookie pruning ───────────────────────────────────────── */
 
-    public function testInvalidCookieIsClearedWhenPresent(): void
+    public function test_invalid_cookie_is_cleared_when_present(): void
     {
         $domainManager = new DomainManager(false, '');
         $listener = $this->makeListener($domainManager);
@@ -174,14 +175,14 @@ final class InterceptListenerTest extends TestCase
         $cookies = $response->headers->getCookies();
         $cleared = false;
         foreach ($cookies as $cookie) {
-            if ($cookie->getName() === self::COOKIE_NAME && $cookie->isCleared()) {
+            if (self::COOKIE_NAME === $cookie->getName() && $cookie->isCleared()) {
                 $cleared = true;
             }
         }
         self::assertTrue($cleared, 'Expected the invalid cookie to be cleared');
     }
 
-    public function testNoCookieClearingWhenNoCookiePresent(): void
+    public function test_no_cookie_clearing_when_no_cookie_present(): void
     {
         $domainManager = new DomainManager(false, '');
         $listener = $this->makeListener($domainManager);
@@ -194,7 +195,7 @@ final class InterceptListenerTest extends TestCase
         self::assertSame([], $response->headers->getCookies());
     }
 
-    public function testInvalidCookieUsesAuthCookieNameWithCentralAuth(): void
+    public function test_invalid_cookie_uses_auth_cookie_name_with_central_auth(): void
     {
         $domainManager = new DomainManager(true, 'auth.example.com');
         $listener = $this->makeListener($domainManager);
@@ -209,7 +210,7 @@ final class InterceptListenerTest extends TestCase
         $response = $event->getResponse();
         $cleared = false;
         foreach ($response->headers->getCookies() as $cookie) {
-            if ($cookie->getName() === self::AUTH_COOKIE_NAME && $cookie->isCleared()) {
+            if (self::AUTH_COOKIE_NAME === $cookie->getName() && $cookie->isCleared()) {
                 $cleared = true;
             }
         }

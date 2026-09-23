@@ -33,18 +33,16 @@ trait MakeNonceTrait
     {
         /* convert raw binary into base64url */
         $nonce = rtrim(strtr(base64_encode(random_bytes(
-            static::NONCE_LENGTH
+            static::NONCE_LENGTH,
         )), '+/', '-_'), '=');
         $nonceItem = $this->nonceCache->getItem($this->makeCacheKey($nonce));
 
         if ($nonceItem->isHit()) {
             if ($retries < 1) {
-                $this->logger->error("aborting: multiple nonce collisions");
-                throw new HttpException(
-                    Response::HTTP_INTERNAL_SERVER_ERROR,
-                    'Internal Server Error'
-                );
+                $this->logger->error('aborting: multiple nonce collisions');
+                throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Internal Server Error');
             }
+
             /* managed to have a collision, try again */
             return $this->makeNonce($retries - 1);
         }
@@ -53,6 +51,7 @@ trait MakeNonceTrait
         $nonceItem->expiresAfter(static::NONCE_TTL);
         $this->logger->debug("added nonce: $nonce");
         $this->nonceCache->save($nonceItem);
+
         return $nonce;
     }
 }

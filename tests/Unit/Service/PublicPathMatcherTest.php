@@ -16,14 +16,14 @@ final class PublicPathMatcherTest extends TestCase
 {
     /* ── empty / disabled ──────────────────────────────────────────────── */
 
-    public function testEmptyStringResultsInNoPatterns(): void
+    public function test_empty_string_results_in_no_patterns(): void
     {
         $matcher = new PublicPathMatcher('');
         self::assertTrue($matcher->isEmpty());
         self::assertFalse($matcher->matches('example.com', '/public'));
     }
 
-    public function testWhitespaceOnlyStringResultsInNoPatterns(): void
+    public function test_whitespace_only_string_results_in_no_patterns(): void
     {
         $matcher = new PublicPathMatcher('   ');
         self::assertTrue($matcher->isEmpty());
@@ -31,20 +31,20 @@ final class PublicPathMatcherTest extends TestCase
 
     /* ── exact path matching ───────────────────────────────────────────── */
 
-    public function testExactPathMatch(): void
+    public function test_exact_path_match(): void
     {
         $matcher = new PublicPathMatcher('/public');
         self::assertTrue($matcher->matches('example.com', '/public'));
     }
 
-    public function testExactPathDoesNotMatchSubpath(): void
+    public function test_exact_path_does_not_match_subpath(): void
     {
         $matcher = new PublicPathMatcher('/public');
         self::assertFalse($matcher->matches('example.com', '/public/'));
         self::assertFalse($matcher->matches('example.com', '/public/repo'));
     }
 
-    public function testExactPathDoesNotMatchDifferentPath(): void
+    public function test_exact_path_does_not_match_different_path(): void
     {
         $matcher = new PublicPathMatcher('/public');
         self::assertFalse($matcher->matches('example.com', '/private'));
@@ -53,26 +53,26 @@ final class PublicPathMatcherTest extends TestCase
 
     /* ── single wildcard * ─────────────────────────────────────────────── */
 
-    public function testSingleWildcardMatchesOneSegment(): void
+    public function test_single_wildcard_matches_one_segment(): void
     {
         $matcher = new PublicPathMatcher('/public/*');
         self::assertTrue($matcher->matches('example.com', '/public/repo'));
         self::assertTrue($matcher->matches('example.com', '/public/xyz'));
     }
 
-    public function testSingleWildcardDoesNotMatchBasePath(): void
+    public function test_single_wildcard_does_not_match_base_path(): void
     {
         $matcher = new PublicPathMatcher('/public/*');
         self::assertFalse($matcher->matches('example.com', '/public'));
     }
 
-    public function testSingleWildcardDoesNotCrossSegments(): void
+    public function test_single_wildcard_does_not_cross_segments(): void
     {
         $matcher = new PublicPathMatcher('/public/*');
         self::assertFalse($matcher->matches('example.com', '/public/a/b'));
     }
 
-    public function testSingleWildcardDoesNotMatchEmptySegment(): void
+    public function test_single_wildcard_does_not_match_empty_segment(): void
     {
         $matcher = new PublicPathMatcher('/public/*');
         self::assertFalse($matcher->matches('example.com', '/public/'));
@@ -80,20 +80,20 @@ final class PublicPathMatcherTest extends TestCase
 
     /* ── double wildcard ** ────────────────────────────────────────────── */
 
-    public function testDoubleWildcardMatchesMultipleSegments(): void
+    public function test_double_wildcard_matches_multiple_segments(): void
     {
         $matcher = new PublicPathMatcher('/public/**');
         self::assertTrue($matcher->matches('example.com', '/public/a'));
         self::assertTrue($matcher->matches('example.com', '/public/a/b/c'));
     }
 
-    public function testDoubleWildcardDoesNotMatchBasePath(): void
+    public function test_double_wildcard_does_not_match_base_path(): void
     {
         $matcher = new PublicPathMatcher('/public/**');
         self::assertFalse($matcher->matches('example.com', '/public'));
     }
 
-    public function testDoubleWildcardMatchesTrailingSlash(): void
+    public function test_double_wildcard_matches_trailing_slash(): void
     {
         $matcher = new PublicPathMatcher('/public/**');
         self::assertTrue($matcher->matches('example.com', '/public/'));
@@ -101,7 +101,7 @@ final class PublicPathMatcherTest extends TestCase
 
     /* ── mid-path wildcards ────────────────────────────────────────────── */
 
-    public function testMidPathSingleWildcard(): void
+    public function test_mid_path_single_wildcard(): void
     {
         $matcher = new PublicPathMatcher('/api/*/status');
         self::assertTrue($matcher->matches('example.com', '/api/v1/status'));
@@ -110,7 +110,7 @@ final class PublicPathMatcherTest extends TestCase
         self::assertFalse($matcher->matches('example.com', '/api/status'));
     }
 
-    public function testMidPathDoubleWildcard(): void
+    public function test_mid_path_double_wildcard(): void
     {
         $matcher = new PublicPathMatcher('/api/**/status');
         self::assertTrue($matcher->matches('example.com', '/api/v1/status'));
@@ -120,7 +120,7 @@ final class PublicPathMatcherTest extends TestCase
 
     /* ── multiple patterns ─────────────────────────────────────────────── */
 
-    public function testMultiplePatternsCommaSeparated(): void
+    public function test_multiple_patterns_comma_separated(): void
     {
         $matcher = new PublicPathMatcher('/public/**,/api/status,/health');
         self::assertTrue($matcher->matches('example.com', '/public/repo'));
@@ -129,7 +129,7 @@ final class PublicPathMatcherTest extends TestCase
         self::assertFalse($matcher->matches('example.com', '/private'));
     }
 
-    public function testMultiplePatternsWithWhitespace(): void
+    public function test_multiple_patterns_with_whitespace(): void
     {
         $matcher = new PublicPathMatcher('/public/**, /api/status, /health');
         self::assertTrue($matcher->matches('example.com', '/public/repo'));
@@ -137,7 +137,7 @@ final class PublicPathMatcherTest extends TestCase
         self::assertTrue($matcher->matches('example.com', '/health'));
     }
 
-    public function testEmptySegmentsInCommaListAreIgnored(): void
+    public function test_empty_segments_in_comma_list_are_ignored(): void
     {
         $matcher = new PublicPathMatcher('/public,,/health,');
         self::assertFalse($matcher->isEmpty());
@@ -147,20 +147,20 @@ final class PublicPathMatcherTest extends TestCase
 
     /* ── domain-prefixed patterns ──────────────────────────────────────── */
 
-    public function testDomainPrefixedPatternMatchesOnThatHost(): void
+    public function test_domain_prefixed_pattern_matches_on_that_host(): void
     {
         $matcher = new PublicPathMatcher('code.example.com/public/**');
         self::assertTrue($matcher->matches('code.example.com', '/public/repo'));
     }
 
-    public function testDomainPrefixedPatternDoesNotMatchOtherHost(): void
+    public function test_domain_prefixed_pattern_does_not_match_other_host(): void
     {
         $matcher = new PublicPathMatcher('code.example.com/public/**');
         self::assertFalse($matcher->matches('other.example.com', '/public/repo'));
         self::assertFalse($matcher->matches('example.com', '/public/repo'));
     }
 
-    public function testPathWithoutDomainPrefixMatchesAnyHost(): void
+    public function test_path_without_domain_prefix_matches_any_host(): void
     {
         $matcher = new PublicPathMatcher('/public/**');
         self::assertTrue($matcher->matches('code.example.com', '/public/repo'));
@@ -168,7 +168,7 @@ final class PublicPathMatcherTest extends TestCase
         self::assertTrue($matcher->matches('localhost', '/public/repo'));
     }
 
-    public function testMixedDomainPrefixedAndPlainPatterns(): void
+    public function test_mixed_domain_prefixed_and_plain_patterns(): void
     {
         $matcher = new PublicPathMatcher('/health,code.example.com/public/**');
         self::assertTrue($matcher->matches('any.host', '/health'));
@@ -176,7 +176,7 @@ final class PublicPathMatcherTest extends TestCase
         self::assertFalse($matcher->matches('other.host', '/public/repo'));
     }
 
-    public function testDomainPrefixedRootPathMatchesRoot(): void
+    public function test_domain_prefixed_root_path_matches_root(): void
     {
         // host/  — the trailing slash is the entire path, nothing after it
         $matcher = new PublicPathMatcher('code.example.com/');
@@ -185,7 +185,7 @@ final class PublicPathMatcherTest extends TestCase
         self::assertFalse($matcher->matches('other.example.com', '/'));
     }
 
-    public function testDomainPrefixedRootWithOtherPatterns(): void
+    public function test_domain_prefixed_root_with_other_patterns(): void
     {
         // The exact scenario from the bug report
         $matcher = new PublicPathMatcher('code.example.com/,code.example.com/public/**');
@@ -195,7 +195,7 @@ final class PublicPathMatcherTest extends TestCase
         self::assertFalse($matcher->matches('other.example.com', '/'));
     }
 
-    public function testDomainPrefixIsCaseInsensitive(): void
+    public function test_domain_prefix_is_case_insensitive(): void
     {
         $matcher = new PublicPathMatcher('Code.Example.COM/public/**');
         self::assertTrue($matcher->matches('code.example.com', '/public/repo'));
@@ -204,13 +204,13 @@ final class PublicPathMatcherTest extends TestCase
 
     /* ── invalid patterns ──────────────────────────────────────────────── */
 
-    public function testPatternWithoutLeadingSlashIsIgnored(): void
+    public function test_pattern_without_leading_slash_is_ignored(): void
     {
         $matcher = new PublicPathMatcher('public');
         self::assertTrue($matcher->isEmpty());
     }
 
-    public function testInvalidPatternAmongValidOnesIsIgnored(): void
+    public function test_invalid_pattern_among_valid_ones_is_ignored(): void
     {
         $matcher = new PublicPathMatcher('invalid,/public');
         self::assertFalse($matcher->isEmpty());
@@ -219,14 +219,14 @@ final class PublicPathMatcherTest extends TestCase
 
     /* ── special regex characters in paths ─────────────────────────────── */
 
-    public function testSpecialRegexCharactersAreEscaped(): void
+    public function test_special_regex_characters_are_escaped(): void
     {
         $matcher = new PublicPathMatcher('/path.with.dots');
         self::assertTrue($matcher->matches('example.com', '/path.with.dots'));
         self::assertFalse($matcher->matches('example.com', '/pathXwithXdots'));
     }
 
-    public function testPlusCharacterIsLiteral(): void
+    public function test_plus_character_is_literal(): void
     {
         $matcher = new PublicPathMatcher('/a+b');
         self::assertTrue($matcher->matches('example.com', '/a+b'));
@@ -235,14 +235,14 @@ final class PublicPathMatcherTest extends TestCase
 
     /* ── root path ─────────────────────────────────────────────────────── */
 
-    public function testRootPathMatch(): void
+    public function test_root_path_match(): void
     {
         $matcher = new PublicPathMatcher('/');
         self::assertTrue($matcher->matches('example.com', '/'));
         self::assertFalse($matcher->matches('example.com', '/anything'));
     }
 
-    public function testWildcardAtRoot(): void
+    public function test_wildcard_at_root(): void
     {
         $matcher = new PublicPathMatcher('/*');
         self::assertTrue($matcher->matches('example.com', '/anything'));
@@ -250,7 +250,7 @@ final class PublicPathMatcherTest extends TestCase
         self::assertFalse($matcher->matches('example.com', '/'));
     }
 
-    public function testDoubleWildcardAtRoot(): void
+    public function test_double_wildcard_at_root(): void
     {
         $matcher = new PublicPathMatcher('/**');
         self::assertTrue($matcher->matches('example.com', '/'));

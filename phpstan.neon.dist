@@ -1,0 +1,116 @@
+# phpstan.neon.dist — canonical shared PHPStan config.
+#
+# Copy verbatim into a project root. This is a LEAF file: it has no
+# project-specific content, so "sync it" means "overwrite it", never merge.
+# Do not hand-edit per repo — change it here and re-sync, or the five copies
+# drift back apart (GUIDING-LIGHT §8.2).
+#
+# Baseline: level 6 for application code. Raise per project as it gets clean;
+# the goal recorded in GUIDING-LIGHT §2.2 is level 6 minimum everywhere.
+#
+# Adopt incrementally:
+#   1. vendor/bin/phpstan analyse --generate-baseline
+#   2. Commit the result over the empty phpstan-baseline.neon that ships with this
+#   3. Ratchet `level` up as the baseline shrinks
+# Never replace a fix with an ignoreErrors entry — see reportIgnoresWithoutComments.
+#
+# IMPORTANT — every key below is VERIFIED against phpstan.org/config-reference.
+# PHPStan 2.x errors on unknown keys, but a plausible-looking wrong key copied
+# from a blog post is a common way to lose an afternoon. If you add a key,
+# confirm it there first. Extension-specific keys (symfony.*, doctrine.*,
+# phpstan-deprecation-rules, etc.) are deliberately NOT set here — see the
+# commented block at the bottom for why and how to opt in per project.
+
+parameters:
+    level: 6
+
+    paths:
+        - src
+        - tests
+
+    # ── High-signal checks (all verified key names) ──────────────────────────
+
+    # An `@var` that contradicts the assignment is almost always a real bug.
+    reportWrongPhpDocTypeInVarTag: true
+
+    # A `@var` that only widens the inferred type is usually an unnecessary cast.
+    reportAnyTypeWideningInVarTag: true
+
+    # `@param`/`@return` that contradict the native signature.
+    reportStaticMethodSignatures: true
+
+    # An ignoreErrors entry with no explanatory comment is a smell.
+    reportIgnoresWithoutComments: true
+
+    # Forces every ignore to still match something. Without this, ignores
+    # accumulate forever and nobody notices when the underlying bug is fixed.
+    reportUnmatchedIgnoredErrors: true
+
+    # Catch `Foo` vs `foo` in function names — matters for Windows devs and
+    # for correctness under strict autoloading.
+    checkFunctionNameCase: true
+
+    # Typed properties that are read before they are definitely initialised.
+    checkUninitializedProperties: true
+
+    # Respect #[Override] so refactors in parent classes cannot silently stop
+    # overriding a method that got renamed.
+    checkMissingOverrideMethodAttribute: true
+    checkMissingOverridePropertyAttribute: true
+
+    # Static analysis cannot see through sprintf, so mis-ordered placeholders
+    # are otherwise invisible until runtime.
+    checkStrictPrintfPlaceholderTypes: true
+
+    # Dynamic properties are deprecated in PHP 8.2+ and are a common source of
+    # typos that would otherwise fail silently at runtime.
+    checkDynamicProperties: true
+
+    # All five repos have this file (verified); the kernel boot lives here.
+    bootstrapFiles:
+        - tests/bootstrap.php
+
+    ignoreErrors:
+        # Symfony's createClient() returns KernelBrowser, but some test helpers
+        # are typed against the narrower legacy interface.
+        # reportUnmatched:false so this does not fail the build once the
+        # offending helper is typed properly.
+        #
+        # NOTE the layout: the dash sits alone and the keys are indented under
+        # it. This is the form used verbatim in PHPStan's own documentation.
+        # (The more compact `- message: ...` / continuation form is also valid
+        # NEON, but NOT every NEON parser in the wild handles it — the PHP
+        # parser PHPStan uses handles both, Python's neon-py handles neither
+        # reliably. Staying with the documented form avoids the argument.)
+        -
+            message: '#Call to an undefined method Symfony\\Component\\HttpFoundation\\Session\\SessionInterface::#'
+            reportUnmatched: false
+
+includes:
+    # Ships EMPTY with this config. A repo overwrites it when it runs
+    # --generate-baseline. It must exist: a missing `includes` target is a hard
+    # error, not a silent skip, which is why the empty file is committed rather
+    # than the include being made conditional.
+    - phpstan-baseline.neon
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OPTIONAL EXTENSIONS — commented out on purpose.
+#
+# These keys are owned by PHPStan *extensions*, not core. If the extension is
+# not installed, or the key name drifts between extension majors, analysis
+# fails outright. So they are opt-in per project rather than shared.
+#
+# Symfony — resolves service ids, autowiring, and container params from the
+# compiled container. Requires phpstan/phpstan-symfony. Uncomment AND make sure
+# the path exists (warm the dev cache first, or let the test bootstrap do it).
+#
+#    symfony:
+#        containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
+#
+# Doctrine — validates DQL against the actual mapping. Requires
+# phpstan/phpstan-doctrine. `repositoryClass` must name a class that EXISTS in
+# the project; setting it to a class you do not have is an instant failure.
+#
+#    doctrine:
+#        repositoryClass: App\Repository\YourBaseRepository
+# ─────────────────────────────────────────────────────────────────────────────

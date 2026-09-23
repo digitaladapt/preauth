@@ -11,18 +11,22 @@ use Psr\Cache\InvalidArgumentException;
  * they are single-use and marked as used after successful authentication */
 interface BackupCodeInterface
 {
-    /** generate a set of backup-codes and return them
+    /** generate a set of backup-codes and return them.
      * @param int $count Number of codes to generate
+     *
      * @return string[] Generated backup codes
+     *
      * @throws InvalidArgumentException|Exception */
     public function generate(int $count = 10): array;
 
     /** @throws InvalidArgumentException */
     public function expire(): void;
 
-    /** check if backup-code is valid and mark it as used
+    /** check if backup-code is valid and mark it as used.
      * @param string $code Code supplied by the client
+     *
      * @return bool true if the code is valid and unused
+     *
      * @throws InvalidArgumentException */
     public function verifyAndConsume(string $code): bool;
 }

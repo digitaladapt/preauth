@@ -16,7 +16,7 @@ final class PayloadTest extends TestCase
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 
-    public function testDecodeValidBase64Url(): void
+    public function test_decode_valid_base64_url(): void
     {
         $data = json_encode([
             'id' => 'testuser', 'token' => '123456', 'nonce' => 'abc123',
@@ -32,49 +32,49 @@ final class PayloadTest extends TestCase
         self::assertSame(Scope::Cookie, $payload->scope);
     }
 
-    public function testDecodeInvalidBase64UrlReturnsNull(): void
+    public function test_decode_invalid_base64_url_returns_null(): void
     {
         self::assertNull(Payload::decode('!!!not-valid-base64!!!'));
     }
 
-    public function testDecodeNonObjectJsonReturnsNull(): void
+    public function test_decode_non_object_json_returns_null(): void
     {
         self::assertNull(Payload::decode(self::b64u('"just a string"')));
     }
 
-    public function testDecodeInvalidJsonReturnsNull(): void
+    public function test_decode_invalid_json_returns_null(): void
     {
         // valid base64url but invalid JSON
         self::assertNull(Payload::decode(self::b64u('{invalid json')));
     }
 
-    public function testDecodeJsonArrayReturnsNull(): void
+    public function test_decode_json_array_returns_null(): void
     {
         self::assertNull(Payload::decode(self::b64u('[1,2,3]')));
     }
 
-    public function testDecodeJsonNullReturnsNull(): void
+    public function test_decode_json_null_returns_null(): void
     {
         self::assertNull(Payload::decode(self::b64u('null')));
     }
 
-    public function testDecodeJsonBooleanReturnsNull(): void
+    public function test_decode_json_boolean_returns_null(): void
     {
         self::assertNull(Payload::decode(self::b64u('true')));
         self::assertNull(Payload::decode(self::b64u('false')));
     }
 
-    public function testDecodeJsonNumberReturnsNull(): void
+    public function test_decode_json_number_returns_null(): void
     {
         self::assertNull(Payload::decode(self::b64u('42')));
     }
 
-    public function testDecodeEmptyStringReturnsNull(): void
+    public function test_decode_empty_string_returns_null(): void
     {
         self::assertNull(Payload::decode(''));
     }
 
-    public function testLoadWithValidInputBag(): void
+    public function test_load_with_valid_input_bag(): void
     {
         $input = new InputBag([
             'username' => 'alice', 'nonce' => 'nonce123', 'totp' => '654321',
@@ -89,34 +89,34 @@ final class PayloadTest extends TestCase
         self::assertSame(Scope::Cookie, $payload->scope);
     }
 
-    public function testLoadMissingUsernameReturnsNull(): void
+    public function test_load_missing_username_returns_null(): void
     {
         $input = new InputBag(['nonce' => 'n', 'totp' => 't']);
         self::assertNull(Payload::load($input));
     }
 
-    public function testLoadMissingNonceReturnsNull(): void
+    public function test_load_missing_nonce_returns_null(): void
     {
         $input = new InputBag(['username' => 'u', 'totp' => 't']);
         self::assertNull(Payload::load($input));
     }
 
-    public function testLoadMissingTotpReturnsNull(): void
+    public function test_load_missing_totp_returns_null(): void
     {
         $input = new InputBag(['username' => 'u', 'nonce' => 'n']);
         self::assertNull(Payload::load($input));
     }
 
-    public function testLoadWithAllFieldsPresentButEmptyReturnsNull(): void
+    public function test_load_with_all_fields_present_but_empty_returns_null(): void
     {
         // has() returns true for all, but create() rejects empty values
         $input = new InputBag(['username' => '', 'nonce' => '', 'totp' => '']);
         self::assertNull(Payload::load($input));
     }
 
-    public function testCreateWithValidData(): void
+    public function test_create_with_valid_data(): void
     {
-        $data = (object)[
+        $data = (object) [
             'id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1',
             'json' => false, 'scope' => 'ip',
         ];
@@ -130,16 +130,16 @@ final class PayloadTest extends TestCase
         self::assertSame(Scope::Ip, $payload->scope);
     }
 
-    public function testCreateWithDefaultScope(): void
+    public function test_create_with_default_scope(): void
     {
-        $data = (object)['id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1'];
+        $data = (object) ['id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1'];
         $payload = Payload::create($data);
         self::assertSame(Scope::Cookie, $payload->scope);
     }
 
-    public function testCreateWithInvalidScopeFallsBackToCookie(): void
+    public function test_create_with_invalid_scope_falls_back_to_cookie(): void
     {
-        $data = (object)[
+        $data = (object) [
             'id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1',
             'scope' => 'admin',
         ];
@@ -147,16 +147,16 @@ final class PayloadTest extends TestCase
         self::assertSame(Scope::Cookie, $payload->scope);
     }
 
-    public function testCreateWithMissingJsonDefaultsToTrue(): void
+    public function test_create_with_missing_json_defaults_to_true(): void
     {
-        $data = (object)['id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1'];
+        $data = (object) ['id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1'];
         $payload = Payload::create($data);
         self::assertTrue($payload->json);
     }
 
-    public function testCreateWithNoneScopeSetsJsonFalse(): void
+    public function test_create_with_none_scope_sets_json_false(): void
     {
-        $data = (object)[
+        $data = (object) [
             'id' => 'user1', 'token' => 'tok1', 'nonce' => 'non1',
             'json' => true, 'scope' => 'none',
         ];
@@ -165,37 +165,37 @@ final class PayloadTest extends TestCase
         self::assertFalse($payload->json);
     }
 
-    public function testCreateWithEmptyIdReturnsNull(): void
+    public function test_create_with_empty_id_returns_null(): void
     {
-        $data = (object)['id' => '', 'token' => 't', 'nonce' => 'n'];
+        $data = (object) ['id' => '', 'token' => 't', 'nonce' => 'n'];
         self::assertNull(Payload::create($data));
     }
 
-    public function testCreateWithWhitespaceIdReturnsNull(): void
+    public function test_create_with_whitespace_id_returns_null(): void
     {
-        $data = (object)['id' => '   ', 'token' => 't', 'nonce' => 'n'];
+        $data = (object) ['id' => '   ', 'token' => 't', 'nonce' => 'n'];
         self::assertNull(Payload::create($data));
     }
 
-    public function testCreateWithEmptyTokenReturnsNull(): void
+    public function test_create_with_empty_token_returns_null(): void
     {
-        $data = (object)['id' => 'u', 'token' => '', 'nonce' => 'n'];
+        $data = (object) ['id' => 'u', 'token' => '', 'nonce' => 'n'];
         self::assertNull(Payload::create($data));
     }
 
-    public function testCreateWithEmptyNonceReturnsNull(): void
+    public function test_create_with_empty_nonce_returns_null(): void
     {
-        $data = (object)['id' => 'u', 'token' => 't', 'nonce' => ''];
+        $data = (object) ['id' => 'u', 'token' => 't', 'nonce' => ''];
         self::assertNull(Payload::create($data));
     }
 
-    public function testCreateTrimsAndTruncatesFields(): void
+    public function test_create_trims_and_truncates_fields(): void
     {
         $long = str_repeat('a', 200);
-        $data = (object)[
-            'id' => '  ' . $long . '  ',
-            'token' => '  ' . $long . '  ',
-            'nonce' => '  ' . $long . '  ',
+        $data = (object) [
+            'id' => '  '.$long.'  ',
+            'token' => '  '.$long.'  ',
+            'nonce' => '  '.$long.'  ',
         ];
         $payload = Payload::create($data);
         $expected = mb_substr($long, 0, 128);
@@ -204,7 +204,7 @@ final class PayloadTest extends TestCase
         self::assertSame($expected, $payload->nonce);
     }
 
-    public function testToString(): void
+    public function test_to_string(): void
     {
         $payload = new Payload();
         $payload->id = 'u';

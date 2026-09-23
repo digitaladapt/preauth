@@ -24,12 +24,12 @@ final readonly class SecurityHeadersListener
     #[AsEventListener(priority: 0)]
     public function onKernelResponse(ResponseEvent $event): void
     {
-        if (! $event->isMainRequest()) {
+        if (!$event->isMainRequest()) {
             return;
         }
 
         $response = $event->getResponse();
-        $headers  = $response->headers;
+        $headers = $response->headers;
 
         /* prevent MIME-type sniffing */
         $headers->set('X-Content-Type-Options', 'nosniff');
@@ -53,7 +53,7 @@ final readonly class SecurityHeadersListener
          * work. On the auth subdomain the form POSTs normally and no
          * inline script is included, so the stricter policy applies. */
         $inlineScript = $this->domainManager->getAuthSubdomain() !== $event->getRequest()->getHost();
-        $csp          = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline';";
+        $csp = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline';";
 
         if ($inlineScript) {
             $csp .= " connect-src 'self';";
@@ -76,7 +76,7 @@ final readonly class SecurityHeadersListener
          * reverse proxy's forward_auth check before reaching the browser,
          * and the protected service's own cache headers must remain
          * untouched. */
-        if (! $response->isSuccessful()) {
+        if (!$response->isSuccessful()) {
             $headers->set('Cache-Control', 'no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
             $headers->set('Pragma', 'no-cache');
             $headers->set('Expires', '0');

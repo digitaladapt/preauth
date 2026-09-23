@@ -15,7 +15,7 @@ use Psr\Clock\ClockInterface;
 final readonly class Utilities
 {
     public function __construct(
-        private ClockInterface         $clock,
+        private ClockInterface $clock,
         private CacheItemPoolInterface $appPool,
     ) {
     }
@@ -31,6 +31,7 @@ final readonly class Utilities
         }
 
         $this->showTotp($totp);
+
         return $totp;
     }
 
@@ -47,9 +48,10 @@ final readonly class Utilities
          * we want this to keep forever, so a few hundred years should do it */
         $totpItem->expiresAt(DateTimeImmutable::createFromFormat(
             'Y-m-d',
-            AppConstants::FAR_FUTURE_DATE
+            AppConstants::FAR_FUTURE_DATE,
         ));
         $this->appPool->save($totpItem);
+
         return $totp;
     }
 
@@ -64,7 +66,7 @@ final readonly class Utilities
             loading TOTP, because the env is not set, please copy above into TOTP_URI
 
             RAW,
-            FILE_APPEND
+            \FILE_APPEND,
         );
     }
 }

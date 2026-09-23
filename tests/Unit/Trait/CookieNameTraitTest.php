@@ -11,17 +11,17 @@ final class CookieNameTraitTest extends TestCase
 {
     use CookieNameTrait;
 
-    public function testCookieName(): void
+    public function test_cookie_name(): void
     {
         self::assertSame('__Host-Http-Preauth', $this->cookieName());
     }
 
-    public function testAuthCookieName(): void
+    public function test_auth_cookie_name(): void
     {
         self::assertSame('__Http-Domain-Preauth', $this->authCookieName());
     }
 
-    public function testHeaderName(): void
+    public function test_header_name(): void
     {
         self::assertSame('X-Preauth', $this->headerName());
     }

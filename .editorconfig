@@ -1,20 +1,56 @@
 # editorconfig.org
+#
+# Canonical shared .editorconfig. Copy verbatim into a project root.
+# LEAF file: sync = overwrite, never merge (GUIDING-LIGHT §8.2).
+#
+# context-loom was missing this entirely in the 2026-09 audit; the other four
+# had three subtly different versions.
 
 root = true
 
 [*]
 charset = utf-8
 end_of_line = lf
-indent_size = 4
 indent_style = space
+indent_size = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+# YAML is indentation-significant and the rest of the ecosystem uses 2 spaces.
+[*.{yaml,yml}]
+indent_size = 2
+
+# Docker/compose files follow the same convention.
+[{Dockerfile,*.dockerfile}]
+indent_size = 4
+
+[{compose.yaml,compose.*.yaml,compose.yml}]
+indent_size = 2
+
+[*.json]
+indent_size = 2
+
+# Markdown: trailing whitespace is a hard line break in some renderers, so
+# stripping it silently changes formatting.
+[*.md]
+trim_trailing_whitespace = false
+
+# Generated / vendored content: never touch, even accidentally on save.
+[{vendor/**,var/**,node_modules/**,public/bundles/**}]
+insert_final_newline = false
+trim_trailing_whitespace = false
+
+# Caddy's own formatter (caddy fmt) indents with tabs, and every Caddyfile in
+# the portfolio already uses them — at the root (preauth, penny-track,
+# vital-pulse), under docker/ (the FrankenPHP app config), and under
+# docs/examples/ (the edge-proxy reference copied from). Without this rule the
+# `[*]` block above silently tells editors to use spaces, so every save
+# reindents the file and caddy fmt immediately undoes it.
 [Caddyfile]
 indent_style = tab
 
-[{compose.yaml,compose.*.yaml}]
-indent_size = 2
+[Makefile]
+indent_style = tab
 
-[*.md]
-trim_trailing_whitespace = false
+[*.{sh,bash}]
+indent_size = 4

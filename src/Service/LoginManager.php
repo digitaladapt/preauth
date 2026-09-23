@@ -31,8 +31,8 @@ final readonly class LoginManager implements LoginInterface
     /** @throws InvalidArgumentException */
     public function __construct(
         CacheItemPoolInterface $sessionCache,
-        private BackupCodeInterface    $backupCodeManager,
-        private DomainInterface        $domainManager,
+        private BackupCodeInterface $backupCodeManager,
+        private DomainInterface $domainManager,
     ) {
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
     }
@@ -41,13 +41,13 @@ final readonly class LoginManager implements LoginInterface
     public function checkToken(Payload $payload, Request $request): ?Response
     {
         /* when scope is IP but ip-access is disabled, scope is to be considered cookie */
-        if ($payload->scope === Scope::Ip && ! $this->config->ipTtl()) {
+        if (Scope::Ip === $payload->scope && !$this->config->ipTtl()) {
             /* requested to grant ip access, but that is not enabled */
             $payload->scope = Scope::Cookie;
         }
 
-        if ($this->getTotp()->verify($payload->token, null, 1) ||
-            $this->backupCodeManager->verifyAndConsume($payload->token)
+        if ($this->getTotp()->verify($payload->token, null, 1)
+            || $this->backupCodeManager->verifyAndConsume($payload->token)
         ) {
             /* token is correct (TOTP or Backup) */
 
@@ -56,7 +56,7 @@ final readonly class LoginManager implements LoginInterface
             if ($nonceItem->isHit() && $nonceItem->get()) {
                 /* mark nonce as spent */
                 $nonceItem->set(false); /* invalid */
-                $nonceItem->expiresAfter(LoginManager::NONCE_TTL); /* keep briefly */
+                $nonceItem->expiresAfter(self::NONCE_TTL); /* keep briefly */
                 $this->nonceCache->save($nonceItem);
 
                 /* token authentication successful, grant access and set response */
@@ -65,27 +65,27 @@ final readonly class LoginManager implements LoginInterface
                 /* if they just want this one page, return ok, to grant them access */
                 $response = $this->authSuccessResponse($cleanId, $this->config);
 
-                if ($payload->scope !== Scope::None) {
+                if (Scope::None !== $payload->scope) {
                     /* grant access based on the requested scope */
-                    if ($payload->scope === Scope::Cookie) {
+                    if (Scope::Cookie === $payload->scope) {
                         $response->headers->setCookie($this->setCookie($cleanId, $request->getHost()));
-                    } elseif ($payload->scope === Scope::Ip) {
+                    } elseif (Scope::Ip === $payload->scope) {
                         $this->setIp($cleanId, $request->getClientIp());
                     }
 
                     if ($payload->json) {
                         $contentType = 'application/json';
-                        $content     = json_encode([
+                        $content = json_encode([
                             'message' => 'Login successful',
-                            'nonce'   => null,
+                            'nonce' => null,
                         ]);
                     } else {
                         $contentType = 'text/html';
-                        $content     = "hi $cleanId, please reload";
+                        $content = "hi $cleanId, please reload";
                     }
 
-                    $location = $request->query->has('return') &&
-                    $this->domainManager->validReturn($request->query->get('return')) ?
+                    $location = $request->query->has('return')
+                    && $this->domainManager->validReturn($request->query->get('return')) ?
                         "{$request->query->get('return')}" :
                         "{$request->getPathInfo()}{$request->getQueryString()}";
 
@@ -97,9 +97,11 @@ final readonly class LoginManager implements LoginInterface
                 }
 
                 $this->logger->debug("successful login for: $cleanId");
+
                 return $response;
             }
         }
+
         return null;
     }
 
@@ -109,11 +111,11 @@ final readonly class LoginManager implements LoginInterface
         /* successful auth with token, store session and set the cookie */
         $ulid = new Ulid();
         $sessionCookie = $this->sessionCache->getItem(
-            $this->makeCacheKey("cookie_$ulid")
+            $this->makeCacheKey("cookie_$ulid"),
         );
         if ($sessionCookie->isHit()) {
             /* it is supposed to be impossible to have collisions */
-            $this->logger->error("aborting: ULID collision");
+            $this->logger->error('aborting: ULID collision');
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Internal Server Error');
         }
         $sessionCookie->set($id);

@@ -9,7 +9,9 @@ use App\Tests\Support\TotpTestHelper;
 use App\Trait\GetTotpTrait;
 use OTPHP\TOTPInterface;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Throwable;
 
 final class GetTotpTraitTest extends TestCase
 {
@@ -17,7 +19,7 @@ final class GetTotpTraitTest extends TestCase
 
     private function makeObject(): object
     {
-        return new class () {
+        return new class {
             use GetTotpTrait;
 
             public function publicGetTotp(): TOTPInterface
@@ -27,18 +29,18 @@ final class GetTotpTraitTest extends TestCase
         };
     }
 
-    public function testSetConfigSetsProperty(): void
+    public function test_set_config_sets_property(): void
     {
         $obj = $this->makeObject();
         $config = $this->makeConfig();
 
         $obj->setConfig($config);
 
-        $reflection = new \ReflectionProperty($obj, 'config');
+        $reflection = new ReflectionProperty($obj, 'config');
         self::assertSame($config, $reflection->getValue($obj));
     }
 
-    public function testGetTotpReturnsTotpInterface(): void
+    public function test_get_totp_returns_totp_interface(): void
     {
         $obj = $this->makeObject();
         $obj->setConfig($this->makeConfig());
@@ -48,7 +50,7 @@ final class GetTotpTraitTest extends TestCase
         self::assertInstanceOf(TOTPInterface::class, $totp);
     }
 
-    public function testGetTotpReturnsValidCode(): void
+    public function test_get_totp_returns_valid_code(): void
     {
         $obj = $this->makeObject();
         $obj->setConfig($this->makeConfig());
@@ -59,7 +61,7 @@ final class GetTotpTraitTest extends TestCase
         self::assertSame($this->validTotpCode(), $totp->now());
     }
 
-    public function testGetTotpThrowsOnInvalidUri(): void
+    public function test_get_totp_throws_on_invalid_uri(): void
     {
         $obj = $this->makeObject();
         $clock = $this->frozenClock();
@@ -83,11 +85,11 @@ final class GetTotpTraitTest extends TestCase
         // Factory::loadFromProvisioningUri throws InvalidProvisioningUriException
         // which is not caught by getTotp() since the instanceof check only runs
         // after a successful load — so we expect a Throwable here
-        $this->expectException(\Throwable::class);
+        $this->expectException(Throwable::class);
         $obj->publicGetTotp();
     }
 
-    public function testGetTotpThrowsHttpExceptionWhenNotTotpType(): void
+    public function test_get_totp_throws_http_exception_when_not_totp_type(): void
     {
         // A HOTP URI loads successfully as an OTPInterface but is NOT a TOTPInterface,
         // so the instanceof check in getTotp() should throw an HttpException(500)

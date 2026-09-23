@@ -12,7 +12,7 @@ final class HasLoggerTraitTest extends TestCase
 {
     use HasLoggerTrait;
 
-    public function testSetLogger(): void
+    public function test_set_logger(): void
     {
         $logger = $this->createStub(LoggerInterface::class);
         $this->setLogger($logger);

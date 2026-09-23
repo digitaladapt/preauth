@@ -25,7 +25,7 @@ trait GetTotpTrait
     {
         $otp = Factory::loadFromProvisioningUri(
             $this->config->totpUri(),
-            $this->config->clock()
+            $this->config->clock(),
         );
         if ($otp instanceof TOTPInterface) {
             return $otp;

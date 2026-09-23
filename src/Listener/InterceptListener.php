@@ -26,9 +26,9 @@ final readonly class InterceptListener
     use MakeNonceTrait;
 
     public function __construct(
-        private ConfigBag       $config,
+        private ConfigBag $config,
         private DomainInterface $domainManager,
-        private Environment     $twig,
+        private Environment $twig,
     ) {
     }
 
@@ -39,29 +39,29 @@ final readonly class InterceptListener
         /* by this point, we know that the request we have is:
          * not already authorized, nor already rate-limited,
          * nor submitting login credentials; so redirect or present the login page now */
-        if ($this->domainManager->getAuthSubdomain() !== $event->getRequest()->getHost() &&
-            $this->domainManager->matchesAuth($event->getRequest()->getHost())
+        if ($this->domainManager->getAuthSubdomain() !== $event->getRequest()->getHost()
+            && $this->domainManager->matchesAuth($event->getRequest()->getHost())
         ) {
             /* host matches base-domain of auth, but not on auth subdomain, redirect */
             $query = http_build_query(['return' => $event->getRequest()->getUri()]);
             $event->setResponse(new Response(
                 '',
                 Response::HTTP_SEE_OTHER,
-                ['Location' => "https://{$this->domainManager->getAuthSubdomain()}/?$query"]
+                ['Location' => "https://{$this->domainManager->getAuthSubdomain()}/?$query"],
             ));
         } else {
             $this->logger->debug("presenting login page: {$event->getRequest()->getClientIp()}");
             $content = $this->twig->render('login.html.twig', [
                 'nonce' => $this->makeNonce(),
-                'post'  => $this->domainManager->getAuthSubdomain() === $event->getRequest()->getHost(),
+                'post' => $this->domainManager->getAuthSubdomain() === $event->getRequest()->getHost(),
             ]);
             $hasCookie = (bool) $event->getRequest()->cookies->get(
-                $this->sessionCookieName($this->domainManager)
+                $this->sessionCookieName($this->domainManager),
             );
             $event->setResponse($this->pruneInvalidCookie(new Response(
                 $content,
                 Response::HTTP_UNAUTHORIZED,
-                ['Content-Type' => 'text/html']
+                ['Content-Type' => 'text/html'],
             ), $hasCookie, $event->getRequest()->getHost()));
         }
     }
@@ -75,7 +75,7 @@ final readonly class InterceptListener
                 $this->sessionCookieDomain($this->domainManager, $host),
                 true,
                 true,
-                Cookie::SAMESITE_STRICT
+                Cookie::SAMESITE_STRICT,
             );
         }
 

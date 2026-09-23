@@ -43,28 +43,28 @@ final readonly class LoginListener
     private RateLimiterFactoryInterface $rateLimiter;
 
     public function __construct(
-        private Environment                 $twig,
+        private Environment $twig,
         #[Target('login_limiter')] RateLimiterFactoryInterface $rateLimiter,
-        private DomainInterface             $domainManager,
-        private LoginInterface              $loginManager,
-        private ConfigBag                   $config,
+        private DomainInterface $domainManager,
+        private LoginInterface $loginManager,
+        private ConfigBag $config,
     ) {
-        $this->rateLimiter  = $rateLimiter;
+        $this->rateLimiter = $rateLimiter;
     }
 
     /** @throws InvalidArgumentException|LoaderError|RuntimeError|SyntaxError */
     #[AsEventListener(priority: 66)]
     public function onKernelRequest(RequestEvent $event): void
     {
-        $payload  = null;
+        $payload = null;
         $response = null;
 
         if ($event->getRequest()->headers->has($this->headerName())) {
             /* if request contains our "X-Preauth" header */
             $data = $event->getRequest()->headers->get($this->headerName());
             $payload = Payload::decode($data);
-        } elseif ($event->getRequest()->isMethod(Request::METHOD_POST) &&
-            $this->domainManager->getAuthSubdomain() === $event->getRequest()->getHost()
+        } elseif ($event->getRequest()->isMethod(Request::METHOD_POST)
+            && $this->domainManager->getAuthSubdomain() === $event->getRequest()->getHost()
         ) {
             /* if request is a POST to the auth-subdomain */
             $payload = Payload::load($event->getRequest()->getPayload());
@@ -80,6 +80,7 @@ final readonly class LoginListener
             /* token or backup-code authentication was successful */
             if ($response) {
                 $event->setResponse($response);
+
                 return;
             }
         }
@@ -92,14 +93,15 @@ final readonly class LoginListener
             $limitReached,
             $payload?->json ?? true,
             $event->getRequest()->getHost(),
-            $this->makeCacheKey($payload?->id ?? '')
+            $this->makeCacheKey($payload?->id ?? ''),
         ));
     }
 
     private function logFailure(Request $request): bool
     {
         $limiter = $this->rateLimiter->create($request->getClientIp());
-        return ($limiter->consume(1)->getRemainingTokens() < 1);
+
+        return $limiter->consume(1)->getRemainingTokens() < 1;
     }
 
     /** @throws InvalidArgumentException|RuntimeError|SyntaxError|LoaderError */
@@ -111,24 +113,24 @@ final readonly class LoginListener
             $message = $this->config->teapot() ? $this->config->teapotTitle()
                 : $this->config->tooManyTitle();
         } else {
-            $status  = Response::HTTP_UNAUTHORIZED;
+            $status = Response::HTTP_UNAUTHORIZED;
             $message = $this->config->errorMessage();
         }
         $answer = [
             'message' => $message,
-            'nonce'   => $this->makeNonce(),
-            'post'    => $this->domainManager->getAuthSubdomain() === $host,
+            'nonce' => $this->makeNonce(),
+            'post' => $this->domainManager->getAuthSubdomain() === $host,
             'username' => $username,
         ];
 
         if ($json) {
             $contentType = 'application/json';
-            $content     = json_encode($answer);
+            $content = json_encode($answer);
         } else {
             $contentType = 'text/html';
-            $content     = $this->twig->render('login.html.twig', $answer);
+            $content = $this->twig->render('login.html.twig', $answer);
         }
 
-        return new Response($content, $status, ["Content-Type" => $contentType]);
+        return new Response($content, $status, ['Content-Type' => $contentType]);
     }
 }

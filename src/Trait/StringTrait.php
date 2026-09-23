@@ -30,7 +30,7 @@ trait StringTrait
         $headers = ['Content-Type' => 'text/plain'];
 
         $headerValue = $this->resolveRemoteUser($id, $config);
-        if ($headerValue !== null) {
+        if (null !== $headerValue) {
             $headers['Remote-User'] = $headerValue;
         }
 
@@ -45,9 +45,9 @@ trait StringTrait
     {
         return match ($config->remoteUserMode()) {
             RemoteUserMode::Session => $id,
-            RemoteUserMode::Static  => $config->remoteUserStatic(),
-            RemoteUserMode::Mapped  => $config->remoteUserMap()[$id] ?? $id,
-            RemoteUserMode::None    => null,
+            RemoteUserMode::Static => $config->remoteUserStatic(),
+            RemoteUserMode::Mapped => $config->remoteUserMap()[$id] ?? $id,
+            RemoteUserMode::None => null,
         };
     }
 }

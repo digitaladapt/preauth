@@ -20,7 +20,7 @@ final readonly class PersistCache
         CacheItemPoolInterface $sessionCache,
         CacheItemPoolInterface $sessionStorage,
     ) {
-        $this->sessionCache   = new MonitorCacheKeys($sessionCache);
+        $this->sessionCache = new MonitorCacheKeys($sessionCache);
         $this->sessionStorage = new MonitorCacheKeys($sessionStorage);
     }
 

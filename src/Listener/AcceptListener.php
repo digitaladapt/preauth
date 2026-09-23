@@ -22,8 +22,8 @@ final readonly class AcceptListener
 
     public function __construct(
         private CacheItemPoolInterface $sessionCache,
-        private DomainInterface        $domainManager,
-        private ConfigBag              $config,
+        private DomainInterface $domainManager,
+        private ConfigBag $config,
     ) {
     }
 
@@ -32,7 +32,7 @@ final readonly class AcceptListener
     {
         /* check if they sent the correct preauth cookie */
         $cookieName = $this->sessionCookieName($this->domainManager);
-        if (! $event->getRequest()->cookies->has($cookieName)) {
+        if (!$event->getRequest()->cookies->has($cookieName)) {
             return;
         }
 
@@ -40,13 +40,13 @@ final readonly class AcceptListener
         $cookieKey = $this->makeCacheKey("cookie_$cookie");
 
         try {
-            if (! $cookie || ! $this->sessionCache->hasItem($cookieKey)) {
+            if (!$cookie || !$this->sessionCache->hasItem($cookieKey)) {
                 return;
             }
 
             /* cookie sent corresponds to valid existing session */
             $item = $this->sessionCache->getItem($cookieKey);
-            if (! $item->isHit()) {
+            if (!$item->isHit()) {
                 /* race condition: item was removed between hasItem and getItem */
                 return;
             }

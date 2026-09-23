@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Listener;
 
 use App\Data\Payload;
-use App\Enum\Scope;
 use App\Listener\LoginListener;
 use App\Service\DomainManager;
 use App\Service\LoginInterface;
@@ -38,6 +37,7 @@ final class LoginListenerTest extends TestCase
         );
         $listener->setLogger(new NullLogger());
         $listener->setNonceCache(new ArrayAdapter());
+
         return $listener;
     }
 
@@ -53,13 +53,14 @@ final class LoginListenerTest extends TestCase
     /** Build a base64url-encoded X-Preauth header value for a payload. */
     private function encodePayload(array $data): string
     {
-        $json = json_encode($data, JSON_THROW_ON_ERROR);
+        $json = json_encode($data, \JSON_THROW_ON_ERROR);
+
         return rtrim(strtr(base64_encode($json), '+/', '-_'), '=');
     }
 
     /* ── no login attempt ─────────────────────────────────────────────── */
 
-    public function testNoHeaderAndNoPostReturnsEarlyWithoutResponse(): void
+    public function test_no_header_and_no_post_returns_early_without_response(): void
     {
         $listener = $this->makeListener();
 
@@ -70,7 +71,7 @@ final class LoginListenerTest extends TestCase
         self::assertFalse($event->hasResponse());
     }
 
-    public function testPostToNonAuthSubdomainReturnsEarlyWithoutResponse(): void
+    public function test_post_to_non_auth_subdomain_returns_early_without_response(): void
     {
         // POST only counts as a login attempt when on the auth subdomain
         $domainManager = new DomainManager(true, 'auth.example.com');
@@ -85,7 +86,7 @@ final class LoginListenerTest extends TestCase
 
     /* ── successful login via header ──────────────────────────────────── */
 
-    public function testSuccessfulLoginViaHeaderSetsResponseFromManager(): void
+    public function test_successful_login_via_header_sets_response_from_manager(): void
     {
         $expected = new Response('hi alice', 200, ['Remote-User' => 'alice']);
         $loginManager = $this->createStub(LoginInterface::class);
@@ -106,7 +107,7 @@ final class LoginListenerTest extends TestCase
         self::assertSame($expected, $event->getResponse());
     }
 
-    public function testSuccessfulLoginViaPostToAuthSubdomain(): void
+    public function test_successful_login_via_post_to_auth_subdomain(): void
     {
         $expected = new Response('hi bob', 303, ['Location' => '/']);
         $loginManager = $this->createStub(LoginInterface::class);
@@ -128,7 +129,7 @@ final class LoginListenerTest extends TestCase
 
     /* ── failed login ─────────────────────────────────────────────────── */
 
-    public function testFailedLoginReturnsJsonErrorWithNewNonce(): void
+    public function test_failed_login_returns_json_error_with_new_nonce(): void
     {
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn(null);
@@ -157,7 +158,7 @@ final class LoginListenerTest extends TestCase
         self::assertSame('alice', $body['username']);
     }
 
-    public function testFailedLoginHtmlResponseWhenJsonFalse(): void
+    public function test_failed_login_html_response_when_json_false(): void
     {
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn(null);
@@ -179,7 +180,7 @@ final class LoginListenerTest extends TestCase
         self::assertStringContainsString('<form', $response->getContent());
     }
 
-    public function testFailedLoginOnAuthSubdomainUsesPostForm(): void
+    public function test_failed_login_on_auth_subdomain_uses_post_form(): void
     {
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn(null);
@@ -205,7 +206,7 @@ final class LoginListenerTest extends TestCase
 
     /* ── rate-limited (blocked) login ─────────────────────────────────── */
 
-    public function testRateLimitedLoginReturnsTeapotWhenTeapotEnabled(): void
+    public function test_rate_limited_login_returns_teapot_when_teapot_enabled(): void
     {
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn(null);
@@ -232,7 +233,7 @@ final class LoginListenerTest extends TestCase
         self::assertSame('Teapot', $body['message']);
     }
 
-    public function testRateLimitedLoginReturnsTooManyRequestsWhenTeapotDisabled(): void
+    public function test_rate_limited_login_returns_too_many_requests_when_teapot_disabled(): void
     {
         $loginManager = $this->createStub(LoginInterface::class);
         $loginManager->method('checkToken')->willReturn(null);
@@ -265,7 +266,7 @@ final class LoginListenerTest extends TestCase
 
     /* ── invalid payload handling ─────────────────────────────────────── */
 
-    public function testInvalidHeaderPayloadStillRecordsFailureAndResponds(): void
+    public function test_invalid_header_payload_still_records_failure_and_responds(): void
     {
         $loginManager = $this->createMock(LoginInterface::class);
         // checkToken should not be called with a null payload
@@ -286,7 +287,7 @@ final class LoginListenerTest extends TestCase
         self::assertSame(Response::HTTP_UNAUTHORIZED, $event->getResponse()->getStatusCode());
     }
 
-    public function testPostWithoutRequiredFieldsDoesNotAttemptLogin(): void
+    public function test_post_without_required_fields_does_not_attempt_login(): void
     {
         $loginManager = $this->createMock(LoginInterface::class);
         $loginManager->expects(self::never())->method('checkToken');

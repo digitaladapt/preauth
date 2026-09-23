@@ -39,8 +39,8 @@ final readonly class PublicAccessListener
 
     public function __construct(
         private PublicPathMatcherInterface $pathMatcher,
-        private DomainInterface           $domainManager,
-        private Environment               $twig,
+        private DomainInterface $domainManager,
+        private Environment $twig,
         #[Target('public_limiter')] RateLimiterFactoryInterface $rateLimiter,
     ) {
         $this->rateLimiter = $rateLimiter;
@@ -63,7 +63,7 @@ final readonly class PublicAccessListener
             return;
         }
 
-        if (! $this->pathMatcher->matches($host, $path)) {
+        if (!$this->pathMatcher->matches($host, $path)) {
             return;
         }
 
@@ -77,8 +77,8 @@ final readonly class PublicAccessListener
                 '',
                 Response::HTTP_OK,
                 [
-                    'Content-Type'   => 'text/plain',
-                    'Retry-After'    => (string) $limit->getRemainingTokens(),
+                    'Content-Type' => 'text/plain',
+                    'Retry-After' => (string) $limit->getRemainingTokens(),
                 ],
             ));
         } else {
@@ -92,7 +92,7 @@ final readonly class PublicAccessListener
                 Response::HTTP_TOO_MANY_REQUESTS,
                 [
                     'Content-Type' => 'text/html',
-                    'Retry-After'  => (string) $retryAfter,
+                    'Retry-After' => (string) $retryAfter,
                 ],
             ));
         }

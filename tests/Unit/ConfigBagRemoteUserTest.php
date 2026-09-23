@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
-use App\ConfigBag;
 use App\Enum\RemoteUserMode;
 use App\Tests\Support\TotpTestHelper;
 use PHPUnit\Framework\TestCase;
@@ -13,14 +12,14 @@ final class ConfigBagRemoteUserTest extends TestCase
 {
     use TotpTestHelper;
 
-    public function testDefaultRemoteUserModeIsSession(): void
+    public function test_default_remote_user_mode_is_session(): void
     {
         $config = $this->makeConfig();
 
         self::assertSame(RemoteUserMode::Session, $config->remoteUserMode());
     }
 
-    public function testStaticMode(): void
+    public function test_static_mode(): void
     {
         $config = $this->makeConfig(remoteUserMode: 'static', remoteUserStatic: 'authenticated');
 
@@ -28,7 +27,7 @@ final class ConfigBagRemoteUserTest extends TestCase
         self::assertSame('authenticated', $config->remoteUserStatic());
     }
 
-    public function testMappedMode(): void
+    public function test_mapped_mode(): void
     {
         $config = $this->makeConfig(remoteUserMode: 'mapped', remoteUserMap: 'alice:admin,bob:user');
 
@@ -36,28 +35,28 @@ final class ConfigBagRemoteUserTest extends TestCase
         self::assertSame(['alice' => 'admin', 'bob' => 'user'], $config->remoteUserMap());
     }
 
-    public function testNoneMode(): void
+    public function test_none_mode(): void
     {
         $config = $this->makeConfig(remoteUserMode: 'none');
 
         self::assertSame(RemoteUserMode::None, $config->remoteUserMode());
     }
 
-    public function testInvalidModeFallsBackToSession(): void
+    public function test_invalid_mode_falls_back_to_session(): void
     {
         $config = $this->makeConfig(remoteUserMode: 'invalid-mode');
 
         self::assertSame(RemoteUserMode::Session, $config->remoteUserMode());
     }
 
-    public function testEmptyMapReturnsEmptyArray(): void
+    public function test_empty_map_returns_empty_array(): void
     {
         $config = $this->makeConfig(remoteUserMode: 'mapped', remoteUserMap: '');
 
         self::assertSame([], $config->remoteUserMap());
     }
 
-    public function testMapParsesWithWhitespace(): void
+    public function test_map_parses_with_whitespace(): void
     {
         $config = $this->makeConfig(
             remoteUserMode: 'mapped',
@@ -67,7 +66,7 @@ final class ConfigBagRemoteUserTest extends TestCase
         self::assertSame(['alice' => 'admin', 'bob' => 'user'], $config->remoteUserMap());
     }
 
-    public function testMapIgnoresInvalidEntries(): void
+    public function test_map_ignores_invalid_entries(): void
     {
         $config = $this->makeConfig(
             remoteUserMode: 'mapped',
@@ -77,7 +76,7 @@ final class ConfigBagRemoteUserTest extends TestCase
         self::assertSame(['alice' => 'admin', 'bob' => 'user'], $config->remoteUserMap());
     }
 
-    public function testMapPreservesColonsInValue(): void
+    public function test_map_preserves_colons_in_value(): void
     {
         $config = $this->makeConfig(
             remoteUserMode: 'mapped',

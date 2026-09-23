@@ -1,0 +1,985 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Clock\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Clock.php
+
+		-
+			message: '#^Method App\\Command\\GenerateBackupCodesCommand\:\:configure\(\) overrides method Symfony\\Component\\Console\\Command\\Command\:\:configure\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Command/GenerateBackupCodesCommand.php
+
+		-
+			message: '#^Method App\\Command\\GenerateBackupCodesCommand\:\:execute\(\) overrides method Symfony\\Component\\Console\\Command\\Command\:\:execute\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Command/GenerateBackupCodesCommand.php
+
+		-
+			message: '#^Class App\\Data\\Payload has an uninitialized property \$id\. Give it default value or assign it in the constructor\.$#'
+			identifier: property.uninitialized
+			count: 1
+			path: src/Data/Payload.php
+
+		-
+			message: '#^Class App\\Data\\Payload has an uninitialized property \$json\. Give it default value or assign it in the constructor\.$#'
+			identifier: property.uninitialized
+			count: 1
+			path: src/Data/Payload.php
+
+		-
+			message: '#^Class App\\Data\\Payload has an uninitialized property \$nonce\. Give it default value or assign it in the constructor\.$#'
+			identifier: property.uninitialized
+			count: 1
+			path: src/Data/Payload.php
+
+		-
+			message: '#^Class App\\Data\\Payload has an uninitialized property \$scope\. Give it default value or assign it in the constructor\.$#'
+			identifier: property.uninitialized
+			count: 1
+			path: src/Data/Payload.php
+
+		-
+			message: '#^Class App\\Data\\Payload has an uninitialized property \$token\. Give it default value or assign it in the constructor\.$#'
+			identifier: property.uninitialized
+			count: 1
+			path: src/Data/Payload.php
+
+		-
+			message: '#^Method App\\Data\\Payload\:\:load\(\) has parameter \$input with generic class Symfony\\Component\\HttpFoundation\\InputBag but does not specify its types\: TInput$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Data/Payload.php
+
+		-
+			message: '#^Class App\\Kernel has an uninitialized property \$persistCache\. Give it default value or assign it in the constructor\.$#'
+			identifier: property.uninitialized
+			count: 1
+			path: src/Kernel.php
+
+		-
+			message: '#^Method App\\Kernel\:\:boot\(\) overrides method Symfony\\Component\\HttpKernel\\Kernel\:\:boot\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Kernel.php
+
+		-
+			message: '#^Method App\\Kernel\:\:terminate\(\) overrides method Symfony\\Component\\HttpKernel\\Kernel\:\:terminate\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Kernel.php
+
+		-
+			message: '#^Class App\\Listener\\AcceptListener has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Listener/AcceptListener.php
+
+		-
+			message: '#^Readonly property App\\Listener\\AcceptListener\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Listener/AcceptListener.php
+
+		-
+			message: '#^Class App\\Listener\\AllowListener has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Listener/AllowListener.php
+
+		-
+			message: '#^Readonly property App\\Listener\\AllowListener\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Listener/AllowListener.php
+
+		-
+			message: '#^Class App\\Listener\\InterceptListener has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Listener/InterceptListener.php
+
+		-
+			message: '#^Class App\\Listener\\InterceptListener has an uninitialized readonly property \$nonceCache\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Listener/InterceptListener.php
+
+		-
+			message: '#^Property App\\Listener\\InterceptListener\:\:\$config is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Listener/InterceptListener.php
+
+		-
+			message: '#^Readonly property App\\Listener\\InterceptListener\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 2
+			path: src/Listener/InterceptListener.php
+
+		-
+			message: '#^Readonly property App\\Listener\\InterceptListener\:\:\$nonceCache is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Listener/InterceptListener.php
+
+		-
+			message: '#^Class App\\Listener\\LoginListener has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Listener/LoginListener.php
+
+		-
+			message: '#^Class App\\Listener\\LoginListener has an uninitialized readonly property \$nonceCache\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Listener/LoginListener.php
+
+		-
+			message: '#^Readonly property App\\Listener\\LoginListener\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 2
+			path: src/Listener/LoginListener.php
+
+		-
+			message: '#^Readonly property App\\Listener\\LoginListener\:\:\$nonceCache is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Listener/LoginListener.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Listener/LoginListener.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>json" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Listener/LoginListener.php
+
+		-
+			message: '#^Class App\\Listener\\PublicAccessListener has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Listener/PublicAccessListener.php
+
+		-
+			message: '#^Readonly property App\\Listener\\PublicAccessListener\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Listener/PublicAccessListener.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type DateTimeImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Listener/PublicAccessListener.php
+
+		-
+			message: '#^Class App\\Listener\\RejectListener has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Listener/RejectListener.php
+
+		-
+			message: '#^Readonly property App\\Listener\\RejectListener\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Listener/RejectListener.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:allValid\(\) has parameter \$keys with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:clear\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:clear\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:commit\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:commit\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:deleteItem\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:deleteItem\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:deleteItems\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:deleteItems\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:getChanges\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:getItem\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:getItem\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:getItems\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:getItems\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:getKeys\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:hasItem\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:hasItem\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:save\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:save\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Method App\\MonitorCacheKeys\:\:saveDeferred\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:saveDeferred\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/MonitorCacheKeys.php
+
+		-
+			message: '#^Class App\\Service\\BackupCodeManager has an uninitialized readonly property \$config\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Service/BackupCodeManager.php
+
+		-
+			message: '#^Class App\\Service\\BackupCodeManager has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Service/BackupCodeManager.php
+
+		-
+			message: '#^Method App\\Service\\BackupCodeManager\:\:expire\(\) overrides method App\\Service\\BackupCodeInterface\:\:expire\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Service/BackupCodeManager.php
+
+		-
+			message: '#^Method App\\Service\\BackupCodeManager\:\:generate\(\) overrides method App\\Service\\BackupCodeInterface\:\:generate\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Service/BackupCodeManager.php
+
+		-
+			message: '#^Method App\\Service\\BackupCodeManager\:\:saveCodes\(\) has parameter \$codes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/BackupCodeManager.php
+
+		-
+			message: '#^Method App\\Service\\BackupCodeManager\:\:verifyAndConsume\(\) overrides method App\\Service\\BackupCodeInterface\:\:verifyAndConsume\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Service/BackupCodeManager.php
+
+		-
+			message: '#^Readonly property App\\Service\\BackupCodeManager\:\:\$config is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Service/BackupCodeManager.php
+
+		-
+			message: '#^Readonly property App\\Service\\BackupCodeManager\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Service/BackupCodeManager.php
+
+		-
+			message: '#^Method App\\Service\\DomainManager\:\:authBase\(\) overrides method App\\Service\\DomainInterface\:\:authBase\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Service/DomainManager.php
+
+		-
+			message: '#^Method App\\Service\\DomainManager\:\:getAuthSubdomain\(\) overrides method App\\Service\\DomainInterface\:\:getAuthSubdomain\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Service/DomainManager.php
+
+		-
+			message: '#^Method App\\Service\\DomainManager\:\:matchesAuth\(\) overrides method App\\Service\\DomainInterface\:\:matchesAuth\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Service/DomainManager.php
+
+		-
+			message: '#^Method App\\Service\\DomainManager\:\:validReturn\(\) overrides method App\\Service\\DomainInterface\:\:validReturn\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Service/DomainManager.php
+
+		-
+			message: '#^Class App\\Service\\LoginManager has an uninitialized readonly property \$config\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Service/LoginManager.php
+
+		-
+			message: '#^Class App\\Service\\LoginManager has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Service/LoginManager.php
+
+		-
+			message: '#^Class App\\Service\\LoginManager has an uninitialized readonly property \$nonceCache\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Service/LoginManager.php
+
+		-
+			message: '#^Method App\\Service\\LoginManager\:\:checkToken\(\) overrides method App\\Service\\LoginInterface\:\:checkToken\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Service/LoginManager.php
+
+		-
+			message: '#^Readonly property App\\Service\\LoginManager\:\:\$config is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Service/LoginManager.php
+
+		-
+			message: '#^Readonly property App\\Service\\LoginManager\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Service/LoginManager.php
+
+		-
+			message: '#^Readonly property App\\Service\\LoginManager\:\:\$nonceCache is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Service/LoginManager.php
+
+		-
+			message: '#^Method App\\Service\\PublicPathMatcher\:\:isEmpty\(\) overrides method App\\Service\\PublicPathMatcherInterface\:\:isEmpty\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Service/PublicPathMatcher.php
+
+		-
+			message: '#^Method App\\Service\\PublicPathMatcher\:\:matches\(\) overrides method App\\Service\\PublicPathMatcherInterface\:\:matches\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: src/Service/PublicPathMatcher.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\AuthenticationFlowTest\:\:createClient\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Functional/AuthenticationFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\AuthenticationFlowTest\:\:createClient\(\) has parameter \$server with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Functional/AuthenticationFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\AuthenticationFlowTest\:\:createClient\(\) overrides method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:createClient\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Functional/AuthenticationFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\AuthenticationFlowTest\:\:encodePayload\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Functional/AuthenticationFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\AuthenticationFlowTest\:\:loginPayload\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: tests/Functional/AuthenticationFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\CacheControlFlowTest\:\:createClient\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Functional/CacheControlFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\CacheControlFlowTest\:\:createClient\(\) has parameter \$server with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Functional/CacheControlFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\CacheControlFlowTest\:\:createClient\(\) overrides method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:createClient\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Functional/CacheControlFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\CacheControlFlowTest\:\:encodePayload\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Functional/CacheControlFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\PublicAccessFlowTest\:\:createClient\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Functional/PublicAccessFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\PublicAccessFlowTest\:\:createClient\(\) has parameter \$server with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Functional/PublicAccessFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\PublicAccessFlowTest\:\:createClient\(\) overrides method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:createClient\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Functional/PublicAccessFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\Functional\\PublicAccessFlowTest\:\:encodePayload\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Functional/PublicAccessFlowTest.php
+
+		-
+			message: '#^Method App\\Tests\\TestKernel\:\:build\(\) overrides method Symfony\\Component\\DependencyInjection\\Kernel\\AbstractKernel\:\:build\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/TestKernel.php
+
+		-
+			message: '#^Method Symfony\\Component\\DependencyInjection\\Compiler\\CompilerPassInterface@anonymous/tests/TestKernel\.php\:31\:\:process\(\) overrides method Symfony\\Component\\DependencyInjection\\Compiler\\CompilerPassInterface\:\:process\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/TestKernel.php
+
+		-
+			message: '#^Method App\\Tests\\Unit\\Command\\GenerateBackupCodesCommandTest\:\:makeManagerStub\(\) has parameter \$generatedCodes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Command/GenerateBackupCodesCommandTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/ConfigBagRemoteUserTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNull\(\) with null will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 2
+			path: tests/Unit/Enum/ScopeTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/AcceptListenerTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/AllowListenerTest.php
+
+		-
+			message: '#^Class Symfony\\Component\\RateLimiter\\Exception\\ReserveNotSupportedException constructor invoked with 0 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: tests/Unit/Listener/InterceptListenerTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/InterceptListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:consume\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:consume\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/InterceptListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:reserve\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reserve\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/InterceptListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:reset\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reset\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/InterceptListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:consume\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:consume\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/InterceptListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:reserve\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reserve\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/InterceptListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:reset\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reset\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/InterceptListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface@anonymous/tests/Support/ListenerTestHelper\.php\:136\:\:create\(\) overrides method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface\:\:create\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/InterceptListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface@anonymous/tests/Support/ListenerTestHelper\.php\:57\:\:create\(\) overrides method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface\:\:create\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/InterceptListenerTest.php
+
+		-
+			message: '#^Class Symfony\\Component\\RateLimiter\\Exception\\ReserveNotSupportedException constructor invoked with 0 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Method App\\Tests\\Unit\\Listener\\LoginListenerTest\:\:encodePayload\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:consume\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:consume\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:reserve\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reserve\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:reset\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reset\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:consume\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:consume\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:reserve\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reserve\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:reset\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reset\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface@anonymous/tests/Support/ListenerTestHelper\.php\:136\:\:create\(\) overrides method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface\:\:create\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface@anonymous/tests/Support/ListenerTestHelper\.php\:57\:\:create\(\) overrides method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface\:\:create\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/LoginListenerTest.php
+
+		-
+			message: '#^Class Symfony\\Component\\RateLimiter\\Exception\\ReserveNotSupportedException constructor invoked with 0 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: tests/Unit/Listener/PublicAccessListenerTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/PublicAccessListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:consume\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:consume\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/PublicAccessListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:reserve\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reserve\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/PublicAccessListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:reset\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reset\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/PublicAccessListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:consume\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:consume\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/PublicAccessListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:reserve\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reserve\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/PublicAccessListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:reset\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reset\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/PublicAccessListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface@anonymous/tests/Support/ListenerTestHelper\.php\:136\:\:create\(\) overrides method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface\:\:create\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/PublicAccessListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface@anonymous/tests/Support/ListenerTestHelper\.php\:57\:\:create\(\) overrides method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface\:\:create\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/PublicAccessListenerTest.php
+
+		-
+			message: '#^Class Symfony\\Component\\RateLimiter\\Exception\\ReserveNotSupportedException constructor invoked with 0 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: tests/Unit/Listener/RejectListenerTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/RejectListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:consume\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:consume\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/RejectListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:reserve\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reserve\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/RejectListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:reset\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reset\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/RejectListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:consume\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:consume\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/RejectListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:reserve\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reserve\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/RejectListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:78\:\:reset\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:reset\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/RejectListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface@anonymous/tests/Support/ListenerTestHelper\.php\:136\:\:create\(\) overrides method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface\:\:create\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/RejectListenerTest.php
+
+		-
+			message: '#^Method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface@anonymous/tests/Support/ListenerTestHelper\.php\:57\:\:create\(\) overrides method Symfony\\Component\\RateLimiter\\RateLimiterFactoryInterface\:\:create\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Listener/RejectListenerTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertIsString\(\) with string will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Service/BackupCodeManagerTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Service/BackupCodeManagerTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Service/BackupCodeManagerTest.php
+
+		-
+			message: '#^Call to an undefined method App\\Service\\BackupCodeInterface\:\:method\(\)\.$#'
+			identifier: method.notFound
+			count: 17
+			path: tests/Unit/Service/LoginManagerTest.php
+
+		-
+			message: '#^Class App\\Tests\\Unit\\Service\\LoginManagerTest has an uninitialized property \$backupCodeManager\. Give it default value or assign it in the constructor\.$#'
+			identifier: property.uninitialized
+			count: 1
+			path: tests/Unit/Service/LoginManagerTest.php
+
+		-
+			message: '#^Class App\\Tests\\Unit\\Service\\LoginManagerTest has an uninitialized property \$domainManager\. Give it default value or assign it in the constructor\.$#'
+			identifier: property.uninitialized
+			count: 1
+			path: tests/Unit/Service/LoginManagerTest.php
+
+		-
+			message: '#^Class App\\Tests\\Unit\\Service\\LoginManagerTest has an uninitialized property \$pool\. Give it default value or assign it in the constructor\.$#'
+			identifier: property.uninitialized
+			count: 1
+			path: tests/Unit/Service/LoginManagerTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Service/LoginManagerTest.php
+
+		-
+			message: '#^Class class@anonymous/tests/Unit/Trait/GetTotpTraitTest\.php\:22 has an uninitialized readonly property \$config\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: tests/Unit/Trait/GetTotpTraitTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/GetTotpTraitTest.php
+
+		-
+			message: '#^Readonly property class@anonymous/tests/Unit/Trait/GetTotpTraitTest\.php\:22\:\:\$config is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: tests/Unit/Trait/GetTotpTraitTest.php
+
+		-
+			message: '#^Class App\\Tests\\Unit\\Trait\\HasLoggerTraitTest has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: tests/Unit/Trait/HasLoggerTraitTest.php
+
+		-
+			message: '#^Readonly property App\\Tests\\Unit\\Trait\\HasLoggerTraitTest\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: tests/Unit/Trait/HasLoggerTraitTest.php
+
+		-
+			message: '#^Class class@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:25 has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Class class@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:25 has an uninitialized readonly property \$nonceCache\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:145\:\:expiresAfter\(\) overrides method Psr\\Cache\\CacheItemInterface\:\:expiresAfter\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:145\:\:expiresAt\(\) overrides method Psr\\Cache\\CacheItemInterface\:\:expiresAt\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:145\:\:get\(\) overrides method Psr\\Cache\\CacheItemInterface\:\:get\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:145\:\:getKey\(\) overrides method Psr\\Cache\\CacheItemInterface\:\:getKey\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:145\:\:isHit\(\) overrides method Psr\\Cache\\CacheItemInterface\:\:isHit\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:145\:\:set\(\) overrides method Psr\\Cache\\CacheItemInterface\:\:set\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemPoolInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:128\:\:clear\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:clear\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemPoolInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:128\:\:commit\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:commit\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemPoolInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:128\:\:deleteItem\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:deleteItem\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemPoolInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:128\:\:deleteItems\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:deleteItems\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemPoolInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:128\:\:getItem\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:getItem\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemPoolInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:128\:\:getItems\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:getItems\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemPoolInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:128\:\:getItems\(\) return type has no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemPoolInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:128\:\:hasItem\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:hasItem\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemPoolInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:128\:\:save\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:save\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Cache\\CacheItemPoolInterface@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:128\:\:saveDeferred\(\) overrides method Psr\\Cache\\CacheItemPoolInterface\:\:saveDeferred\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Readonly property class@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:25\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Readonly property class@anonymous/tests/Unit/Trait/MakeNonceTraitTest\.php\:25\:\:\$nonceCache is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: tests/Unit/Trait/MakeNonceTraitTest.php
+
+		-
+			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
+			identifier: method.missingOverride
+			count: 1
+			path: tests/Unit/Trait/StringTraitTest.php
+
+		-
+			message: '#^Call to function method_exists\(\) with ''Symfony\\\\Component\\\\Dotenv\\\\Dotenv'' and ''bootEnv'' will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: tests/bootstrap.php
+
+		-
+			message: '#^Call to method bootEnv\(\) on an unknown class Symfony\\Component\\Dotenv\\Dotenv\.$#'
+			identifier: class.notFound
+			count: 1
+			path: tests/bootstrap.php
+
+		-
+			message: '#^Class Symfony\\Component\\Dotenv\\Dotenv not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: tests/bootstrap.php
+
+		-
+			message: '#^Instantiated class Symfony\\Component\\Dotenv\\Dotenv not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: tests/bootstrap.php
