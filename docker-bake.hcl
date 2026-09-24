@@ -1,23 +1,13 @@
-# preauth build config — one published variant from one Dockerfile.
+# Preauth build config
 #
-#   docker buildx bake                     # build, no push
-#   docker buildx bake --push              # build and push
-#   docker buildx bake --print             # resolve and print, without building
-#   MAX_REQUESTS=0 docker buildx bake      # override any variable
+# CI (develop.yaml / docker.yaml) invokes this with --file so the compose
+# file that lives in the same directory is not merged in as extra targets.
 #
-# CI (.gitea/workflows/develop.yaml, docker.yaml) invokes this, so the build
-# definition lives here rather than in the workflow files.
+# DOCKERHUB_TARGET is the org/repo (Gitea Settings → Variables)
+# CI sets TAG=latest + VERSION=<v-stripped> for tag pushes,
+#         TAG=develop  for pushes to main.
 #
-# Naming contract (portfolio, identical to context-shuttle and task-weaver):
-#   DOCKERHUB_TARGET is the org/repo (Gitea Settings → Variables; value
-#   digitaladapt/preauth). Tag suffixes are decided HERE, not in CI:
-#     main push → :develop
-#     tag push  → :latest and :<version>  (leading 'v' stripped)
-#   CI sets TAG=develop for main pushes, TAG=latest + VERSION=<v-stripped> for
-#   tag pushes. Both amd64 and arm64 are always built (ARM server).
-#
-# Variables can be overridden from the environment, e.g.:
-#   DOCKERHUB_TARGET=digitaladapt/preauth TAG=develop docker buildx bake --push
+# MAX_REQUESTS=0 docker buildx bake # specify variables to override
 
 variable "DOCKERHUB_TARGET" {
   default     = "digitaladapt/preauth"
