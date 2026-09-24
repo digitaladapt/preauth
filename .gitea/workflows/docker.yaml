@@ -1,6 +1,7 @@
-# Push Docker — thin caller for the shared reusable workflow.
+# Push Docker - release new version to docker and update the "latest" rolling docker image tag, via the shared workflow
 #
-# INLINED until 2026-09. The build/push steps live in private/ci now.
+# The build is defined in docker-bake.hcl.
+
 name: Push Docker
 
 on:
@@ -13,9 +14,11 @@ jobs:
     uses: private/ci/.gitea/workflows/docker-publish.yaml@v1
     with:
       mode: release
+
+      # Passed explicitly from repo vars
       image-target: ${{ vars.DOCKERHUB_TARGET }}
 
-      # See develop.yaml — the build is defined in docker-bake.hcl.
+      # docker-bake.hcl controls building
       build-backend: 'bake'
 
     secrets:

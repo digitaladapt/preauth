@@ -1,6 +1,7 @@
-# Push Develop — thin caller for the shared reusable workflow.
+# Push Develop - update the "develop" rolling docker image tag, via the shared workflow
 #
-# INLINED until 2026-09. The build/push steps live in private/ci now.
+# The build is defined in docker-bake.hcl.
+
 name: Push Develop
 
 on:
@@ -13,15 +14,11 @@ jobs:
     uses: private/ci/.gitea/workflows/docker-publish.yaml@v1
     with:
       mode: develop
-      # Passed explicitly rather than resolved inside the shared workflow:
-      # `vars` context behaviour inside a reusable workflow is not something to
-      # rely on across Gitea versions, so the caller reads it where it is
-      # unambiguous and hands over a plain string.
+
+      # Passed explicitly from repo vars
       image-target: ${{ vars.DOCKERHUB_TARGET }}
 
-      # The build definition — Dockerfile target, platforms, tags, build args —
-      # lives in docker-bake.hcl so it is version-controlled with the code and
-      # reviewable in a diff. Change the build there, not here.
+      # docker-bake.hcl controls building
       build-backend: 'bake'
 
     secrets:
