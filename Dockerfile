@@ -24,8 +24,7 @@ RUN apt-get update \
 
 # APCu and Composer, both only needed to compile the application.
 RUN pecl install apcu \
-    && docker-php-ext-enable apcu \
-    && docker-php-ext-enable opcache
+    && docker-php-ext-enable apcu
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
