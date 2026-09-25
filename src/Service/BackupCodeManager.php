@@ -31,7 +31,7 @@ final readonly class BackupCodeManager implements BackupCodeInterface
 
     /** @throws InvalidArgumentException */
     public function __construct(
-        #[Target('sessionCache')] CacheItemPoolInterface $sessionCache
+        #[Target('sessionCache')] CacheItemPoolInterface $sessionCache,
     ) {
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
     }
