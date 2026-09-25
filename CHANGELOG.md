@@ -66,6 +66,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deliberately excluded: they are consumed by the proxy's `forward_auth`
   check and never reach the browser.
 
+### Changed
+- **Dockerfile rebuild — same layout as the rest of the portfolio** (Guiding
+  Light §6.4). The build now copies the tree (`COPY . .`) and lets
+  `.dockerignore` decide what reaches the context, instead of maintaining a
+  hand-written `COPY ./x /app/x` allowlist that had to be kept in step with
+  the project layout. `var/` — which the old file list never copied — now
+  simply stays out via the ignore file.
+- **The image runs as a non-root `app` user** (uid/gid 1000, the same
+  convention as task-loom/context-shuttle). `/data` (cache pools) and
+  `/config` are created and owned by it. This resolves the last failing
+  conformance check (§6.4 `dockerfile-nonroot`).
+- **`.dockerignore` rebuilt on the Guiding Light §6.2 baseline** — in
+  particular `.env` is now excluded explicitly (§6.1), so a developer's
+  local environment file can never be baked into a layer.
+- **`docker/php.ini` and `docker/Caddyfile` added.** The PHP overrides
+  (`expose_php=Off`, error/log settings, OPcache timestamps off, APCu for
+  CLI) and the FrankenPHP app config now live in the repository instead of
+  being three heredocs inside the Dockerfile, so what the image runs is
+  reviewable in a diff.
+- **Runtime base image pinned to `dunglas/frankenphp:1-php8.5-trixie` and
+  APCu installed via the base image's `install-php-extensions`** — the
+  versioned tag replaces the floating one, and the build no longer drags a
+  compiler toolchain into the runtime layer to build one extension.
+- **`/app` is now the whole project.** The old image only shipped
+  `bin/console`, `config`, `public`, `src`, `templates` and the composer
+  manifests; `config/reference.php` and other loose files are now present.
+  No application path changes: `public/index.php` and `bin/console` resolve
+  through the same relative paths.
+- `bin/franken.sh` mounts the share dir at its new default
+  (`/app/var/share`) instead of the old `/app/var/share` bind that no longer
+  matched the image.
+
+### Fixed
+- **`composer dump-env prod --empty` removed.** preauth does not depend on
+  `symfony/dotenv` (it is not in `composer.lock`), so nothing reads a `.env`
+  file in the container — the command only produced a dead
+  `.env.local.php` in the build stage. The Dockerfile comment that claimed
+  otherwise is gone with it.
+- **`composer install` no longer ships a classmap missing `App\`.** The old
+  build ran `install --optimize-autoloader` before `src/` was copied, and the
+  final `--classmap-authoritative` dump happened before any `COPY . .`; the
+  classmap is now rebuilt after the application is in place.
+- **The HEALTHCHECK can actually pass.** It probed `curl -f http://localhost/`,
+  and preauth answers every unauthenticated request to `/` with the login page
+  and a `401` — so the probe failed 100% of the time and the container was
+  permanently marked unhealthy. It now probes Caddy's loopback admin endpoint
+  (the base image's own default probe, restated explicitly), which is why the
+  Caddyfile deliberately does not disable the admin API.
+- **`expose_php` is now genuinely off in the runtime image.** The base image
+  ships the `php.ini-production` *template* but no active `php.ini`, so the
+  previous `cp` of the template was the only thing setting it — and the
+  `docker/php.ini` overrides are loaded after it, so stating it here makes the
+  intent explicit; verified against a real boot that no `X-Powered-By` header
+  is emitted.
+- `bin/franken.sh` no longer passes `DEFAULT_URI`, which the application does
+  not read (`config/packages/routing.yaml` sets the router's `default_uri`).
+
 ## [1.0.0] — v1.0 Release
 
 ### Security

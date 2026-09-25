@@ -62,8 +62,10 @@ services preauth protects.
 
 ## Deployment note
 
-preauth runs as a container and, once
-[GUIDING-LIGHT §6.4](https://code.devgnome.com/private/ci) is adopted here, will
-drop privileges via `USER`. The image declares `VOLUME ["/config", "/data"]`;
-if you pin a `user:` in your compose file, that user must be able to write both
-paths — otherwise login state and backup codes cannot be persisted.
+preauth runs as a container and drops privileges via `USER` (Guiding Light
+§6.4): the image runs as the non-root `app` user (uid/gid 1000) and owns the
+state paths it needs. Only `/data` is written at runtime — the cache pools
+behind sessions, backup codes and rate limiting — and `/config` is declared
+because the base image points Caddy's XDG config dir there. If you pin a
+different `user:` in your compose file, that user must be able to write to
+both paths — otherwise login state and backup codes cannot be persisted.

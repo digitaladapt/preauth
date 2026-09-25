@@ -1,0 +1,36 @@
+# PreAuth — Caddyfile / FrankenPHP app config.
+#
+# The container serves plain HTTP on :80; TLS is terminated by the upstream
+# proxy. SERVER_NAME=:80 is set in the Dockerfile.
+#
+# This is the config the image ships (/etc/frankenphp/Caddyfile). The
+# Caddyfile in the repository root is the example for host-side setups.
+{
+	frankenphp {
+		# Restart each PHP worker thread after this many requests, containing
+		# slow memory growth across long uptime. Preserves the 7.4-era default
+		# loop count of runtime/frankenphp-symfony (500) after the Symfony 8.1
+		# upgrade. Set MAX_REQUESTS=0 to disable restarts. The Dockerfile bakes
+		# in the default of 500 via build arg; override at runtime with:
+		#   docker run -e MAX_REQUESTS=5000 ...
+		# For full control, the stock FRANKENPHP_CONFIG env var can inject any
+		# directive under this block instead.
+		max_requests {$MAX_REQUESTS}
+	}
+
+	# The admin API is deliberately left at its default: bound to 127.0.0.1
+	# inside the container, where it is the target of the image's
+	# HEALTHCHECK. It is not reachable from outside the container. Do NOT set
+	# `admin off` here without also changing that probe — the app has no 2xx
+	# liveness route to fall back on, because every anonymous request is
+	# answered with the login page and a 401.
+}
+
+http:// {
+	root public/
+	rewrite index.php
+	php {
+		root /app/public
+		worker index.php
+	}
+}

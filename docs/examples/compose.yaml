@@ -1,7 +1,8 @@
 services:
   preauth:
     env_file:
-      # copy ".env.example" to ".env", edit as needed
+      # copy ".env.example" to ".env", edit as needed, and put APP_SECRET
+      # in it (any long random string).
       # strongly recommend setting TOTP_URI, if not provided the app
       # will generate one for you, please copy it into your .env file
       - .env
@@ -9,8 +10,10 @@ services:
       - 80
     image: digitaladapt/preauth:latest
     restart: unless-stopped
-    # if you wish to set the user, you must make sure that the user
-    # can write to /config and /data within the container
+    # The image runs as the non-root `app` user (uid/gid 1000) and creates
+    # its state directories owned by that user, so a named volume inherits
+    # the right ownership on first start — no `user:` override is needed.
+    # If you pin one anyway, it must be able to write /config and /data.
     #user: <uid>:<gid>
     volumes:
       - preauth-config:/config
@@ -19,4 +22,3 @@ services:
 volumes:
   preauth-config:
   preauth-data:
-

@@ -9,8 +9,6 @@ docker run --name preauth \
     -e APP_ENV=dev \
     -e APP_DEBUG=true \
     -e APP_SECRET="${APP_SECRET:-$(openssl rand -hex 16)}" \
-    -e APP_SHARE_DIR=var/share \
-    -e DEFAULT_URI=http://localhost \
-    -v ./var/share:/app/var/share \
+    -e APP_SHARE_DIR=/app/var/share \
     -p 8000:80 \
     digitaladapt/preauth:dev
