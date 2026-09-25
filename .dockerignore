@@ -1,12 +1,84 @@
-.git/
+# .dockerignore — defines the build context used by `COPY . .`.
+#
+# Ignoring a path keeps EVERYTHING under it out of the context, which is what
+# makes "copy the tree instead of listing files" safe: the allowlist that used
+# to live in eight `COPY ./x /app/x` lines is now simply the absence of a
+# pattern here. The failure mode is inverted — a missed entry fails the build
+# loudly ("not found in build context") instead of silently baking a file in.
+#
+# Rules that matter (Guiding Light §6.3): `config/`, `bin/`, `public/` and the
+# composer manifests are never ignored, and /Caddyfile is the inverse case —
+# it is ignored, because the final stage copies it from `docker/Caddyfile`.
+
+# ── VCS & CI ────────────────────────────────────────────────────────────────
+.git
 .gitignore
+.editorconfig
+.gitea
+.ci
+
+# ── Secrets: never bake these into a layer (§6.1, §8.12) ────────────────────
+# Bare `.env` included deliberately: it is exactly the file a developer has
+# locally and must not land in an image layer.
+.env
+.env.local
+.env.local.php
+.env.*.local
+.env.dev
+.env.test
+host.env
+config/secrets/prod/prod.decrypt.private.php
+
+# ── Local runtime state (§5.2) ──────────────────────────────────────────────
+# var/ holds the dev cache and logs; the prod cache is warmed inside the image.
 var/
+*.sqlite
+*.sqlite3
+*.db
+
+# ── Rebuilt inside the image from composer.lock ─────────────────────────────
 vendor/
+
+# ── Dev / test artefacts not needed at runtime ──────────────────────────────
 tests/
 .phpunit.cache/
+.phpunit.result.cache
+phpunit.xml
+phpunit.dist.xml
+.php-cs-fixer.cache
+.php-cs-fixer.dist.php
+.php-cs-fixer.php
+phpstan.neon.dist
+phpstan-baseline.neon
+
+# ── Build inputs that aren't payload ────────────────────────────────────────
+Dockerfile
+.dockerignore
+docker-bake.hcl
+compose*.yaml
+docker-compose*.yaml
+
+# ── Docs, examples and host-side tooling ────────────────────────────────────
+# The root Caddyfile is the host-side example (docs/examples/ has a longer
+# one); the image's config is docker/Caddyfile, copied explicitly below.
 docs/
 *.md
-.env
-.env.test
-.env.local
+license.txt
+Caddyfile
+Domainfile
+run.sh
+deploy.sh
+bin/composer
+bin/dev.sh
+bin/franken.sh
+bin/phpunit
 composer.phar
+
+# ── Generated config reference (regenerate with config:dump) ────────────────
+config/reference.php
+
+# ── Editor / OS noise ───────────────────────────────────────────────────────
+.idea
+.vscode
+*.swp
+.DS_Store
