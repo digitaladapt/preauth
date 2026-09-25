@@ -118,6 +118,66 @@ any_file_contains() {
   local pat="$1"; shift
   grep -rlE "$pat" "$@" >/dev/null 2>&1
 }
+
+# caller_disables <knob> <value>
+#
+# True when one of the repo's own *php-test pins* sets a shared-workflow input
+# to <value> — `run-composer-audit: 'false'`, `coverage: 'none'`. Accepts the
+# bare YAML boolean spelling and both quote styles, ignores indentation and
+# trailing comments, and only reads files that pin php-test.yaml (a
+# docker-publish caller's knobs are unrelated).
+#
+# "Any pin disables it" is deliberate: one workflow that switches the step off
+# is enough to make the check un-satisfied. Refusing to accept an opt-out
+# would turn this fix into a false green, which is the one outcome worse than
+# the false red it replaces.
+caller_disables() {
+  local knob="$1" value="$2" got
+  local pins=()
+  mapfile -t pins < <(grep -rlE '^[[:space:]]*uses:[[:space:]]*private/ci/\.gitea/workflows/php-test\.yaml@' .gitea/workflows 2>/dev/null)
+  [ "${#pins[@]}" -eq 0 ] && return 1
+  got=$(grep -hE "^[[:space:]]*${knob}:" "${pins[@]}" 2>/dev/null \
+    | sed 's/#.*//' | sed 's/^[^:]*://' | tr -d "[:space:]\042\047" \
+    | tr '[:upper:]' '[:lower:]' || true)
+  printf '%s\n' "$got" | grep -qx "$value"
+}
+
+# ci_runs <inline-pattern> [<knob> <disabled-value>]
+#
+# "CI runs X" checks have TWO legitimate shapes, and only one existed when
+# they were written — before the move to shared workflows (§8.2(1)):
+#
+#   1. INLINE    — this repo's own workflow contains the command. Grep it.
+#   2. DELEGATED — this repo pins private/ci's php-test.yaml, and the command
+#      runs there. The text is deliberately NOT in this repo any more; the
+#      caller is a ~15-line pin by design.
+#
+# Only shape 1 used to be accepted, which turned every adopted repo's audit
+# and validate checks red while the steps genuinely ran — a false positive
+# that reported a violation where there was none.
+#
+# For shape 2 the only local evidence is the knobs the caller passes, so that
+# is what gets checked: an explicit opt-out (`run-composer-audit: 'false'`,
+# `coverage: 'none'`) means the step does NOT run there, and the check must
+# keep failing. A check that accepts a switched-off step is a false green.
+#
+# Deliberately NOT verified here: that the shared pipeline still contains the
+# step. This script is vendored and stays offline (see the header), and
+# private/ci is LAN-only, so fetching it at run time would reintroduce exactly
+# the silent-no-op dependency that vendoring removed. That half of the
+# contract is guarded where the file lives: validate-workflows.py fails
+# private/ci's own CI if php-test.yaml loses a step the projects' checks take
+# on faith, or if a gate's default flips to disabled.
+ci_runs() {
+  local pattern="$1" knob="${2:-}" disabled="${3:-}"
+  if grep -rqE '^[[:space:]]*uses:[[:space:]]*private/ci/\.gitea/workflows/php-test\.yaml@' .gitea/workflows 2>/dev/null; then
+    # Delegated: the caller's knobs are the only local source of truth.
+    [ -n "$knob" ] && caller_disables "$knob" "$disabled" && return 1
+    return 0
+  fi
+  any_file_contains "$pattern" .gitea/workflows
+}
+
 # no_file_contains <ext-glob> <pattern> — searches source trees only
 no_match_in_sources() {
   local pattern="$1"; shift
@@ -194,20 +254,23 @@ check "editorconfig" \
 $OUTPUT_JSON || echo ""
 $OUTPUT_JSON || echo "CI & supply chain"
 
+# These three accept the command either inline or via the shared pipeline —
+# see ci_runs above for why, and for what is still required of a delegating
+# caller (the opt-out knobs must not be set).
 check "ci-composer-audit" \
   "CI runs 'composer audit'" \
   "§8.1" \
-  any_file_contains 'composer audit' .gitea/workflows
+  ci_runs 'composer audit' run-composer-audit false
 
 check "ci-coverage" \
   "CI measures test coverage" \
   "§2.3" \
-  any_file_contains 'coverage' .gitea/workflows
+  ci_runs 'coverage' coverage none
 
 check "ci-composer-validate" \
   "CI runs 'composer validate --strict'" \
   "§8.3" \
-  any_file_contains 'composer validate' .gitea/workflows
+  ci_runs 'composer validate'
 
 # Anchored to a REAL `uses:` line, not the string anywhere in the file.
 #
@@ -222,6 +285,32 @@ check "ci-reusable-workflows" \
   "CI calls shared workflows from private/ci (not five drift surfaces)" \
   "§8.2" \
   any_file_contains '^[[:space:]]*uses:[[:space:]]*private/ci/\.gitea/workflows' .gitea/workflows
+
+# A bake file describes WHICH Dockerfile stage to build. buildx does not check
+# that the stage exists until build time, and `bake --print` — the obvious way
+# to validate one — happily resolves a target that names no stage, because it
+# never reads the Dockerfile. So a typo there reaches CI and fails after the
+# push. This is the check that buildx is missing.
+#
+# SKIPPED when there is no bake file: most repos use the `action` backend and
+# have none, and absence is not a violation.
+#
+# The helper belongs in the PREREQUISITE, not only in the command. It used to
+# be `[ -f ... ] || exit 0` INSIDE the command, which is a different thing: a
+# repo that has a bake file but no vendored helper reported a green tick for a
+# check that never ran. That is the one outcome this script's header singles
+# out as most dangerous, and it was live — preauth adopted a bake file before
+# the `validate-bake.py` half of the re-vendor landed, so its next sync would
+# have shown a green `bake-target-exists` no matter what the bake file said.
+#
+# With the helper in the prerequisite the same state reports SKIPPED — its own
+# yellow state, explicitly not a pass. (`css-control-size.py`, the other
+# helper, has been wired this way since it was added; see below.)
+check_opt "bake-target-exists" \
+  "docker-bake.hcl targets a stage that exists in the Dockerfile" \
+  "§6.2" \
+  'command -v python3 >/dev/null 2>&1 && [ -f docker-bake.hcl ] && [ -f "$CONFORMANCE_DIR/validate-bake.py" ]' \
+  bash -c 'exec "$CONFORMANCE_DIR/validate-bake.py" docker-bake.hcl Dockerfile'
 
 $OUTPUT_JSON || echo ""
 $OUTPUT_JSON || echo "Hygiene & layout"
