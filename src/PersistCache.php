@@ -7,6 +7,7 @@ namespace App;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 
 /* need autoconfigure so we get it from the service container in Kernel->boot() */
 #[Autoconfigure(public: true)]
@@ -17,8 +18,8 @@ final readonly class PersistCache
 
     /** @throws InvalidArgumentException */
     public function __construct(
-        CacheItemPoolInterface $sessionCache,
-        CacheItemPoolInterface $sessionStorage,
+        #[Target('sessionCache')] CacheItemPoolInterface $sessionCache,
+        #[Target('sessionStorage')] CacheItemPoolInterface $sessionStorage,
     ) {
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
         $this->sessionStorage = new MonitorCacheKeys($sessionStorage);

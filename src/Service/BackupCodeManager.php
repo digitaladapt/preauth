@@ -13,6 +13,7 @@ use DateTimeImmutable;
 use Exception;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 
 /** backup-codes are case‑insensitive alphanumeric strings
  * they are single-use and marked as used after successful authentication */
@@ -29,8 +30,9 @@ final readonly class BackupCodeManager implements BackupCodeInterface
     private CacheItemPoolInterface $sessionCache;
 
     /** @throws InvalidArgumentException */
-    public function __construct(CacheItemPoolInterface $sessionCache)
-    {
+    public function __construct(
+        #[Target('sessionCache')] CacheItemPoolInterface $sessionCache
+    ) {
         $this->sessionCache = new MonitorCacheKeys($sessionCache);
     }
 

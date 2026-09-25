@@ -9,6 +9,7 @@ use App\Trait\HasLoggerTrait;
 use App\Trait\StringTrait;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 
@@ -18,7 +19,7 @@ final readonly class AllowListener
     use StringTrait;
 
     public function __construct(
-        private CacheItemPoolInterface $sessionCache,
+        #[Target('sessionCache')] private CacheItemPoolInterface $sessionCache,
         private ConfigBag $config,
     ) {
     }

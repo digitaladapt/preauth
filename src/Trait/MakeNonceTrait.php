@@ -7,6 +7,7 @@ namespace App\Trait;
 use Exception;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -23,8 +24,9 @@ trait MakeNonceTrait
     protected readonly CacheItemPoolInterface $nonceCache;
 
     #[Required]
-    public function setNonceCache(CacheItemPoolInterface $nonceCache): void
-    {
+    public function setNonceCache(
+        #[Target('nonceCache')] CacheItemPoolInterface $nonceCache,
+    ): void {
         $this->nonceCache = $nonceCache;
     }
 

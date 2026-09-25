@@ -13,6 +13,7 @@ use App\Trait\MakeNonceTrait;
 use App\Trait\StringTrait;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,7 +31,7 @@ final readonly class LoginManager implements LoginInterface
 
     /** @throws InvalidArgumentException */
     public function __construct(
-        CacheItemPoolInterface $sessionCache,
+        #[Target('sessionCache')] CacheItemPoolInterface $sessionCache,
         private BackupCodeInterface $backupCodeManager,
         private DomainInterface $domainManager,
     ) {
