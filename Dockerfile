@@ -71,6 +71,7 @@ FROM dunglas/frankenphp:1-php8.5-trixie AS app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && install-php-extensions apcu \
+    && install-php-extensions intl \
     && rm -rf /var/lib/apt/lists/*
 
 # PHP configuration. The packaged production baseline is copied in first
