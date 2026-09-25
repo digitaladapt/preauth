@@ -1,7 +1,7 @@
 # Tests - ensure code quality, via the shared workflow.
 #
 # Checks include: PHPStan, PHPUnit, and PHP-CS-Fixer.
-#
+
 name: Tests
 
 on:

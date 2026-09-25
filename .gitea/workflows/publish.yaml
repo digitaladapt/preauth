@@ -1,3 +1,5 @@
+# Sync GitHub - upload branch change to github, via the shared workflow
+
 name: Sync GitHub
 
 on:
@@ -11,31 +13,12 @@ on:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
+    uses: private/ci/.gitea/workflows/sync-github.yaml@v1
+    with:
+      sync-target: ${{ vars.SYNC_GITHUB_TARGET }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      # by default we do not alter existing github tags, but that can be changed here.
+      # force-tags: true
 
-      - name: Configure Git
-        run: |
-          git config --global user.name "Andrew Sync"
-          git config --global user.email "sync@digitaladapt.com"
-
-      - name: Add GitHub Remote
-        env:
-          SYNC_TOKEN: ${{ secrets.SYNC_GITHUB_TOKEN }}
-          SYNC_TARGET: ${{ vars.SYNC_GITHUB_TARGET }}
-        run: |
-          git remote add github "https://digitaladapt:${SYNC_TOKEN}@github.com/$SYNC_TARGET" 2>/dev/null || git remote set-url github "https://digitaladapt:${SYNC_TOKEN}@github.com/$SYNC_TARGET"
-
-      - name: Push Current Branch
-        run: |
-          git push github HEAD:${GITHUB_REF_NAME}
-
-      - name: Push Tags
-        run: |
-          git push github --tags
-
+    secrets:
+      SYNC_GITHUB_TOKEN: ${{ secrets.SYNC_GITHUB_TOKEN }}
