@@ -10,18 +10,18 @@
 # MAX_REQUESTS=0 docker buildx bake # specify variables to override
 
 variable "DOCKERHUB_TARGET" {
-  default     = "digitaladapt/preauth"
+  default = "digitaladapt/preauth"
   description = "Docker Hub repo/org (Gitea repo variable DOCKERHUB_TARGET)."
 }
 
 variable "TAG" {
-  default     = "latest"
+  default = "latest"
   description = "Base tag for this build: latest (release), develop (main push), or a version."
 }
 
 variable "VERSION" {
-  default     = ""
-  description = "Full version (v stripped) to also tag with; empty for develop builds."
+  default = ""
+  description = "Optional full version (v stripped) to also tag with; empty for develop builds."
 }
 
 variable "MAX_REQUESTS" {
