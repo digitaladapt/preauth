@@ -127,6 +127,30 @@ parameters:
 			path: src/Listener/InterceptListener.php
 
 		-
+			message: '#^Class App\\Listener\\PasskeyListener has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Listener/PasskeyListener.php
+
+		-
+			message: '#^Class App\\Listener\\PasskeyListener has an uninitialized readonly property \$nonceCache\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
+			count: 1
+			path: src/Listener/PasskeyListener.php
+
+		-
+			message: '#^Readonly property App\\Listener\\PasskeyListener\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 2
+			path: src/Listener/PasskeyListener.php
+
+		-
+			message: '#^Readonly property App\\Listener\\PasskeyListener\:\:\$nonceCache is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Listener/PasskeyListener.php
+
+		-
 			message: '#^Class App\\Listener\\LoginListener has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
 			identifier: property.uninitializedReadonly
 			count: 1

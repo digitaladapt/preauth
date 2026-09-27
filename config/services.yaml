@@ -66,6 +66,10 @@ parameters:
     # Extra options, custom labels
     env(PASSKEY_BUTTON_NAME): 'Sign in with a passkey'
     env(PASSKEY_REGISTER_NAME): 'Register this device as a passkey'
+    # bounds how many ceremonies one caller can start (resource guard, not the
+    # login budget — see config/packages/rate_limiter.yaml)
+    env(PASSKEY_BEGIN_BURST_COUNT): 30
+    env(PASSKEY_BEGIN_BURST_TIME): 60
 
     # --- styling options ---
     env(TITLE): 'Pre-Authentication System'
