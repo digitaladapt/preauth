@@ -349,14 +349,20 @@ parameters:
 			path: src/Service/LoginManager.php
 
 		-
-			message: '#^Class App\\Service\\LoginManager has an uninitialized readonly property \$nonceCache\. Assign it in the constructor\.$#'
+			message: '#^Class App\\Service\\SessionIssuer has an uninitialized readonly property \$logger\. Assign it in the constructor\.$#'
 			identifier: property.uninitializedReadonly
 			count: 1
-			path: src/Service/LoginManager.php
+			path: src/Service/SessionIssuer.php
 
 		-
-			message: '#^Method App\\Service\\LoginManager\:\:checkToken\(\) overrides method App\\Service\\LoginInterface\:\:checkToken\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
+			message: '#^Readonly property App\\Service\\SessionIssuer\:\:\$logger is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyAssignNotInConstructor
+			count: 1
+			path: src/Service/SessionIssuer.php
+
+		-
+			message: '#^Class App\\Service\\LoginManager has an uninitialized readonly property \$nonceCache\. Assign it in the constructor\.$#'
+			identifier: property.uninitializedReadonly
 			count: 1
 			path: src/Service/LoginManager.php
 

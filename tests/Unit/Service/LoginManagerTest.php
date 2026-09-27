@@ -9,6 +9,7 @@ use App\Enum\Scope;
 use App\Service\BackupCodeInterface;
 use App\Service\DomainManager;
 use App\Service\LoginManager;
+use App\Service\SessionIssuer;
 use App\Tests\Support\TotpTestHelper;
 use App\Trait\StringTrait;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +29,7 @@ final class LoginManagerTest extends TestCase
     private ArrayAdapter $pool;
     private BackupCodeInterface $backupCodeManager;
     private DomainManager $domainManager;
+    private ?SessionIssuer $sessionIssuer = null;
 
     private function makeLoginManager(
         ?int $ipTtl = 0,
@@ -38,7 +40,12 @@ final class LoginManagerTest extends TestCase
         $this->backupCodeManager = $this->createStub(BackupCodeInterface::class);
         $this->domainManager = new DomainManager($subdomainRedirect, $authSubdomain);
 
-        $manager = new LoginManager($this->pool, $this->backupCodeManager, $this->domainManager);
+        /* session issuing is shared with the passkey flow, so it is built as the
+         * same collaborator the container would inject */
+        $this->sessionIssuer = new SessionIssuer($this->pool, $this->domainManager, $this->makeConfig(ipTtl: $ipTtl));
+        $this->sessionIssuer->setLogger(new NullLogger());
+
+        $manager = new LoginManager($this->backupCodeManager, $this->sessionIssuer);
         $manager->setConfig($this->makeConfig(ipTtl: $ipTtl));
         $manager->setLogger(new NullLogger());
         $manager->setNonceCache(new ArrayAdapter());
@@ -277,8 +284,10 @@ final class LoginManagerTest extends TestCase
         self::assertFalse($response->headers->has('Set-Cookie'));
 
         // verify the IP session exists in the cache
-        $reflection = new ReflectionProperty(LoginManager::class, 'sessionCache');
-        $sessionCache = $reflection->getValue($manager);
+        $issuer = $this->sessionIssuer;
+        self::assertNotNull($issuer, 'makeLoginManager() should have built a session issuer.');
+        $reflection = new ReflectionProperty(SessionIssuer::class, 'sessionCache');
+        $sessionCache = $reflection->getValue($issuer);
         self::assertTrue($sessionCache->hasItem('ip_1.2.3.4'));
     }
 
@@ -361,7 +370,12 @@ final class LoginManagerTest extends TestCase
         $this->backupCodeManager = $this->createStub(BackupCodeInterface::class);
         $this->backupCodeManager->method('verifyAndConsume')->willReturn(false);
 
-        $manager = new LoginManager($pool, $this->backupCodeManager, $this->domainManager);
+        /* the colliding pool must be the one the session issuer writes through,
+         * because that is where the cookie is stored */
+        $issuer = new SessionIssuer($pool, $this->domainManager, $this->makeConfig());
+        $issuer->setLogger(new NullLogger());
+
+        $manager = new LoginManager($this->backupCodeManager, $issuer);
         $manager->setConfig($this->makeConfig());
         $manager->setLogger(new NullLogger());
         $manager->setNonceCache(new ArrayAdapter());
