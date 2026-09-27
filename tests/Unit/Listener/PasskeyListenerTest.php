@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Listener;
 
+use App\AppConstants;
 use App\Data\PasskeyCredential;
 use App\Enum\Scope;
 use App\Listener\PasskeyListener;
-use App\MonitorCacheKeys;
 use App\Service\DomainInterface;
 use App\Service\PasskeyInterface;
 use App\Service\PasskeyPolicyInterface;
@@ -41,8 +41,6 @@ final class PasskeyListenerTest extends TestCase
 
     private const string AUTH_HOST = 'auth.example.com';
 
-    private ?ArrayAdapter $sessionCache = null;
-
     private function makeListener(
         ?PasskeyInterface $passkeys = null,
         bool $available = true,
@@ -50,8 +48,6 @@ final class PasskeyListenerTest extends TestCase
         ?DomainInterface $domainManager = null,
         int $beginLimit = 30,
     ): PasskeyListener {
-        $this->sessionCache = new ArrayAdapter();
-
         $policy = $this->createStub(PasskeyPolicyInterface::class);
         $policy->method('isAvailableFor')->willReturn($available);
 
@@ -60,7 +56,6 @@ final class PasskeyListenerTest extends TestCase
         $listener = new PasskeyListener(
             new RateLimiterFactory(['id' => 'passkey_begin_burst', 'policy' => 'sliding_window', 'limit' => $beginLimit, 'interval' => '60 seconds'], new InMemoryStorage()),
             new RateLimiterFactory(['id' => 'login_limiter', 'policy' => 'sliding_window', 'limit' => 2, 'interval' => '60 seconds'], new InMemoryStorage()),
-            $this->sessionCache,
             $passkeys ?? $this->createStub(PasskeyInterface::class),
             $policy,
             $sessionIssuer ?? $this->createStub(SessionIssuerInterface::class),
@@ -252,16 +247,22 @@ final class PasskeyListenerTest extends TestCase
 
         $listener->onKernelRequest($event);
 
-        self::assertSame('1', $event->getResponse()?->headers->get(PasskeyListener::CEREMONY_MARKER));
+        self::assertSame('1', $event->getResponse()?->headers->get(AppConstants::PASSKEY_CEREMONY_MARKER));
     }
 
     /* ── registration gating ──────────────────────────────────────────── */
 
     /**
-     * Registration requires a live session: the identity comes from the cookie,
-     * never from the body, so nobody can register a passkey for another identity.
+     * /**
+     * `register-begin` deliberately has no handler here.
+     *
+     * A registration ceremony may only start after a valid TOTP code, which is
+     * presented to `LoginManager` as part of the form submission — so
+     * `LoginManager` starts it. Exposing it on this listener would hand out a
+     * challenge without proving anything, which is precisely the hole the
+     * design closes. This test pins that the operation is *not* honoured.
      */
-    public function test_register_begin_without_a_session_is_refused(): void
+    public function test_register_begin_is_not_a_listener_operation(): void
     {
         $passkeys = $this->createMock(PasskeyInterface::class);
         $passkeys->expects(self::never())->method('beginRegistration');
@@ -272,33 +273,6 @@ final class PasskeyListenerTest extends TestCase
         $listener->onKernelRequest($event);
 
         self::assertSame(Response::HTTP_UNAUTHORIZED, $event->getResponse()?->getStatusCode());
-    }
-
-    public function test_register_begin_uses_the_identity_from_the_session_cookie(): void
-    {
-        $passkeys = $this->createMock(PasskeyInterface::class);
-        $passkeys->expects(self::once())
-            ->method('beginRegistration')
-            ->with('lyra')
-            ->willReturn(['publicKey' => [], 'ceremonyId' => 'cid']);
-
-        $listener = $this->makeListener($passkeys);
-
-        /* seed a live session the way SessionIssuer would have; this has to
-         * happen after makeListener(), which builds the pool the listener holds */
-        $ulid = 'test-ulid';
-        $monitor = new MonitorCacheKeys($this->sessionCache);
-        $item = $monitor->getItem($this->makeCacheKey("cookie_$ulid"));
-        $item->set('lyra');
-        $monitor->save($item);
-
-        $request = $this->ceremonyRequest('register-begin');
-        $request->cookies->set('__Http-Domain-Preauth', $ulid);
-
-        $event = $this->makeEvent($request);
-        $listener->onKernelRequest($event);
-
-        self::assertSame(Response::HTTP_OK, $event->getResponse()?->getStatusCode());
     }
 
     /* ── failures share the login budget (D3) ─────────────────────────── */

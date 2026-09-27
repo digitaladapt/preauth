@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Listener;
 
-use App\Listener\PasskeyListener;
+use App\AppConstants;
 use App\Listener\SecurityHeadersListener;
 use App\Service\DomainInterface;
 use App\Service\PasskeyPolicyInterface;
@@ -252,11 +252,11 @@ final class SecurityHeadersListenerTest extends TestCase
     {
         $listener = $this->makeListener('auth.example.com');
         $response = new Response('{}', Response::HTTP_OK);
-        $response->headers->set(PasskeyListener::CEREMONY_MARKER, '1');
+        $response->headers->set(AppConstants::PASSKEY_CEREMONY_MARKER, '1');
 
         $listener->onKernelResponse($this->makeEvent($response));
 
-        self::assertFalse($response->headers->has(PasskeyListener::CEREMONY_MARKER));
+        self::assertFalse($response->headers->has(AppConstants::PASSKEY_CEREMONY_MARKER));
         self::assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
         self::assertSame('*', $response->headers->get('Vary'));
     }
@@ -279,6 +279,6 @@ final class SecurityHeadersListenerTest extends TestCase
         self::assertStringNotContainsString('no-store', $cacheControl);
         self::assertStringContainsString('max-age=60', $cacheControl);
         self::assertFalse($response->headers->has('Surrogate-Control'));
-        self::assertFalse($response->headers->has(PasskeyListener::CEREMONY_MARKER));
+        self::assertFalse($response->headers->has(AppConstants::PASSKEY_CEREMONY_MARKER));
     }
 }

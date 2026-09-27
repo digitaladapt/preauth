@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Listener;
 
+use App\AppConstants;
 use App\Service\DomainInterface;
 use App\Service\PasskeyPolicyInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -98,8 +99,8 @@ final readonly class SecurityHeadersListener
             return;
         }
 
-        if ($headers->has(PasskeyListener::CEREMONY_MARKER)) {
-            $headers->remove(PasskeyListener::CEREMONY_MARKER);
+        if ($headers->has(AppConstants::PASSKEY_CEREMONY_MARKER)) {
+            $headers->remove(AppConstants::PASSKEY_CEREMONY_MARKER);
             $this->applyNoStore($headers);
         }
     }

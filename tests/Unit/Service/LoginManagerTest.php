@@ -9,6 +9,7 @@ use App\Enum\Scope;
 use App\Service\BackupCodeInterface;
 use App\Service\DomainManager;
 use App\Service\LoginManager;
+use App\Service\PasskeyInterface;
 use App\Service\SessionIssuer;
 use App\Tests\Support\TotpTestHelper;
 use App\Trait\StringTrait;
@@ -45,7 +46,7 @@ final class LoginManagerTest extends TestCase
         $this->sessionIssuer = new SessionIssuer($this->pool, $this->domainManager, $this->makeConfig(ipTtl: $ipTtl));
         $this->sessionIssuer->setLogger(new NullLogger());
 
-        $manager = new LoginManager($this->backupCodeManager, $this->sessionIssuer);
+        $manager = new LoginManager($this->backupCodeManager, $this->sessionIssuer, $this->createStub(PasskeyInterface::class));
         $manager->setConfig($this->makeConfig(ipTtl: $ipTtl));
         $manager->setLogger(new NullLogger());
         $manager->setNonceCache(new ArrayAdapter());
@@ -375,7 +376,7 @@ final class LoginManagerTest extends TestCase
         $issuer = new SessionIssuer($pool, $this->domainManager, $this->makeConfig());
         $issuer->setLogger(new NullLogger());
 
-        $manager = new LoginManager($this->backupCodeManager, $issuer);
+        $manager = new LoginManager($this->backupCodeManager, $issuer, $this->createStub(PasskeyInterface::class));
         $manager->setConfig($this->makeConfig());
         $manager->setLogger(new NullLogger());
         $manager->setNonceCache(new ArrayAdapter());

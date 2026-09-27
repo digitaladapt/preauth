@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace App\Listener;
 
+use App\AppConstants;
 use App\ConfigBag;
 use App\Enum\Scope;
 use App\Service\DomainInterface;
 use App\Service\PasskeyInterface;
 use App\Service\PasskeyPolicyInterface;
 use App\Service\SessionIssuerInterface;
-use App\Trait\CookieNameTrait;
 use App\Trait\HasLoggerTrait;
 use App\Trait\MakeNonceTrait;
 use App\Trait\StringTrait;
-use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -36,13 +35,21 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
  *   returns null and the request would be scored as a failed login — burning a
  *   rate-limit token for every legitimate passkey login.
  *
+ * **Three operations, not four.** `register-begin` is deliberately *absent*: a
+ * registration ceremony may only be started after a valid TOTP code, which is
+ * presented to `LoginManager` as part of the form submission. `LoginManager`
+ * therefore starts that ceremony and returns its options with the login
+ * response. Exposing `register-begin` here would be a way to obtain a challenge
+ * **without proving anything**, which is the vulnerability rather than the
+ * feature — there is no session cookie to check at that point either, since the
+ * whole flow is what *produces* the session.
+ *
  * **Every** request carrying the dispatch header gets a response, including
  * malformed ones. Falling through would let `InterceptListener` render HTML to a
  * `fetch()` caller.
  */
 final readonly class PasskeyListener
 {
-    use CookieNameTrait;
     use HasLoggerTrait;
     use MakeNonceTrait;
     use StringTrait;
@@ -55,16 +62,11 @@ final readonly class PasskeyListener
      */
     public const string HEADER = 'X-Preauth-Passkey';
 
-    /** Marks a response as ceremony output, so the caching policy can see it. */
-    public const string CEREMONY_MARKER = 'X-Preauth-Ceremony';
+    public const string BEGIN_LOGIN = 'login-begin';
 
-    private const string BEGIN_LOGIN = 'login-begin';
+    public const string FINISH_LOGIN = 'login-finish';
 
-    private const string FINISH_LOGIN = 'login-finish';
-
-    private const string BEGIN_REGISTER = 'register-begin';
-
-    private const string FINISH_REGISTER = 'register-finish';
+    public const string FINISH_REGISTER = 'register-finish';
 
     private RateLimiterFactoryInterface $beginLimiter;
 
@@ -73,7 +75,6 @@ final readonly class PasskeyListener
     public function __construct(
         #[Target('passkey_begin_burst')] RateLimiterFactoryInterface $beginLimiter,
         #[Target('login_limiter')] RateLimiterFactoryInterface $loginLimiter,
-        #[Target('sessionCache')] private CacheItemPoolInterface $sessionCache,
         private PasskeyInterface $passkeys,
         private PasskeyPolicyInterface $policy,
         private SessionIssuerInterface $sessionIssuer,
@@ -116,7 +117,6 @@ final readonly class PasskeyListener
         return $this->ceremonyResponse(match ($operation) {
             self::BEGIN_LOGIN => $this->beginLogin($request),
             self::FINISH_LOGIN => $this->finishLogin($request),
-            self::BEGIN_REGISTER => $this->beginRegistration($request),
             self::FINISH_REGISTER => $this->finishRegistration($request),
             default => $this->error('Unknown passkey operation.', $request),
         });
@@ -129,25 +129,6 @@ final readonly class PasskeyListener
         }
 
         return $this->json($this->passkeys->beginLogin());
-    }
-
-    /**
-     * Registration is only offered to someone who already authenticated: the
-     * identity comes from the live session, never from the request body, so a
-     * caller cannot register a passkey for an identity it does not hold.
-     */
-    private function beginRegistration(Request $request): Response
-    {
-        $identity = $this->identityFromRequest($request);
-        if (null === $identity) {
-            return $this->error('Registration requires a completed login.', $request);
-        }
-
-        if ($limit = $this->beginBurstExceeded($request)) {
-            return $limit;
-        }
-
-        return $this->json($this->passkeys->beginRegistration($identity));
     }
 
     private function finishLogin(Request $request): Response
@@ -165,6 +146,12 @@ final readonly class PasskeyListener
         return $this->sessionIssuer->issue($credential->identity, Scope::Cookie, $request, true);
     }
 
+    /**
+     * The ceremony was authorised by the TOTP-gated hand-off in `LoginManager`,
+     * so the capability here is the single-use `ceremonyId` itself: it is
+     * server-issued, stored against the identity that passed the check, and
+     * consumed on use.
+     */
     private function finishRegistration(Request $request): Response
     {
         $credential = $this->passkeys->finishRegistration($this->body($request));
@@ -176,31 +163,6 @@ final readonly class PasskeyListener
         $this->logger->debug("passkey registered for: {$credential->identity}");
 
         return $this->sessionIssuer->issue($credential->identity, Scope::Cookie, $request, true);
-    }
-
-    /**
-     * The identity of an already-authenticated caller, for registration.
-     *
-     * Read from the live session cookie, so `register-begin` is reachable only by
-     * someone who has just passed the TOTP check. Null when there is no session.
-     *
-     * @throws InvalidArgumentException
-     */
-    private function identityFromRequest(Request $request): ?string
-    {
-        $cookie = $request->cookies->get($this->sessionCookieName($this->domainManager));
-        if (!\is_string($cookie) || '' === $cookie) {
-            return null;
-        }
-
-        $item = $this->sessionCache->getItem($this->makeCacheKey("cookie_$cookie"));
-        if (!$item->isHit()) {
-            return null;
-        }
-
-        $identity = $item->get();
-
-        return \is_string($identity) && '' !== $identity ? $identity : null;
     }
 
     /**
@@ -266,7 +228,7 @@ final readonly class PasskeyListener
      */
     private function ceremonyResponse(Response $response): Response
     {
-        $response->headers->set(self::CEREMONY_MARKER, '1');
+        $response->headers->set(AppConstants::PASSKEY_CEREMONY_MARKER, '1');
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
