@@ -652,6 +652,10 @@ the `doctrine/deprecations` triggers).
 
 ## 8. Implementation order
 
+**Status: complete.** All steps below are implemented and on
+`feat/passkey-auth-subdomain`. Two deviations from the order as written, both
+noted inline.
+
 Each step is independently committable and leaves the suite green.
 
 1. **Dependency** *(done on the spike branch)* — `composer require
@@ -667,11 +671,29 @@ Each step is independently committable and leaves the suite green.
 5. **`PasskeyListener`** — priority 70, header dispatch, always terminate,
    no-store marker. Unit-test every branch incl. "post-shaped request must not
    reach `LoginListener`".
+   > **Deviation 1 — done after step 6.** The listener needs the shared session
+   > issuing that step 6 extracts, so the order had to be inverted.
+   >
+   > **Deviation 2 — three operations, not four.** `register-begin` is not a
+   > listener operation, and the first implementation was wrong to make it one.
+   > It would have handed out a challenge without proving anything; there is
+   > also no session cookie to check at that point, since the whole flow is what
+   > produces the session. The ceremony is started by `LoginManager`, after it
+   > verifies the code and nonce. A test pins that the listener refuses the
+   > operation.
 6. **Extract session issuing** from `LoginManager` so both paths share it —
    prove equality against the existing `LoginManagerTest`/`AuthenticationFlowTest`
    before touching anything else (Q3.8).
+   > Verified as intended: all 18 existing `LoginManagerTest` cases passed
+   > unchanged, and a functional test now compares the two paths' cookies
+   > field by field.
 7. **Registration UI** — checkbox in `login.html.twig`, the `Payload`-intent
    hand-off described in §3.1, `_passkey_register.html.twig`.
+   > Note: the separate script template was not needed — both handlers share
+   > helpers, so `_passkey.html.twig` holds them and `login.html.twig` stays a
+   > single readable file. The checkbox is also **not** rendered where the form
+   > does not POST, since registration authorises itself with the code carried
+   > in that submission.
 8. **Login UI + CSP** — `_passkey.html.twig`, `SecurityHeadersListener`, extend
    `CacheControlFlowTest` and `SecurityHeadersListenerTest`.
 9. **Functional tests** with real crypto (§7.2).

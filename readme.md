@@ -152,6 +152,56 @@ Rate limiting **cannot be disabled**. It uses a compound sliding window:
 | `UPPER_COUNT` | `10` | Max attempts per upper window. |
 | `UPPER_TIME` | `3600` | Upper window in seconds (1 hour). |
 
+### Passkey Authentication
+
+Passkeys (WebAuthn) can replace the TOTP code for everyday logins, while the
+code remains the way a new device is enrolled.
+
+**Two prerequisites, both enforced.** The feature refuses to operate without
+them rather than degrading quietly:
+
+1. **Central auth must be configured** (`SUBDOMAIN_REDIRECT=true` and a real
+   `AUTH_SUBDOMAIN`). A passkey is scoped to one relying party, so there has to
+   be a single shared domain for the whole family of services. Without it,
+   passkeys are switched off — they would otherwise be scoped to a single host
+   and confuse users with multiple, unrelated passkeys.
+2. **HTTPS is required, in development too.** There is no `http://localhost`
+   exemption and no setting that re-enables one, because such an exemption is
+   exactly how the same weakness ends up enabled in production. To exercise
+   passkeys locally, see the TLS note in `docs/examples/Caddyfile`.
+
+`localhost` therefore cannot be used for passkeys: it has no base domain, so
+central auth cannot be configured at all.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PASSKEY_ENABLED` | `0` | Master switch. Enabling it without the prerequisites above makes the container fail at startup, rather than offering a feature that cannot work. |
+| `PASSKEY_RP_NAME` | `TITLE` | Name shown in the authenticator prompt. |
+| `PASSKEY_USER_VERIFICATION` | `required` | `required`, `preferred`, or `discouraged`. An unrecognised value falls back to `required`, never to something weaker. |
+| `PASSKEY_TIMEOUT` | `60000` | Ceremony timeout in milliseconds. |
+| `PASSKEY_BUTTON_NAME` | `Sign in with a passkey` | Label for the sign-in button. |
+| `PASSKEY_REGISTER_NAME` | `Register this device as a passkey` | Label for the registration checkbox. |
+| `PASSKEY_BEGIN_BURST_COUNT` | `30` | Ceremonies one caller may start per window. A resource guard, not part of the login budget. |
+| `PASSKEY_BEGIN_BURST_TIME` | `60` | Window for the above, in seconds. |
+
+**Registering a device.** Log in with your code as usual, tick *Register this
+device as a passkey*, and approve the prompt. The TOTP check in that same
+submission is what authorises the registration — there is no separate enrolment
+token and no CLI command, so a passkey cannot be created without already holding
+a valid code.
+
+**Logging in.** Once registered, *Sign in with a passkey* signs you in with a
+fingerprint, face, or device PIN instead of typing a code. Failed passkey
+attempts count against the same rate-limit budget as wrong codes, so passkeys
+cannot be used to sidestep a lockout, and after the limit is reached *every*
+method is blocked equally.
+
+> **On signature counters.** Many passkeys (anything synchronised through a
+> keychain) report a constant counter, so a counter-based clone check would lock
+> users out of their own credentials. Preauth accepts an unchanged counter and
+> rejects only one that moves *backwards*. Clone detection is deliberately not a
+> property this feature claims — see `SECURITY.md`.
+
 ### Public Rate-Limited Access
 
 Preauth can provide rate-limited unauthenticated access to select public
@@ -235,9 +285,17 @@ passes through a priority-ordered chain of listeners:
 3. **PublicAccessListener** (priority 84) — If public paths are configured,
    allows rate-limited unauthenticated access to matching paths.
 4. **RejectListener** (priority 77) — Rate-limiting gate.
-5. **LoginListener** (priority 66) — Processes login attempts.
-6. **InterceptListener** (priority 55) — Renders login page or redirects.
-7. **SecurityHeadersListener** (response) — Adds security headers.
+5. **PasskeyListener** (priority 70) — WebAuthn ceremonies, when enabled.
+6. **LoginListener** (priority 66) — Processes login attempts.
+7. **InterceptListener** (priority 55) — Renders login page or redirects.
+8. **SecurityHeadersListener** (response) — Adds security headers.
+
+`PasskeyListener` sits deliberately between the rate-limit gate and the login
+handler: **after** `RejectListener`, so a blocked IP never reaches a ceremony;
+and **before** `LoginListener`, because that listener treats any POST to the auth
+subdomain as a login attempt, and a ceremony request carries no code — it would
+otherwise be counted as a failed login and burn rate-limit budget on every
+legitimate passkey sign-in.
 
 ### Security Model
 
@@ -256,6 +314,13 @@ passes through a priority-ordered chain of listeners:
   Successful (2xx) responses are deliberately excluded — they are
   consumed by the proxy's `forward_auth` check and never reach the
   browser, so a protected service's own caching is not affected.
+  Passkey ceremony replies are the one exception: they are the only 2xx
+  this application returns straight to a browser, so they carry the same
+  anti-caching headers.
+- **Passkeys**: registerable only after a valid TOTP code; challenge is
+  server-issued and single-use; RP ID is always the base domain; only the
+  derived `https://` origin is ever accepted; a failed attempt is
+  indistinguishable from a wrong code and shares its rate-limit budget.
 
 ### Cache
 

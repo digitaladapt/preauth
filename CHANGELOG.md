@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] — v1.1
 
 ### Added
+- **Passkey authentication (WebAuthn)** — Registered passkeys can replace the
+  TOTP code for everyday logins. Registration itself still requires a valid
+  code, so a passkey can never be created without already holding the secret.
+  - New dependency: `web-auth/webauthn-lib` `^5.3` (resolved to 5.3.9);
+    `composer audit` reports no advisories.
+  - **Requires central auth** (`SUBDOMAIN_REDIRECT` + `AUTH_SUBDOMAIN`) so
+    there is one relying party for the whole domain, and **requires HTTPS in
+    every environment, development included**. Enabling it in a configuration
+    that cannot work fails at container start rather than in a browser.
+  - Registration is a checkbox on the login form; login is a button. Passive
+    keys and OS pickers work normally, with the code as a fallback.
+  - New `PasskeyListener` (priority 70) — after the rate-limit gate so a
+    blocked IP never reaches a ceremony, and before `LoginListener` so a
+    ceremony request is not misfiled as a failed login.
+  - New env vars: `PASSKEY_ENABLED`, `PASSKEY_RP_NAME`,
+    `PASSKEY_USER_VERIFICATION`, `PASSKEY_TIMEOUT`, `PASSKEY_BUTTON_NAME`,
+    `PASSKEY_REGISTER_NAME`, `PASSKEY_BEGIN_BURST_COUNT`,
+    `PASSKEY_BEGIN_BURST_TIME`.
+  - New `docs/examples/Caddyfile` section describing local development over
+    real TLS, because there is deliberately no `http://` exemption.
 - **Public rate-limited access** — Select paths can now be made publicly
   accessible without TOTP authentication, with separate per-IP rate limiting.
   This is useful for exposing public content (e.g., public Gitea repositories)
@@ -25,7 +45,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New `PublicPathMatcher` service for path pattern matching.
   - New `PublicAccessListener` (priority 84) in the request pipeline.
 
+### Security
+- **Passkey ceremonies** — The challenge is issued and stored server-side and
+  the client's copy is never trusted; it is single-use, deleted before
+  verification so a failed or replayed attempt cannot be retried against the
+  same challenge. Only the derived `https://{AUTH_SUBDOMAIN}` origin is ever
+  accepted, and an unknown credential produces the same response as a wrong
+  code so the endpoint cannot be used for enumeration.
+
 ### Changed
+- **Session issuing extracted into `SessionIssuer`** — `LoginManager`
+  previously built the session cookie itself. Both login paths now share one
+  implementation, so a passkey login and a code login set an identical cookie;
+  two copies would have drifted, most likely in cookie attributes, where the
+  difference is invisible until it breaks in a browser.
 - **Upgraded Symfony 7.4 → 8.1** — All `symfony/*` components bumped to
   `8.1.*` (resolved to 8.1.2–8.1.6). The 7.4 deprecation sweep was clean
   (test suite runs with `failOnDeprecation`), so the major-version jump
