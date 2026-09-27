@@ -487,39 +487,15 @@ parameters:
 			path: tests/Unit/Command/GenerateBackupCodesCommandTest.php
 
 		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
-			count: 1
-			path: tests/Unit/ConfigBagRemoteUserTest.php
-
-		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNull\(\) with null will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 2
 			path: tests/Unit/Enum/ScopeTest.php
 
 		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
-			count: 1
-			path: tests/Unit/Listener/AcceptListenerTest.php
-
-		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
-			count: 1
-			path: tests/Unit/Listener/AllowListenerTest.php
-
-		-
 			message: '#^Class Symfony\\Component\\RateLimiter\\Exception\\ReserveNotSupportedException constructor invoked with 0 parameters, 1\-3 required\.$#'
 			identifier: arguments.count
 			count: 2
-			path: tests/Unit/Listener/InterceptListenerTest.php
-
-		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
-			count: 1
 			path: tests/Unit/Listener/InterceptListenerTest.php
 
 		-
@@ -583,12 +559,6 @@ parameters:
 			path: tests/Unit/Listener/LoginListenerTest.php
 
 		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
-			count: 1
-			path: tests/Unit/Listener/LoginListenerTest.php
-
-		-
 			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:consume\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:consume\(\) but is missing the \#\[\\Override\] attribute\.$#'
 			identifier: method.missingOverride
 			count: 1
@@ -643,12 +613,6 @@ parameters:
 			path: tests/Unit/Listener/PublicAccessListenerTest.php
 
 		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
-			count: 1
-			path: tests/Unit/Listener/PublicAccessListenerTest.php
-
-		-
 			message: '#^Method Symfony\\Component\\RateLimiter\\LimiterInterface@anonymous/tests/Support/ListenerTestHelper\.php\:105\:\:consume\(\) overrides method Symfony\\Component\\RateLimiter\\LimiterInterface\:\:consume\(\) but is missing the \#\[\\Override\] attribute\.$#'
 			identifier: method.missingOverride
 			count: 1
@@ -700,12 +664,6 @@ parameters:
 			message: '#^Class Symfony\\Component\\RateLimiter\\Exception\\ReserveNotSupportedException constructor invoked with 0 parameters, 1\-3 required\.$#'
 			identifier: arguments.count
 			count: 2
-			path: tests/Unit/Listener/RejectListenerTest.php
-
-		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
-			count: 1
 			path: tests/Unit/Listener/RejectListenerTest.php
 
 		-
@@ -769,12 +727,6 @@ parameters:
 			path: tests/Unit/Service/BackupCodeManagerTest.php
 
 		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
-			count: 1
-			path: tests/Unit/Service/BackupCodeManagerTest.php
-
-		-
 			message: '#^Call to an undefined method App\\Service\\BackupCodeInterface\:\:method\(\)\.$#'
 			identifier: method.notFound
 			count: 17
@@ -799,20 +751,8 @@ parameters:
 			path: tests/Unit/Service/LoginManagerTest.php
 
 		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
-			count: 1
-			path: tests/Unit/Service/LoginManagerTest.php
-
-		-
 			message: '#^Class class@anonymous/tests/Unit/Trait/GetTotpTraitTest\.php\:22 has an uninitialized readonly property \$config\. Assign it in the constructor\.$#'
 			identifier: property.uninitializedReadonly
-			count: 1
-			path: tests/Unit/Trait/GetTotpTraitTest.php
-
-		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
 			count: 1
 			path: tests/Unit/Trait/GetTotpTraitTest.php
 
@@ -953,12 +893,6 @@ parameters:
 			identifier: property.readOnlyAssignNotInConstructor
 			count: 1
 			path: tests/Unit/Trait/MakeNonceTraitTest.php
-
-		-
-			message: '#^Method Psr\\Clock\\ClockInterface@anonymous/tests/Support/TotpTestHelper\.php\:33\:\:now\(\) overrides method Psr\\Clock\\ClockInterface\:\:now\(\) but is missing the \#\[\\Override\] attribute\.$#'
-			identifier: method.missingOverride
-			count: 1
-			path: tests/Unit/Trait/StringTraitTest.php
 
 		-
 			message: '#^Call to function method_exists\(\) with ''Symfony\\\\Component\\\\Dotenv\\\\Dotenv'' and ''bootEnv'' will always evaluate to false\.$#'

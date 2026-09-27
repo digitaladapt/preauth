@@ -15,4 +15,10 @@ twig:
             teapot_message: '%env(TEAPOT_MESSAGE)%'
             too_many_title: '%env(TOO_MANY_TITLE)%'
             too_many_message: '%env(TOO_MANY_MESSAGE)%'
+            passkey_button_name: '%env(PASSKEY_BUTTON_NAME)%'
+            passkey_register_name: '%env(PASSKEY_REGISTER_NAME)%'
             debug: '%env(SHELL_VERBOSITY)%'
+
+    # `passkeys` is computed per request by the controller-facing templates via
+    # PasskeyPolicyInterface, never from an env var, so that availability and the
+    # D1/D4 prerequisites cannot drift apart.

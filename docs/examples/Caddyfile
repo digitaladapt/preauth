@@ -49,9 +49,42 @@ protected.example.com {
 # optionally, if you want to use a subdomain for central preauth
 # set SUBDOMAIN_REDIRECT to true
 # and AUTH_SUBDOMAIN to match the subdomain you use here
+#
+# Passkeys (PASSKEY_ENABLED) require this block AND HTTPS: the ceremony runs
+# here and the credential is scoped to the base domain. Caddy provisions a
+# certificate automatically for a real hostname, so nothing extra is needed in
+# production. This block is also deliberately NOT behind forward_auth — the
+# browser talks to it directly during a ceremony.
 auth.example.com {
 	reverse_proxy preauth
 }
+
+# --- local development with passkeys ---
+# Browsers only allow a WebAuthn ceremony over HTTPS, and preauth does not offer
+# an exemption for http://localhost (that would be a way to run passkeys
+# insecurely in production). So to exercise passkeys locally, give yourself a
+# real hostname and a locally-trusted certificate:
+#
+#   1. Point the names at your machine:
+#        # /etc/hosts
+#        127.0.0.1 auth.preauthtest.local app.preauthtest.local
+#   2. Trust a certificate for them (mkcert installs a local CA):
+#        mkcert auth.preauthtest.local app.preauthtest.local
+#
+#   3. In preauth's .env:
+#        SUBDOMAIN_REDIRECT=true
+#        AUTH_SUBDOMAIN=auth.preauthtest.local
+#        PASSKEY_ENABLED=true
+#
+#   4. Terminate TLS here and proxy to the container:
+#
+# auth.preauthtest.local, "*.preauthtest.local" {
+#     tls /path/to/auth.preauthtest.local+1.pem /path/to/auth.preauthtest.local+1-key.pem
+#     reverse_proxy preauth
+# }
+#
+# Note "localhost" itself cannot be used: it has no base domain, so central
+# auth cannot be configured and passkeys stay disabled.
 
 # --- public rate-limited access (v1.1) ---
 # Configure PUBLIC_PATHS env var to specify which paths are public.

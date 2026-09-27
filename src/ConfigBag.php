@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App;
 
 use App\Enum\RemoteUserMode;
+use App\Enum\UserVerification;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -23,6 +24,14 @@ final readonly class ConfigBag
     private string $remoteUserStatic;
     /** @var array<string,string> */
     private array $remoteUserMap;
+    private string $title;
+    private bool $passkeyEnabled;
+    private string $passkeyRpName;
+    private UserVerification $passkeyUserVerification;
+    private int $passkeyTimeout;
+
+    /** Passkey ceremony timeout in milliseconds (WebAuthn default). */
+    private const int DEFAULT_PASSKEY_TIMEOUT = 60000;
 
     /** @throws InvalidArgumentException */
     public function __construct(
@@ -38,6 +47,11 @@ final readonly class ConfigBag
         #[Autowire('%app.remote_user%')] string $remoteUserMode,
         #[Autowire('%app.remote_user_static%')] string $remoteUserStatic,
         #[Autowire('%app.remote_user_map%')] string $remoteUserMap,
+        #[Autowire('%app.title%')] string $title = 'Pre-Authentication System',
+        #[Autowire('%app.passkey_enabled%')] bool $passkeyEnabled = false,
+        #[Autowire('%app.passkey_rp_name%')] string $passkeyRpName = '',
+        #[Autowire('%app.passkey_user_verification%')] string $passkeyUserVerification = 'required',
+        #[Autowire('%app.passkey_timeout%')] int $passkeyTimeout = self::DEFAULT_PASSKEY_TIMEOUT,
     ) {
         $this->clock = $clock;
         $this->cookieTtl = $cookieTtl;
@@ -51,6 +65,11 @@ final readonly class ConfigBag
         $this->remoteUserMode = RemoteUserMode::tryFrom($remoteUserMode) ?? RemoteUserMode::Session;
         $this->remoteUserStatic = $remoteUserStatic;
         $this->remoteUserMap = $this->parseUserMap($remoteUserMap);
+        $this->title = $title;
+        $this->passkeyEnabled = $passkeyEnabled;
+        $this->passkeyRpName = $passkeyRpName;
+        $this->passkeyUserVerification = UserVerification::fromConfig($passkeyUserVerification);
+        $this->passkeyTimeout = $passkeyTimeout > 0 ? $passkeyTimeout : self::DEFAULT_PASSKEY_TIMEOUT;
     }
 
     /**
@@ -131,5 +150,40 @@ final readonly class ConfigBag
     public function remoteUserMap(): array
     {
         return $this->remoteUserMap;
+    }
+
+    public function title(): string
+    {
+        return $this->title;
+    }
+
+    /**
+     * Whether the passkey feature is switched on by configuration.
+     *
+     * This says nothing about whether the configuration is *usable* — that is
+     * {@see Service\PasskeyPolicyInterface::isEnabled()}, which also
+     * requires the central-auth prerequisite (D1).
+     */
+    public function passkeyEnabled(): bool
+    {
+        return $this->passkeyEnabled;
+    }
+
+    /** Relying-party name shown in the authenticator prompt; blank falls back to the title. */
+    public function passkeyRpName(): string
+    {
+        return $this->passkeyRpName;
+    }
+
+    /** User-verification requirement; an unrecognised value falls back to `required`. */
+    public function passkeyUserVerification(): string
+    {
+        return $this->passkeyUserVerification->value;
+    }
+
+    /** Ceremony timeout in milliseconds. */
+    public function passkeyTimeout(): int
+    {
+        return $this->passkeyTimeout;
     }
 }
