@@ -1,0 +1,168 @@
+{#
+    Passkey UI. Only included when passkeys are available, so that an
+    unavailable configuration renders a byte-identical login page.
+
+    Every string that reaches the server is base64url with no padding, matching
+    what webauthn-lib expects — the library rejects anything else, and the
+    failure mode ("invalid signature") looks nothing like an encoding bug.
+#}
+<div class="center passkey-row">
+    <button type="button" id="preauth-passkey">{{ env.passkey_button_name }}</button>
+</div>
+<style>
+div.passkey-row { width: 100%; }
+div.passkey-row button { background-color: #ffffff; }
+label.passkey-label { display: inline-block; text-align: left; }
+label.passkey-label input { width: auto; }
+</style>
+<script>
+(function () {
+    const form      = document.getElementById('preauth-form');
+    const message   = document.getElementById('preauth-message');
+    const button    = document.getElementById('preauth-passkey');
+    const checkbox  = document.getElementById('preauth-register');
+
+    /* base64url <-> ArrayBuffer, exactly as webauthn-lib encodes these fields */
+    const b64url = {
+        encode: (value) => btoa(String.fromCharCode.apply(null, new Uint8Array(value)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
+        decode: (value) => {
+            const padded = value.replace(/-/g, '+').replace(/_/g, '/');
+            const raw = atob(padded + '='.repeat((4 - padded.length % 4) % 4));
+            return Uint8Array.from(raw, (character) => character.charCodeAt(0));
+        },
+    };
+
+    const show = (text) => { if (message) { message.innerText = text; } };
+
+    /* POST a ceremony step and return the parsed JSON body */
+    const ceremony = (operation, body) => fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Preauth-Passkey': operation,
+        },
+        // never serve this request from, or store it in, the HTTP cache
+        cache: 'no-store',
+        body: JSON.stringify(body ?? {}),
+    }).then((response) => response.json().then((content) => ({ response, content })));
+
+    const descriptors = (list) => (list ?? []).map((entry) => ({
+        ...entry,
+        id: b64url.decode(entry.id),
+    }));
+
+    /* ── login (assertion) ────────────────────────────────────────────── */
+    if (button) {
+        button.addEventListener('click', () => {
+            ceremony('login-begin')
+                .then(({ content }) => navigator.credentials.get({
+                    publicKey: {
+                        ...content.publicKey,
+                        challenge: b64url.decode(content.publicKey.challenge),
+                        allowCredentials: descriptors(content.publicKey.allowCredentials),
+                    },
+                }).then((assertion) => ceremony('login-finish', {
+                    ceremonyId: content.ceremonyId,
+                    credential: {
+                        id: assertion.id,
+                        rawId: b64url.encode(assertion.rawId),
+                        type: assertion.type,
+                        response: {
+                            clientDataJSON: b64url.encode(assertion.response.clientDataJSON),
+                            authenticatorData: b64url.encode(assertion.response.authenticatorData),
+                            signature: b64url.encode(assertion.response.signature),
+                            userHandle: assertion.response.userHandle
+                                ? b64url.encode(assertion.response.userHandle) : null,
+                        },
+                    },
+                })))
+                .then(({ response, content }) => {
+                    if (response.headers.has('Location')) {
+                        window.location.replace(response.headers.get('Location'));
+                        return;
+                    }
+                    show(content.message ?? '');
+                    if (Object.hasOwn(content, 'nonce') && form.nonce) {
+                        form.nonce.value = content.nonce;
+                    }
+                })
+                .catch((error) => {
+                    console.log('passkey login failed');
+                    console.log(error);
+                    show({{ env.error_message|json_encode|raw }});
+                });
+        });
+    }
+
+    /* ── registration ─────────────────────────────────────────────────── */
+    /* The checkbox turns the ordinary submit into a registration ceremony.
+       Authorisation is the TOTP check the server performs on that same POST,
+       so the ceremony cannot be started without a valid code. */
+    if (form && checkbox) {
+        form.addEventListener('submit', (event) => {
+            if (!checkbox.checked || form.getAttribute('method') !== 'post') {
+                /* not registering, or a non-post form: leave the normal flow alone */
+                return;
+            }
+
+            event.preventDefault();
+
+            const payload = new URLSearchParams({
+                username: form.username.value,
+                totp: form.totp.value,
+                nonce: form.nonce.value,
+                register: 'passkey',
+            });
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                cache: 'no-store',
+                body: payload.toString(),
+            }).then((response) => response.json()).then((content) => {
+                if (!content.register) {
+                    show(content.message ?? '');
+                    if (Object.hasOwn(content, 'nonce')) {
+                        form.nonce.value = content.nonce;
+                    }
+                    return;
+                }
+
+                const options = content.register.publicKey;
+                return navigator.credentials.create({
+                    publicKey: {
+                        ...options,
+                        challenge: b64url.decode(options.challenge),
+                        user: { ...options.user, id: b64url.decode(options.user.id) },
+                        excludeCredentials: descriptors(options.excludeCredentials),
+                    },
+                }).then((attestation) => ceremony('register-finish', {
+                    ceremonyId: content.register.ceremonyId,
+                    credential: {
+                        id: attestation.id,
+                        rawId: b64url.encode(attestation.rawId),
+                        type: attestation.type,
+                        response: {
+                            clientDataJSON: b64url.encode(attestation.response.clientDataJSON),
+                            attestationObject: b64url.encode(attestation.response.attestationObject),
+                            transports: attestation.response.getTransports
+                                ? attestation.response.getTransports() : [],
+                        },
+                    },
+                })).then(({ response, content: finished }) => {
+                    if (response.headers.has('Location')) {
+                        window.location.replace(response.headers.get('Location'));
+                        return;
+                    }
+                    show(finished.message ?? '');
+                });
+            }).catch((error) => {
+                console.log('passkey registration failed');
+                console.log(error);
+                show({{ env.error_message|json_encode|raw }});
+            });
+        });
+    }
+})();
+</script>

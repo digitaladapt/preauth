@@ -8,6 +8,7 @@ use App\ConfigBag;
 use App\Data\Payload;
 use App\Service\DomainInterface;
 use App\Service\LoginInterface;
+use App\Service\PasskeyPolicyInterface;
 use App\Trait\CookieNameTrait;
 use App\Trait\HasLoggerTrait;
 use App\Trait\MakeNonceTrait;
@@ -48,6 +49,7 @@ final readonly class LoginListener
         private DomainInterface $domainManager,
         private LoginInterface $loginManager,
         private ConfigBag $config,
+        private PasskeyPolicyInterface $passkeyPolicy,
     ) {
         $this->rateLimiter = $rateLimiter;
     }
@@ -94,6 +96,7 @@ final readonly class LoginListener
             $payload?->json ?? true,
             $event->getRequest()->getHost(),
             $this->makeCacheKey($payload?->id ?? ''),
+            $event->getRequest(),
         ));
     }
 
@@ -105,7 +108,7 @@ final readonly class LoginListener
     }
 
     /** @throws InvalidArgumentException|RuntimeError|SyntaxError|LoaderError */
-    private function makeFailedResponse(bool $limited, bool $json, string $host, string $username): Response
+    private function makeFailedResponse(bool $limited, bool $json, string $host, string $username, Request $request): Response
     {
         if ($limited) {
             $status = $this->config->teapot() ? Response::HTTP_I_AM_A_TEAPOT
@@ -121,6 +124,7 @@ final readonly class LoginListener
             'nonce' => $this->makeNonce(),
             'post' => $this->domainManager->getAuthSubdomain() === $host,
             'username' => $username,
+            'passkeys' => $this->passkeyPolicy->isAvailableFor($request),
         ];
 
         if ($json) {

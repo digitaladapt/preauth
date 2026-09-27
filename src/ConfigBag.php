@@ -29,6 +29,8 @@ final readonly class ConfigBag
     private string $passkeyRpName;
     private UserVerification $passkeyUserVerification;
     private int $passkeyTimeout;
+    private string $passkeyButtonName;
+    private string $passkeyRegisterName;
 
     /** Passkey ceremony timeout in milliseconds (WebAuthn default). */
     private const int DEFAULT_PASSKEY_TIMEOUT = 60000;
@@ -52,6 +54,8 @@ final readonly class ConfigBag
         #[Autowire('%app.passkey_rp_name%')] string $passkeyRpName = '',
         #[Autowire('%app.passkey_user_verification%')] string $passkeyUserVerification = 'required',
         #[Autowire('%app.passkey_timeout%')] int $passkeyTimeout = self::DEFAULT_PASSKEY_TIMEOUT,
+        #[Autowire('%app.passkey_button_name%')] string $passkeyButtonName = 'Sign in with a passkey',
+        #[Autowire('%app.passkey_register_name%')] string $passkeyRegisterName = 'Register this device as a passkey',
     ) {
         $this->clock = $clock;
         $this->cookieTtl = $cookieTtl;
@@ -70,6 +74,8 @@ final readonly class ConfigBag
         $this->passkeyRpName = $passkeyRpName;
         $this->passkeyUserVerification = UserVerification::fromConfig($passkeyUserVerification);
         $this->passkeyTimeout = $passkeyTimeout > 0 ? $passkeyTimeout : self::DEFAULT_PASSKEY_TIMEOUT;
+        $this->passkeyButtonName = $passkeyButtonName;
+        $this->passkeyRegisterName = $passkeyRegisterName;
     }
 
     /**
@@ -185,5 +191,17 @@ final readonly class ConfigBag
     public function passkeyTimeout(): int
     {
         return $this->passkeyTimeout;
+    }
+
+    /** Label for the "sign in with a passkey" button. */
+    public function passkeyButtonName(): string
+    {
+        return $this->passkeyButtonName;
+    }
+
+    /** Label for the "register this device" checkbox. */
+    public function passkeyRegisterName(): string
+    {
+        return $this->passkeyRegisterName;
     }
 }

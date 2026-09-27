@@ -14,9 +14,19 @@
     <div class="right"><label for="totp">{{ env.token_name }}:</label></div>
     <div><input type="text" name="totp" id="totp"
         autocomplete="one-time-code" required="required"></div>
+    {% if (passkeys ?? false) and (post ?? false) %}
+    {# Only where the form actually POSTs: registration authorises itself with
+       the TOTP code carried in that submission, so a fetch()-submitted form on
+       a protected host has nothing to start a ceremony with. #}
+    <div class="center passkey-row"><label class="passkey-label" for="preauth-register">
+        <input type="checkbox" name="register" id="preauth-register" value="passkey"> {{ env.passkey_register_name }}</label></div>
+    {% endif %}
     <div class="center"><button type="submit">{{ env.submit_name }}</button></div>
 </form>
 {% if not post ?? false %}
     {{- include('_script.html.twig') -}}
+{% endif %}
+{% if passkeys ?? false %}
+    {{- include('_passkey.html.twig') -}}
 {% endif %}
 {% endblock %}

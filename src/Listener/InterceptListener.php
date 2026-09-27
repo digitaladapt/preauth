@@ -6,6 +6,7 @@ namespace App\Listener;
 
 use App\ConfigBag;
 use App\Service\DomainInterface;
+use App\Service\PasskeyPolicyInterface;
 use App\Trait\CookieNameTrait;
 use App\Trait\HasLoggerTrait;
 use App\Trait\MakeNonceTrait;
@@ -29,6 +30,7 @@ final readonly class InterceptListener
         private ConfigBag $config,
         private DomainInterface $domainManager,
         private Environment $twig,
+        private PasskeyPolicyInterface $passkeyPolicy,
     ) {
     }
 
@@ -54,6 +56,10 @@ final readonly class InterceptListener
             $content = $this->twig->render('login.html.twig', [
                 'nonce' => $this->makeNonce(),
                 'post' => $this->domainManager->getAuthSubdomain() === $event->getRequest()->getHost(),
+                /* only offered when the feature is usable *for this request* — the
+                 * same computation that decides whether the ceremony endpoints
+                 * will answer, so the UI cannot offer what the server refuses */
+                'passkeys' => $this->passkeyPolicy->isAvailableFor($event->getRequest()),
             ]);
             $hasCookie = (bool) $event->getRequest()->cookies->get(
                 $this->sessionCookieName($this->domainManager),
