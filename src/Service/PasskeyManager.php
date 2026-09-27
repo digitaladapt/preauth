@@ -109,13 +109,16 @@ final readonly class PasskeyManager implements PasskeyInterface
         }
 
         /* the credential id selects the record: an attacker cannot nominate a
-         * different credential than the one they hold the key for */
-        $stored = $this->credentials->find($publicKeyCredential->rawId);
-        if (null === $stored) {
-            return null;
-        }
-
+         * different credential than the one they hold the key for.
+         *
+         * Inside the try: a cache failure must degrade to "this passkey is
+         * unavailable", never to a 500 on the login page. */
         try {
+            $stored = $this->credentials->find($publicKeyCredential->rawId);
+            if (null === $stored) {
+                return null;
+            }
+
             $updated = $this->factory
                 ->requestCeremonyValidator($this->policy->allowedOrigins())
                 ->check(
@@ -210,7 +213,15 @@ final readonly class PasskeyManager implements PasskeyInterface
             $this->labelFor($record),
             new DateTimeImmutable(),
         );
-        $this->credentials->save($credential);
+
+        try {
+            $this->credentials->save($credential);
+        } catch (Throwable) {
+            /* a store that cannot persist a credential must not report success:
+             * the user would believe the passkey was registered and then find it
+             * missing at the next login */
+            return null;
+        }
 
         return $credential;
     }

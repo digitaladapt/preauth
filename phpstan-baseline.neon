@@ -543,7 +543,7 @@ parameters:
 		-
 			message: '#^Call to an undefined method App\\Service\\BackupCodeInterface\:\:method\(\)\.$#'
 			identifier: method.notFound
-			count: 17
+			count: 20
 			path: tests/Unit/Service/LoginManagerTest.php
 
 		-

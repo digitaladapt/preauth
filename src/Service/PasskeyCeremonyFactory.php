@@ -95,11 +95,6 @@ final readonly class PasskeyCeremonyFactory
         );
     }
 
-    public function counterChecker(): PasskeyCounterChecker
-    {
-        return $this->counterChecker;
-    }
-
     /**
      * The ceremony steps shared by both ceremonies.
      *

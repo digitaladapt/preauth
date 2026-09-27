@@ -417,4 +417,22 @@ final class PasskeyListenerTest extends TestCase
 
         self::assertSame(Response::HTTP_UNAUTHORIZED, $event->getResponse()?->getStatusCode());
     }
+
+    /**
+     * An empty body is not an error in itself: the ceremony id is simply
+     * missing, so the request is refused the same way a malformed one is.
+     * Asserted separately because it is the shape a bare `fetch()` produces.
+     */
+    public function test_an_empty_body_is_refused(): void
+    {
+        $passkeys = $this->createStub(PasskeyInterface::class);
+        $passkeys->method('finishLogin')->willReturn(null);
+
+        $listener = $this->makeListener($passkeys);
+        $event = $this->makeEvent($this->ceremonyRequest('login-finish'));
+
+        $listener->onKernelRequest($event);
+
+        self::assertSame(Response::HTTP_UNAUTHORIZED, $event->getResponse()?->getStatusCode());
+    }
 }
