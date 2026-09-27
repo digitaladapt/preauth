@@ -6,7 +6,8 @@ namespace App\Service;
 
 use Cose\Algorithm\Manager;
 use Cose\Algorithm\Signature\ECDSA\ES256;
-use Symfony\Component\Serializer\SerializerInterface;
+use RuntimeException;
+use Symfony\Component\Serializer\Serializer;
 use Throwable;
 use Webauthn\AttestationStatement\AttestationStatementSupportManager;
 use Webauthn\AttestationStatement\NoneAttestationStatementSupport;
@@ -16,6 +17,8 @@ use Webauthn\CeremonyStep\CeremonyStepManagerFactory;
 use Webauthn\CredentialRecord;
 use Webauthn\Denormalizer\WebauthnSerializerFactory;
 use Webauthn\Exception\InvalidDataException;
+use Webauthn\PublicKeyCredentialCreationOptions;
+use Webauthn\PublicKeyCredentialRequestOptions;
 
 /**
  * Builds the WebAuthn collaborators, and is the one place that knows how they
@@ -45,6 +48,22 @@ final readonly class PasskeyCeremonyFactory
         $manager->add(NoneAttestationStatementSupport::create());
         $this->attestationStatementSupportManager = $manager;
         $this->counterChecker = new PasskeyCounterChecker();
+    }
+
+    /**
+     * The wire form of the ceremony options, ready to JSON-encode for the client.
+     *
+     * Goes through the serializer rather than `json_encode()`, because the
+     * challenge is raw binary: `json_encode()` rejects it outright, and the
+     * serializer base64url-encodes exactly the fields the browser expects. Using
+     * one path here and another at verification time is how a challenge silently
+     * stops matching, so both go through this factory.
+     *
+     * @return array<string,mixed>
+     */
+    public function optionsAsArray(PublicKeyCredentialCreationOptions|PublicKeyCredentialRequestOptions $options): array
+    {
+        return $this->serializer()->normalize($options, 'json');
     }
 
     /**
@@ -111,10 +130,23 @@ final readonly class PasskeyCeremonyFactory
      * (the challenge) which `json_encode()` rejects outright, and
      * `CredentialRecord` is not `JsonSerializable` at all — the serializer
      * base64url-encodes those fields and is required for a correct round-trip.
+     *
+     * The concrete `Serializer` is returned because the library's own return
+     * type (`SerializerInterface`) only declares `serialize()`/`deserialize()`,
+     * while this class also needs `normalize()`/`denormalize()`.
      */
-    public function serializer(): SerializerInterface
+    public function serializer(): Serializer
     {
-        return (new WebauthnSerializerFactory($this->attestationStatementSupportManager))->create();
+        $serializer = (new WebauthnSerializerFactory($this->attestationStatementSupportManager))->create();
+
+        /* the library's declared return type is the narrower interface, so this
+         * narrows it back — failing loudly if a future version ever returns
+         * something else, rather than erroring at the first ceremony */
+        if (!$serializer instanceof Serializer) {
+            throw new RuntimeException('Expected the WebAuthn serializer to be a '.Serializer::class.'.');
+        }
+
+        return $serializer;
     }
 
     public function attestationStatementSupportManager(): AttestationStatementSupportManager

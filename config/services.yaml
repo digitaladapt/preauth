@@ -135,3 +135,10 @@ services:
     # the boot-time passkey configuration check runs during `cache:warmup`, so a
     # misconfigured deployment fails to start instead of failing in a browser
     App\Service\PasskeyPolicyInterface: '@App\Service\PasskeyPolicy'
+    App\Service\PasskeyInterface: '@App\Service\PasskeyManager'
+    App\Service\PasskeyCeremonyStoreInterface: '@App\Service\PasskeyCeremonyStore'
+    App\Service\PasskeyCredentialStoreInterface: '@App\Service\PasskeyCredentialStore'
+
+    # the ceremony factory takes no constructor arguments and holds no state, so
+    # it is built once and shared rather than re-created per ceremony
+    App\Service\PasskeyCeremonyFactory: ~

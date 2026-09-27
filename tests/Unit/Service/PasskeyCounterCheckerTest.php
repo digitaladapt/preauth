@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Service;
 use App\Service\PasskeyCounterChecker;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
+use Webauthn\Counter\CounterChecker;
 use Webauthn\Counter\ThrowExceptionIfInvalid;
 use Webauthn\CredentialRecord;
 use Webauthn\Exception\CounterException;
@@ -72,7 +73,7 @@ final class PasskeyCounterCheckerTest extends TestCase
         $record = $this->makeRecord(5);
 
         $checker->check($record, 6);
-        $checker->check($record, PHP_INT_MAX);
+        $checker->check($record, \PHP_INT_MAX);
 
         self::assertSame(5, $record->counter);
     }
@@ -111,6 +112,6 @@ final class PasskeyCounterCheckerTest extends TestCase
      */
     public function test_it_is_not_the_library_default(): void
     {
-        self::assertNotInstanceOf(ThrowExceptionIfInvalid::class, new PasskeyCounterChecker());
+        self::assertInstanceOf(CounterChecker::class, new PasskeyCounterChecker());
     }
 }

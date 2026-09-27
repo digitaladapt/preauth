@@ -84,6 +84,7 @@ Baseline suite green before and after install: **313 tests / 738 assertions**.
 | **C2** | (unstated) treat option objects as plain JSON | `json_encode($creationOptions)` **throws** `JsonException: Malformed UTF-8` — the challenge is raw binary. Options **must** be serialized by the same factory, which base64url-encodes binary fields. | Both the `begin` payload and the stored record go through one `SerializerInterface`. Caught immediately by the spike; would otherwise have been a runtime 500 on first test. |
 | **C3** | "the package carries 3 published advisories" | `composer audit` against 5.3.9 reports **none**. | No remediation work; record the clean audit in the CHANGELOG. |
 | **C4** | counter handling not mentioned | Counter replay raises `CounterException`, which can **mask** the real reason a verification failed. | Test helper must use an incrementing counter per ceremony, or negative tests give false passes (this actually happened during the spike and had to be fixed). |
+| **C5** | "keep the library default" for the counter | The default requires a strictly *increasing* counter. Measured: stored `0`, reported `0` → `CounterException`. A synchronised passkey reports `0` forever, so **every** such credential fails on its **first** login — and only on real hardware, since a test helper that increments never reproduces it. | `PasskeyCounterChecker` accepts `>=` and rejects strictly backwards. Pinned by `PasskeyCounterCheckerTest`, including a test asserting the library default still rejects `0`/`0` so this reasoning is re-checked if the dependency is upgraded. |
 | **C5** | separate `passkey_limiter` + `publicRateLimitCache`-style pool | Decision D3 makes it redundant for the *login* budget. | Drop it. One small limiter remains, for a different purpose (§5.4). |
 
 ### 2.3 Attestation: why `none`, measured rather than assumed
@@ -403,8 +404,11 @@ $serializer           = (new WebauthnSerializerFactory($attestationManager))->cr
   neither `web-token/jwt-library` nor `symfony/http-client` is needed — the
   latter confirmed absent from the current install, so reaching for MDS would add
   a second new dependency, not just code.
-- Counter: keep the library default; document that clone detection is not relied
-  upon (Q3.5). Test helpers must increment (C4).
+- Counter: **replaced the library default** — see §2.2 C5. `ThrowExceptionIfInvalid`
+  requires a *strictly increasing* counter, which rejects a synchronised passkey
+  on its first login; `PasskeyCounterChecker` accepts equal-or-greater and still
+  rejects moves backwards. Clone detection is not relied upon. Test helpers must
+  still increment (C4).
 
 ### 5.2 Ceremony state
 
@@ -751,8 +755,12 @@ real TLS with a local certificate (§4.2). `PASSKEY_ALLOWED_ORIGINS` is deleted.
 Note `localhost` deliberately cannot satisfy D1, so there is no half-configured
 state to document away.
 
-**Q3.5 — Counter checking.** *Proposal: keep the library default; document that
-counter-based clone detection is not relied upon (many passkeys always report 0).*
+**Q3.5 — Counter checking.** **Resolved during implementation: the proposal was
+wrong and was reversed.** The assumption "many passkeys always report 0" was
+correct, but the conclusion "so the default is harmless" was not — the default
+*rejects* a reported 0 against a stored 0, so the very case it was assumed to
+tolerate is the case it fails. Replaced with `PasskeyCounterChecker` (accept
+`>=`, reject strictly backwards). See §2.2 C5.
 
 **Q3.6 — Keep the `begin` resource guard?** It is not part of the login budget
 (D3 governs that) — it only bounds cache-fill. *Proposal: keep it; it is ~15

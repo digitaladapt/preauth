@@ -46,11 +46,7 @@ final readonly class PasskeyCounterChecker implements CounterChecker
     public function check(CredentialRecord $credentialRecord, int $currentCounter): void
     {
         if ($currentCounter < $credentialRecord->counter) {
-            throw CounterException::create(
-                $currentCounter,
-                $credentialRecord->counter,
-                'The signature counter moved backwards, which can indicate a cloned authenticator.',
-            );
+            throw CounterException::create($currentCounter, $credentialRecord->counter, 'The signature counter moved backwards, which can indicate a cloned authenticator.');
         }
     }
 }
