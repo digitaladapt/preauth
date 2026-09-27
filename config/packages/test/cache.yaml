@@ -12,3 +12,5 @@ framework:
                 adapters: cache.adapter.array
             publicRateLimitCache:
                 adapters: cache.adapter.array
+            passkeyRateLimitCache:
+                adapters: cache.adapter.array

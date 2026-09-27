@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Listener;
 
+use App\AppConstants;
 use App\Listener\SecurityHeadersListener;
 use App\Service\DomainInterface;
+use App\Service\PasskeyPolicyInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,12 +16,15 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 final class SecurityHeadersListenerTest extends TestCase
 {
-    private function makeListener(?string $authSubdomain = null): SecurityHeadersListener
+    private function makeListener(?string $authSubdomain = null, bool $passkeysAvailable = false): SecurityHeadersListener
     {
         $domainManager = $this->createStub(DomainInterface::class);
         $domainManager->method('getAuthSubdomain')->willReturn($authSubdomain);
 
-        return new SecurityHeadersListener($domainManager);
+        $policy = $this->createStub(PasskeyPolicyInterface::class);
+        $policy->method('isAvailableFor')->willReturn($passkeysAvailable);
+
+        return new SecurityHeadersListener($domainManager, $policy);
     }
 
     private function makeEvent(
@@ -203,5 +208,77 @@ final class SecurityHeadersListenerTest extends TestCase
         $listener->onKernelResponse($event);
 
         self::assertStringNotContainsString('connect-src', $response->headers->get('Content-Security-Policy'));
+    }
+
+    /**
+     * `publickey-credentials-get`/`-create` do not fall back to `default-src`, so
+     * without them the browser refuses the ceremony however the script is written.
+     */
+    public function test_csp_grants_the_webauthn_directives_when_passkeys_are_available(): void
+    {
+        $listener = $this->makeListener('auth.example.com', true);
+        $response = new Response('login', Response::HTTP_UNAUTHORIZED);
+        $request = Request::create('https://auth.example.com/', 'GET');
+        $listener->onKernelResponse($this->makeEvent($response, $request));
+
+        $csp = (string) $response->headers->get('Content-Security-Policy');
+        self::assertStringContainsString("publickey-credentials-get 'self';", $csp);
+        self::assertStringContainsString("publickey-credentials-create 'self';", $csp);
+        self::assertStringContainsString("connect-src 'self';", $csp);
+    }
+
+    /**
+     * With passkeys unavailable the header must be byte-identical to today's,
+     * which is what makes "unavailable means invisible" a testable property.
+     */
+    public function test_csp_is_unchanged_when_passkeys_are_unavailable(): void
+    {
+        $listener = $this->makeListener('auth.example.com', false);
+        $response = new Response('login', Response::HTTP_UNAUTHORIZED);
+        $request = Request::create('https://auth.example.com/', 'GET');
+        $listener->onKernelResponse($this->makeEvent($response, $request));
+
+        self::assertSame(
+            "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline';",
+            $response->headers->get('Content-Security-Policy'),
+        );
+    }
+
+    /**
+     * A ceremony reply is a browser-facing 2xx, so the usual "2xx is consumed by
+     * forward_auth" assumption does not hold and it has to be made no-store.
+     */
+    public function test_ceremony_responses_are_made_no_store_and_the_marker_is_stripped(): void
+    {
+        $listener = $this->makeListener('auth.example.com');
+        $response = new Response('{}', Response::HTTP_OK);
+        $response->headers->set(AppConstants::PASSKEY_CEREMONY_MARKER, '1');
+
+        $listener->onKernelResponse($this->makeEvent($response));
+
+        self::assertFalse($response->headers->has(AppConstants::PASSKEY_CEREMONY_MARKER));
+        self::assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+        self::assertSame('*', $response->headers->get('Vary'));
+    }
+
+    /**
+     * An ordinary 2xx must stay untouched: those are consumed by forward_auth, and
+     * adding cache headers could interfere with the protected service.
+     */
+    public function test_a_plain_success_response_is_left_cacheable(): void
+    {
+        $listener = $this->makeListener('auth.example.com');
+        $response = new Response('hi', Response::HTTP_OK);
+        $response->setCache(['public' => true, 'max_age' => 60]);
+
+        $listener->onKernelResponse($this->makeEvent($response));
+
+        /* the headers the caller set must survive untouched — no no-store, and
+         * no marker leaking through */
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+        self::assertStringNotContainsString('no-store', $cacheControl);
+        self::assertStringContainsString('max-age=60', $cacheControl);
+        self::assertFalse($response->headers->has('Surrogate-Control'));
+        self::assertFalse($response->headers->has(AppConstants::PASSKEY_CEREMONY_MARKER));
     }
 }

@@ -31,7 +31,7 @@ class TestKernel extends AppKernel
         $container->addCompilerPass(new class implements CompilerPassInterface {
             public function process(ContainerBuilder $container): void
             {
-                foreach (['nonceCache', 'rateLimitCache', 'sessionCache', 'sessionStorage', 'publicRateLimitCache'] as $poolId) {
+                foreach (['nonceCache', 'rateLimitCache', 'sessionCache', 'sessionStorage', 'publicRateLimitCache', 'passkeyRateLimitCache'] as $poolId) {
                     if ($container->hasDefinition($poolId)) {
                         $container->getDefinition($poolId)->clearTag('kernel.reset');
                     }

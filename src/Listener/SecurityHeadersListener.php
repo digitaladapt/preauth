@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Listener;
 
+use App\AppConstants;
 use App\Service\DomainInterface;
+use App\Service\PasskeyPolicyInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 
 /**
@@ -18,6 +21,7 @@ final readonly class SecurityHeadersListener
 {
     public function __construct(
         private DomainInterface $domainManager,
+        private PasskeyPolicyInterface $passkeyPolicy,
     ) {
     }
 
@@ -55,7 +59,14 @@ final readonly class SecurityHeadersListener
         $inlineScript = $this->domainManager->getAuthSubdomain() !== $event->getRequest()->getHost();
         $csp = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline';";
 
-        if ($inlineScript) {
+        /* `publickey-credentials-get`/`-create` do NOT fall back to default-src,
+         * so without these directives the browser refuses the ceremony even
+         * though the script itself is allowed to run. `connect-src 'self'` is
+         * needed in both modes here, because the passkey flow always talks to
+         * the server with fetch(). */
+        if ($this->passkeyPolicy->isAvailableFor($event->getRequest())) {
+            $csp .= " connect-src 'self'; publickey-credentials-get 'self'; publickey-credentials-create 'self';";
+        } elseif ($inlineScript) {
             $csp .= " connect-src 'self';";
         }
 
@@ -75,13 +86,31 @@ final readonly class SecurityHeadersListener
          * access ("already authenticated" or public) are consumed by the
          * reverse proxy's forward_auth check before reaching the browser,
          * and the protected service's own cache headers must remain
-         * untouched. */
+         * untouched.
+         *
+         * A ceremony reply is the exception that proves the rule: it is a 2xx
+         * that goes straight to the browser, because the auth subdomain has no
+         * forward_auth in front of it. Left alone it would be cacheable, so a
+         * browser could replay a stale challenge. `PasskeyListener` marks those
+         * responses and the marker is stripped here. */
         if (!$response->isSuccessful()) {
-            $headers->set('Cache-Control', 'no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
-            $headers->set('Pragma', 'no-cache');
-            $headers->set('Expires', '0');
-            $headers->set('Surrogate-Control', 'no-store');
-            $headers->set('Vary', '*');
+            $this->applyNoStore($headers);
+
+            return;
         }
+
+        if ($headers->has(AppConstants::PASSKEY_CEREMONY_MARKER)) {
+            $headers->remove(AppConstants::PASSKEY_CEREMONY_MARKER);
+            $this->applyNoStore($headers);
+        }
+    }
+
+    private function applyNoStore(ResponseHeaderBag $headers): void
+    {
+        $headers->set('Cache-Control', 'no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+        $headers->set('Pragma', 'no-cache');
+        $headers->set('Expires', '0');
+        $headers->set('Surrogate-Control', 'no-store');
+        $headers->set('Vary', '*');
     }
 }

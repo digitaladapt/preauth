@@ -8,6 +8,7 @@ use App\Data\Payload;
 use App\Listener\LoginListener;
 use App\Service\DomainManager;
 use App\Service\LoginInterface;
+use App\Service\PasskeyPolicyInterface;
 use App\Tests\Support\ListenerTestHelper;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -34,6 +35,7 @@ final class LoginListenerTest extends TestCase
             $domainManager ?? new DomainManager(false, ''),
             $loginManager ?? $this->createStub(LoginInterface::class),
             $this->makeConfig(),
+            $this->createStub(PasskeyPolicyInterface::class),
         );
         $listener->setLogger(new NullLogger());
         $listener->setNonceCache(new ArrayAdapter());
@@ -244,6 +246,7 @@ final class LoginListenerTest extends TestCase
             new DomainManager(false, ''),
             $loginManager,
             $this->makeConfig(teapot: false),
+            $this->createStub(PasskeyPolicyInterface::class),
         );
         $listener->setLogger(new NullLogger());
         $listener->setNonceCache(new ArrayAdapter());

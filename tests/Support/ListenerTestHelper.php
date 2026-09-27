@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Support;
 
 use DateTimeImmutable;
+use Override;
 use Symfony\Component\RateLimiter\LimiterInterface;
 use Symfony\Component\RateLimiter\RateLimit;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
@@ -40,6 +41,8 @@ trait ListenerTestHelper
             'teapot_message' => 'I refuse to brew coffee',
             'too_many_title' => 'Too many requests',
             'too_many_message' => 'Try again later',
+            'passkey_button_name' => 'Sign in with a passkey',
+            'passkey_register_name' => 'Register this device as a passkey',
             'debug' => 0,
         ]);
 
@@ -59,6 +62,7 @@ trait ListenerTestHelper
             {
             }
 
+            #[Override]
             public function create(?string $key = null): LimiterInterface
             {
                 return $this->limiter;
@@ -80,16 +84,19 @@ trait ListenerTestHelper
             {
             }
 
+            #[Override]
             public function reserve(int $tokens = 1, ?float $maxTime = null): \Symfony\Component\RateLimiter\Reservation
             {
-                throw new \Symfony\Component\RateLimiter\Exception\ReserveNotSupportedException();
+                throw new \Symfony\Component\RateLimiter\Exception\ReserveNotSupportedException(static::class);
             }
 
+            #[Override]
             public function consume(int $tokens = 1): RateLimit
             {
                 return $this->rateLimit;
             }
 
+            #[Override]
             public function reset(): void
             {
             }
@@ -109,11 +116,13 @@ trait ListenerTestHelper
             {
             }
 
+            #[Override]
             public function reserve(int $tokens = 1, ?float $maxTime = null): \Symfony\Component\RateLimiter\Reservation
             {
-                throw new \Symfony\Component\RateLimiter\Exception\ReserveNotSupportedException();
+                throw new \Symfony\Component\RateLimiter\Exception\ReserveNotSupportedException(static::class);
             }
 
+            #[Override]
             public function consume(int $tokens = 1): RateLimit
             {
                 $this->consumed += $tokens;
@@ -127,6 +136,7 @@ trait ListenerTestHelper
                 );
             }
 
+            #[Override]
             public function reset(): void
             {
                 $this->consumed = 0;
@@ -138,6 +148,7 @@ trait ListenerTestHelper
             {
             }
 
+            #[Override]
             public function create(?string $key = null): LimiterInterface
             {
                 return $this->limiter;

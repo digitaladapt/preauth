@@ -27,3 +27,15 @@ framework:
         public_limiter:
             policy: compound
             limiters: [public_burst, public_upper]
+
+        # bounds how many ceremonies one caller can *start*.
+        #
+        # This is a resource guard, NOT part of the login budget: D3 makes the
+        # existing login_limiter the single shared budget for every login method,
+        # and a legitimate `begin` must not consume failure budget. Without this,
+        # an unauthenticated caller could fill the ceremony cache with records.
+        passkey_begin_burst:
+            policy: 'sliding_window'
+            limit: '%env(int:PASSKEY_BEGIN_BURST_COUNT)%'
+            interval: '%env(int:PASSKEY_BEGIN_BURST_TIME)% seconds'
+            cache_pool: 'passkeyRateLimitCache'

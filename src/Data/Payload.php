@@ -17,6 +17,17 @@ final class Payload
     public bool $json;  /* should we return json (for the login page) */
     public Scope $scope; /* type of access being requested */
 
+    /**
+     * The caller ticked "register this device as a passkey".
+     *
+     * Carried on the payload rather than handled by the listener, because the
+     * TOTP check is what authorises registration — so the intent has to reach
+     * `LoginManager`, which is where that check (and the nonce check) already
+     * happens. Starting a ceremony any earlier would move nonce validation and
+     * risk spending it twice.
+     */
+    public bool $register = false;
+
     public static function decode(string $base64url): ?self
     {
         /* convert the base64url into json string */
@@ -42,6 +53,7 @@ final class Payload
                 'id' => $input->get('username'),
                 'nonce' => $input->get('nonce'),
                 'token' => $input->get('totp'),
+                'register' => $input->get('register'),
                 'json' => false,
             ]);
         }
@@ -65,6 +77,7 @@ final class Payload
         $payload->id = mb_substr(trim($data->id), 0, AppConstants::MAX_INPUT_LENGTH);
         $payload->nonce = mb_substr(trim($data->nonce), 0, AppConstants::MAX_INPUT_LENGTH);
         $payload->json = ($data->json ?? true);
+        $payload->register = (bool) ($data->register ?? false);
         $payload->scope = Scope::tryFrom($data->scope ?? '') ?? Scope::Cookie;
         $payload->token = mb_substr(trim($data->token), 0, AppConstants::MAX_INPUT_LENGTH);
 

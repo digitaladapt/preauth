@@ -8,6 +8,7 @@ use App\ConfigBag;
 use App\Utilities;
 use DateTimeImmutable;
 use OTPHP\TOTP;
+use Override;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Clock\ClockInterface as PsrClockInterface;
@@ -35,6 +36,7 @@ trait TotpTestHelper
             {
             }
 
+            #[Override]
             public function now(): DateTimeImmutable
             {
                 return new DateTimeImmutable($this->time);
@@ -77,6 +79,11 @@ trait TotpTestHelper
         string $remoteUserMode = 'session',
         string $remoteUserStatic = 'authenticated',
         string $remoteUserMap = '',
+        string $title = 'Pre-Authentication System',
+        bool $passkeyEnabled = false,
+        string $passkeyRpName = '',
+        string $passkeyUserVerification = 'required',
+        int $passkeyTimeout = 60000,
     ): ConfigBag {
         $clock = $this->frozenClock();
         $utilities = $this->createUtilities($clock);
@@ -94,6 +101,11 @@ trait TotpTestHelper
             $remoteUserMode,
             $remoteUserStatic,
             $remoteUserMap,
+            $title,
+            $passkeyEnabled,
+            $passkeyRpName,
+            $passkeyUserVerification,
+            $passkeyTimeout,
         );
     }
 

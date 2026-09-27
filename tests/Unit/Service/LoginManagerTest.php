@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
 
+use App\AppConstants;
 use App\Data\Payload;
 use App\Enum\Scope;
 use App\Service\BackupCodeInterface;
 use App\Service\DomainManager;
 use App\Service\LoginManager;
+use App\Service\PasskeyInterface;
+use App\Service\SessionIssuer;
 use App\Tests\Support\TotpTestHelper;
 use App\Trait\StringTrait;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +19,7 @@ use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\NullLogger;
 use ReflectionProperty;
+use RuntimeException;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -28,17 +32,24 @@ final class LoginManagerTest extends TestCase
     private ArrayAdapter $pool;
     private BackupCodeInterface $backupCodeManager;
     private DomainManager $domainManager;
+    private ?SessionIssuer $sessionIssuer = null;
 
     private function makeLoginManager(
         ?int $ipTtl = 0,
         bool $subdomainRedirect = false,
         string $authSubdomain = '',
+        ?PasskeyInterface $passkeys = null,
     ): LoginManager {
         $this->pool = new ArrayAdapter();
         $this->backupCodeManager = $this->createStub(BackupCodeInterface::class);
         $this->domainManager = new DomainManager($subdomainRedirect, $authSubdomain);
 
-        $manager = new LoginManager($this->pool, $this->backupCodeManager, $this->domainManager);
+        /* session issuing is shared with the passkey flow, so it is built as the
+         * same collaborator the container would inject */
+        $this->sessionIssuer = new SessionIssuer($this->pool, $this->domainManager, $this->makeConfig(ipTtl: $ipTtl));
+        $this->sessionIssuer->setLogger(new NullLogger());
+
+        $manager = new LoginManager($this->backupCodeManager, $this->sessionIssuer, $passkeys ?? $this->createStub(PasskeyInterface::class));
         $manager->setConfig($this->makeConfig(ipTtl: $ipTtl));
         $manager->setLogger(new NullLogger());
         $manager->setNonceCache(new ArrayAdapter());
@@ -277,8 +288,10 @@ final class LoginManagerTest extends TestCase
         self::assertFalse($response->headers->has('Set-Cookie'));
 
         // verify the IP session exists in the cache
-        $reflection = new ReflectionProperty(LoginManager::class, 'sessionCache');
-        $sessionCache = $reflection->getValue($manager);
+        $issuer = $this->sessionIssuer;
+        self::assertNotNull($issuer, 'makeLoginManager() should have built a session issuer.');
+        $reflection = new ReflectionProperty(SessionIssuer::class, 'sessionCache');
+        $sessionCache = $reflection->getValue($issuer);
         self::assertTrue($sessionCache->hasItem('ip_1.2.3.4'));
     }
 
@@ -361,7 +374,12 @@ final class LoginManagerTest extends TestCase
         $this->backupCodeManager = $this->createStub(BackupCodeInterface::class);
         $this->backupCodeManager->method('verifyAndConsume')->willReturn(false);
 
-        $manager = new LoginManager($pool, $this->backupCodeManager, $this->domainManager);
+        /* the colliding pool must be the one the session issuer writes through,
+         * because that is where the cookie is stored */
+        $issuer = new SessionIssuer($pool, $this->domainManager, $this->makeConfig());
+        $issuer->setLogger(new NullLogger());
+
+        $manager = new LoginManager($this->backupCodeManager, $issuer, $this->createStub(PasskeyInterface::class));
         $manager->setConfig($this->makeConfig());
         $manager->setLogger(new NullLogger());
         $manager->setNonceCache(new ArrayAdapter());
@@ -447,5 +465,84 @@ final class LoginManagerTest extends TestCase
         self::assertNotNull($location);
         // should fall back to path since empty string is not a valid URL
         self::assertStringStartsWith('/', $location);
+    }
+
+    /* ── the passkey registration hand-off ────────────────────────────── */
+
+    /**
+     * With the intent set, a successful check must return ceremony options
+     * rather than a session — beginning the ceremony from the place that has
+     * already verified both the code and the nonce.
+     */
+    public function test_a_registration_intent_returns_ceremony_options(): void
+    {
+        $passkeys = $this->createMock(PasskeyInterface::class);
+        $passkeys->expects(self::once())
+            ->method('beginRegistration')
+            ->with('testuser')
+            ->willReturn(['publicKey' => ['challenge' => 'abc'], 'ceremonyId' => 'cid']);
+
+        $manager = $this->makeLoginManager(passkeys: $passkeys);
+
+        $payload = $this->makePayloadWithNonce($manager);
+        $payload->register = true;
+
+        $this->backupCodeManager->method('verifyAndConsume')->willReturn(false);
+
+        $response = $manager->checkToken($payload, Request::create('/', 'GET'));
+
+        self::assertNotNull($response);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('application/json', $response->headers->get('Content-Type'));
+
+        /* a ceremony reply is browser-facing, so it must carry the marker that
+         * becomes the no-store policy */
+        self::assertSame('1', $response->headers->get(AppConstants::PASSKEY_CEREMONY_MARKER));
+
+        $decoded = json_decode((string) $response->getContent(), true);
+        self::assertSame('cid', $decoded['register']['ceremonyId']);
+    }
+
+    /**
+     * Registration does **not** grant a session: the credential is not verified
+     * until register-finish, so issuing one now would hand out access for a
+     * ceremony that has not happened.
+     */
+    public function test_a_registration_intent_sets_no_session_cookie(): void
+    {
+        $passkeys = $this->createStub(PasskeyInterface::class);
+        $passkeys->method('beginRegistration')->willReturn(['publicKey' => [], 'ceremonyId' => 'cid']);
+
+        $manager = $this->makeLoginManager(passkeys: $passkeys);
+
+        $payload = $this->makePayloadWithNonce($manager);
+        $payload->register = true;
+
+        $this->backupCodeManager->method('verifyAndConsume')->willReturn(false);
+
+        $response = $manager->checkToken($payload, Request::create('/', 'GET'));
+
+        self::assertNotNull($response);
+        self::assertFalse($response->headers->has('Set-Cookie'));
+        self::assertFalse($response->headers->has('Location'));
+    }
+
+    /**
+     * A ceremony that cannot start must not become a 500 on the login page: it
+     * falls through to the same failure path a wrong code takes.
+     */
+    public function test_a_ceremony_that_cannot_start_fails_like_a_wrong_code(): void
+    {
+        $passkeys = $this->createStub(PasskeyInterface::class);
+        $passkeys->method('beginRegistration')->willThrowException(new RuntimeException('no ceremony'));
+
+        $manager = $this->makeLoginManager(passkeys: $passkeys);
+
+        $payload = $this->makePayloadWithNonce($manager);
+        $payload->register = true;
+
+        $this->backupCodeManager->method('verifyAndConsume')->willReturn(false);
+
+        self::assertNull($manager->checkToken($payload, Request::create('/', 'GET')));
     }
 }

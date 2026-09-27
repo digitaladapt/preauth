@@ -295,6 +295,9 @@ the management surface is incomplete.
 
 ### Phase 2c — Passkey Authentication
 
+**Status: complete.** See `docs/passkey-auth-subdomain-plan.md` for the full
+plan, the evidence behind each decision, and the deviations noted below.
+
 **Goal:** Add WebAuthn/FIDO2 passkey support as an alternative
 authentication method alongside TOTP and backup codes.
 
@@ -305,39 +308,31 @@ codes. For a pre-auth gate that friends and family use, passkeys would
 be a major UX improvement — especially for non-technical users who
 struggle with TOTP apps.
 
-**Design considerations:**
+**What was built**, and how it differs from the sketch above:
 
-- Passkeys are **per-device**, not shared secrets. Unlike TOTP (one
-  secret shared with all devices), each device registers its own
-  passkey. This is actually better for a family-use gate — you can
-  register mom's phone separately from dad's laptop.
+- **A Symfony bundle was not used**, only `web-auth/webauthn-lib`. The bundle
+  brings a database-backed credential repository and a controller setup that do
+  not fit a no-database, listener-only application; the library alone is a
+  clean fit and its types are confined to `PasskeyManager` and
+  `PasskeyCeremonyFactory` so a major-version rename touches two files.
+- **Registration happens in the browser, not a console command.** The checkbox
+  on the login form is authorised by the TOTP code in the same submission, so
+  it needs no separate token and no CLI. This also settles the "how does the
+  identity get specified" question: it is the identity that just authenticated.
+- **Central auth is a hard prerequisite.** A passkey is scoped to one relying
+  party, so passkeys require `SUBDOMAIN_REDIRECT` + `AUTH_SUBDOMAIN`; the RP ID
+  is always that base domain. Without it the feature stays off, rather than
+  quietly scoping credentials to a single host.
+- **HTTPS is required with no exemption**, development included, since an
+  `http://` escape hatch is how the same weakness reaches production.
+- **Failed attempts share the TOTP rate-limit budget**, so passkeys cannot be
+  used to sidestep a lockout.
+- **Attestation is `none`**, measured rather than assumed — see SECURITY.md and
+  plan §2.3.
 
-- WebAuthn requires a **challenge-response flow**:
-  1. Client requests a challenge (preauth generates and stores a
-     challenge nonce, similar to the existing nonce system)
-  2. Browser prompts for biometric/PIN, creates a signed assertion
-  3. Server verifies the assertion against the registered credential
-
-- This is a **two-step flow** unlike TOTP's single-step, which means
-  the login page JS and `LoginListener` need to handle an additional
-  round-trip. The existing nonce + AJAX pattern in `_script.html.twig`
-  is a good foundation — extend it with a "use passkey" button that
-  initiates the `navigator.credentials.get()` flow.
-
-- Library: `web-auth/webauthn-framework` (PHP WebAuthn library,
-  Symfony bundle available). Would add registration ceremony (console
-  command or initial-setup flow to register a passkey).
-
-- [ ] Research `web-auth/webauthn-framework` integration with Symfony
-      8.1 and FrankenPHP
-- [ ] Design passkey registration flow (console command? first-visit
-      setup? separate registration endpoint?)
-- [ ] Implement challenge generation and storage (extend existing
-      nonce/cache infrastructure)
-- [ ] Implement assertion verification in a new `PasskeyManager`
-      service (implements a shared `AuthMethodInterface`?)
-- [ ] Add passkey option to login page JS (`navigator.credentials.get()`)
-- [ ] Handle multiple registered passkeys (per-device)
+**Remaining work:** none for the feature itself. Discoverable-credential
+(usernameless) login is possible but not needed, since the login page already
+lists registered credentials.
 - [ ] Console command: `app:list-passkeys` — show registered devices
 - [ ] Console command: `app:remove-passkey` — revoke a passkey
 - [ ] Config: `PASSKEY_ENABLED=false` — enable/disable passkey auth

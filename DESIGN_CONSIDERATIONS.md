@@ -8,6 +8,60 @@ This document was originally prepared as a design review. Items that have been a
 
 ---
 
+## 0. Passkey implementation notes
+
+Four decisions are worth recording because the reasoning is not obvious from the
+code, and each looks like an odd choice without it.
+
+### 0.1 The signature counter is checked leniently, against the library's default
+
+`webauthn-lib`'s default checker requires a *strictly increasing* counter. That
+is wrong for the passkeys this feature targets: a synchronised passkey reports a
+constant `0` forever, so the default rejects a brand-new credential on its
+**first** login. Measured against the installed version: stored `0`, reported
+`0` → `CounterException`.
+
+The failure mode is what makes this worth a note. It cannot happen in a unit
+test that increments the counter — only on real hardware, and only for the most
+common kind of passkey. `PasskeyCounterChecker` therefore accepts equal-or-greater
+and rejects only a counter that moves *backwards*. Clone detection is explicitly
+not claimed as a property of this feature.
+
+### 0.2 The ceremony replies are the only browser-facing 2xx
+
+`SecurityHeadersListener` applies `no-store` to non-2xx responses only, on the
+assumption that a 2xx is consumed by the proxy's `forward_auth` check. That
+assumption is false for a ceremony reply: the auth subdomain is `reverse_proxy`-ed
+with no `forward_auth` in front of it, so the JSON goes straight to the browser.
+Left alone it would be cacheable, and a browser could replay a stale challenge.
+
+The producer marks the response (`PasskeyListener` or `LoginManager`) and the
+caching policy lives in one place that consumes the marker, rather than being
+duplicated at each site that happens to return 2xx.
+
+### 0.3 Registration is a checkbox on the login form, not an endpoint
+
+A separate `register-begin` endpoint was the first design and would have been a
+vulnerability: it hands out a challenge without proving anything. The TOTP check
+is what authorises registration, and that check happens inside `LoginManager` as
+part of an ordinary login submission — so `LoginManager` is where the ceremony
+starts.
+
+There is no session cookie to check at that point either, which makes the point
+neatly: the whole flow is what *produces* the session, so anything gated on one
+cannot be part of it. The capability at `register-finish` is the single-use
+ceremony id, issued server-side and bound to the identity that passed the check.
+
+### 0.4 Both login paths share one session-issuing implementation
+
+`SessionIssuer` was extracted from `LoginManager` when the passkey ceremony
+needed the same behaviour. Two implementations would have drifted, and the most
+likely place to drift is cookie attributes — where a difference is invisible
+until it breaks in a browser, on one path only. A functional test compares the
+cookies the two paths produce, field by field.
+
+---
+
 ## 1. Security
 
 ### 1.1 Missing Security Response Headers [HIGH PRIORITY] ✅ Addressed

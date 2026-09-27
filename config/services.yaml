@@ -55,6 +55,22 @@ parameters:
     env(PUBLIC_UPPER_COUNT): 500    # max requests per sustained window per IP
     env(PUBLIC_UPPER_TIME): 3600    # sustained window in seconds (1 hour)
 
+    # --- passkey authentication ---
+    # Requires central auth (SUBDOMAIN_REDIRECT=1 + AUTH_SUBDOMAIN) and HTTPS.
+    # Enabling this without central auth makes the container fail at cache warmup
+    # rather than offering a feature that cannot work.
+    env(PASSKEY_ENABLED): '0'       # boolean, 1 to offer passkeys on the auth subdomain
+    env(PASSKEY_RP_NAME): ''        # blank to use TITLE
+    env(PASSKEY_USER_VERIFICATION): 'required' # required|preferred|discouraged
+    env(PASSKEY_TIMEOUT): '60000'   # milliseconds
+    # Extra options, custom labels
+    env(PASSKEY_BUTTON_NAME): 'Sign in with a passkey'
+    env(PASSKEY_REGISTER_NAME): 'Register this device as a passkey'
+    # bounds how many ceremonies one caller can start (resource guard, not the
+    # login budget — see config/packages/rate_limiter.yaml)
+    env(PASSKEY_BEGIN_BURST_COUNT): 30
+    env(PASSKEY_BEGIN_BURST_TIME): 60
+
     # --- styling options ---
     env(TITLE): 'Pre-Authentication System'
     env(BG_COLOR): '#029386'        # teal
@@ -96,6 +112,15 @@ parameters:
     app.error_message: '%env(ERROR_MESSAGE)%'
     app.teapot_title: '%env(TEAPOT_TITLE)%'
     app.too_many_title: '%env(TOO_MANY_TITLE)%'
+    app.title: '%env(TITLE)%'
+
+    app.passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
+    app.passkey_rp_name: '%env(PASSKEY_RP_NAME)%'
+    app.passkey_user_verification: '%env(PASSKEY_USER_VERIFICATION)%'
+    app.passkey_timeout: '%env(int:PASSKEY_TIMEOUT)%'
+
+    app.passkey_button_name: '%env(PASSKEY_BUTTON_NAME)%'
+    app.passkey_register_name: '%env(PASSKEY_REGISTER_NAME)%'
 
 services:
     # default configuration for services in *this* file
@@ -110,3 +135,15 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    # the boot-time passkey configuration check runs during `cache:warmup`, so a
+    # misconfigured deployment fails to start instead of failing in a browser
+    App\Service\PasskeyPolicyInterface: '@App\Service\PasskeyPolicy'
+    App\Service\PasskeyInterface: '@App\Service\PasskeyManager'
+    App\Service\PasskeyCeremonyStoreInterface: '@App\Service\PasskeyCeremonyStore'
+    App\Service\PasskeyCredentialStoreInterface: '@App\Service\PasskeyCredentialStore'
+    App\Service\SessionIssuerInterface: '@App\Service\SessionIssuer'
+
+    # the ceremony factory takes no constructor arguments and holds no state, so
+    # it is built once and shared rather than re-created per ceremony
+    App\Service\PasskeyCeremonyFactory: ~

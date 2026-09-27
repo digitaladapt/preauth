@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Listener;
 
 use App\Listener\InterceptListener;
 use App\Service\DomainManager;
+use App\Service\PasskeyPolicyInterface;
 use App\Tests\Support\ListenerTestHelper;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemPoolInterface;
@@ -32,6 +33,7 @@ final class InterceptListenerTest extends TestCase
             $this->makeConfig(),
             $domainManager,
             $this->makeTwig(),
+            $this->createStub(PasskeyPolicyInterface::class),
         );
         $listener->setLogger(new NullLogger());
         $listener->setNonceCache($nonceCache ?? new ArrayAdapter());
