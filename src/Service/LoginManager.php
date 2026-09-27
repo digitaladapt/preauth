@@ -76,7 +76,7 @@ final readonly class LoginManager implements LoginInterface
 
         /* the code and the nonce are both good from here on */
 
-        if ($payload->register) {
+        if ($payload->register && $payload->json) {
             return $this->startRegistration($payload);
         }
 
@@ -94,6 +94,15 @@ final readonly class LoginManager implements LoginInterface
      *
      * `SessionIssuer` is deliberately not involved — the session is granted only
      * once the new credential has actually been verified, at `register-finish`.
+     *
+     * **JSON only.** The checkbox is submitted through the same `X-Preauth` AJAX
+     * path as an ordinary login, so a failed attempt comes back as JSON carrying
+     * a fresh nonce. On the plain form-post path it would be HTML, the script's
+     * `response.json()` would throw, and — worse — the fresh nonce would be lost,
+     * so the user's retry would fail against a nonce that had already been spent.
+     * A non-JSON submission is therefore treated as an ordinary login; WebAuthn
+     * needs scripting regardless, so it is the checkbox that is the enhancement
+     * here, not the underlying login.
      */
     private function startRegistration(Payload $payload): ?Response
     {

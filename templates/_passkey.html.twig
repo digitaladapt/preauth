@@ -96,35 +96,42 @@ label.passkey-label input { width: auto; }
     }
 
     /* ── registration ─────────────────────────────────────────────────── */
-    /* The checkbox turns the ordinary submit into a registration ceremony.
-       Authorisation is the TOTP check the server performs on that same POST,
-       so the ceremony cannot be started without a valid code. */
+    /* The checkbox turns an ordinary submit into a registration ceremony.
+       Authorisation is the TOTP check the server performs on that same
+       submission, so a ceremony cannot be started without a valid code.
+
+       This goes through the same X-Preauth AJAX path as a normal login rather
+       than a plain form post, so that failures come back as JSON with a fresh
+       nonce — a form post would return HTML and lose the nonce, making the
+       user's next attempt fail for a reason they could not see. */
     if (form && checkbox) {
         form.addEventListener('submit', (event) => {
-            if (!checkbox.checked || form.getAttribute('method') !== 'post') {
-                /* not registering, or a non-post form: leave the normal flow alone */
+            if (!checkbox.checked) {
+                /* not registering: leave the normal submit path alone */
                 return;
             }
 
             event.preventDefault();
 
-            const payload = new URLSearchParams({
-                username: form.username.value,
-                totp: form.totp.value,
-                nonce: form.nonce.value,
+            const data = btoa(JSON.stringify({
+                id: form.username.value?.trim() ?? '',
+                token: form.totp.value?.trim() ?? '',
+                nonce: form.nonce.value?.trim() ?? '',
                 register: 'passkey',
-            });
+                json: true,
+            })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
             fetch(window.location.href, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                method: 'GET',
+                headers: { 'X-Preauth': data },
                 cache: 'no-store',
-                body: payload.toString(),
             }).then((response) => response.json()).then((content) => {
                 if (!content.register) {
                     show(content.message ?? '');
                     if (Object.hasOwn(content, 'nonce')) {
                         form.nonce.value = content.nonce;
+                        form.totp.value = '';
+                        form.totp.focus();
                     }
                     return;
                 }
